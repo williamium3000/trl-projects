@@ -1,0 +1,31 @@
+wandb offline
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
+    --config_file projects/grpo/accelerate.yaml \
+    --num_processes 8 \
+    --gradient_accumulation_steps 4 \
+    --main_process_port 19346 \
+    projects/grpo/train_grpo.py \
+    --learning_rate 2e-5 \
+    --per_device_train_batch_size 1 \
+    --gradient_accumulation_steps 4 \
+    --model_name_or_path Qwen/Qwen3-4B \
+    --output_dir projects/grpo/work_dirs/qwen4b-1epoch/ \
+    --train_dataset siyanzhao/Openthoughts_math_30k_opsd \
+    --run_config qwen4b-1epoch \
+    --num_train_epochs 1 \
+    --gradient_checkpointing \
+    --lora_r 64 \
+    --lora_alpha 128 \
+    --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj \
+    --max_completion_length 16000 \
+    --num_generations 8 \
+    --temperature 1.2 \
+    --use_vllm \
+    --use_peft \
+    --vllm_mode colocate \
+    --logging_steps 10 \
+    --save_steps 200 \
+    --beta 0.0 \
+    --loss_type grpo \
+    --scale_rewards group \
+    --wandb_project GRPO
