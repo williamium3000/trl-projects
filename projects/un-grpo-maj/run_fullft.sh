@@ -1,17 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OUTPUT_DIR="projects/work_dirs/un-grpo-maj/qwen4b-1epoch-fullft-opsd30k_bs2_acc4_lr2e-5_gen8_temp1.2_sct0.0"
+RUN_CONFIG="qwen4b-1epoch-fullft-opsd30k-sct0.0"
+mkdir -p "$OUTPUT_DIR"
+
 wandb offline
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
-    --config_file projects/grpo/accelerate.yaml \
+    --config_file projects/un-grpo-maj/accelerate.yaml \
     --num_processes 8 \
     --gradient_accumulation_steps 4 \
     --main_process_port 19346 \
-    projects/grpo/train_grpo.py \
+    projects/un-grpo-maj/train_un_grpo.py \
     --learning_rate 2e-5 \
-    --per_device_train_batch_size 1 \
+    --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 4 \
     --model_name_or_path Qwen/Qwen3-4B \
-    --output_dir projects/work_dirs/grpo/qwen4b-1epoch-fullft-opsd30k_bs1_acc4_lr2e-5_gen8_temp1.2/ \
+    --output_dir "$OUTPUT_DIR" \
     --train_dataset siyanzhao/Openthoughts_math_30k_opsd \
-    --run_config qwen4b-1epoch-fullft-opsd30k \
+    --run_config "$RUN_CONFIG" \
     --num_train_epochs 1 \
     --gradient_checkpointing \
     --max_completion_length 16000 \
@@ -24,4 +31,5 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --beta 0.0 \
     --loss_type grpo \
     --scale_rewards group \
-    --wandb_project GRPO
+    --self_consistency_threshold 0.0 \
+    --wandb_project un-grpo-maj 2>&1 | tee -a "$OUTPUT_DIR/train.log"

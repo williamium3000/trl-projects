@@ -1,0 +1,175 @@
+from collections import Counter
+
+from accelerate.utils import gather_object
+from trl import GRPOTrainer
+
+
+# Duplicated from projects/grpo/train_grpo.py so this project is self-contained.
+# Keep in sync if the baseline changes.
+def extract_boxed_answer(text):
+    """
+    Extract the answer from \\boxed{} format.
+    Returns the content inside the first \\boxed{} if found, otherwise None.
+    Handles nested braces correctly (e.g. \\boxed{\\frac{1}{2}}).
+    """
+    idx = text.find(r"\boxed{")
+    if idx == -1:
+        return None
+    start = idx + len(r"\boxed{")
+    depth = 1
+    i = start
+    while i < len(text) and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+    if depth == 0:
+        return text[start : i - 1].strip()
+    return None
+
+
+def normalize_answer(answer):
+    """
+    Normalize the answer by removing extra whitespace and converting to lowercase.
+    """
+    if answer is None:
+        return None
+    return answer.strip().lower()
+
+
+# Sentinel written into `solution` for prompt groups that fail the self-consistency
+# threshold. It cannot match any parsed \boxed{} answer, so reward_correctness
+# returns 0.0 for every rollout in such a group — no reward-function change needed.
+_UNLABELED_SENTINEL = "\x00__unlabeled__\x00"
+
+
+def _extract_and_normalize(completion):
+    return normalize_answer(extract_boxed_answer(completion))
+
+
+def _majority_vote(answers, threshold):
+    """
+    Args:
+        answers (`list[str | None]`):
+            One normalized parsed answer per rollout in the prompt group.
+            `None` means the rollout did not produce a parseable `\\boxed{}`.
+        threshold (`float`):
+            Minimum top-answer frequency (over parseable answers) to accept
+            the majority as the pseudo-label.
+
+    Returns:
+        `tuple[str | None, float]`: `(pseudo_label, top_frequency)`. `pseudo_label`
+        is `None` when no rollout parses, or when the top frequency is below
+        `threshold`. `top_frequency` is `0.0` when no rollout parses.
+    """
+    valid = [a for a in answers if a is not None]
+    if not valid:
+        return None, 0.0
+    counts = Counter(valid)
+    top_answer, top_count = counts.most_common(1)[0]
+    top_freq = top_count / len(valid)
+    if top_freq < threshold:
+        return None, top_freq
+    return top_answer, top_freq
+
+
+class SelfLabelingGRPOTrainer(GRPOTrainer):
+    """
+    GRPO trainer that replaces the ground-truth `solution` with a majority-vote
+    pseudo-label computed across the N rollouts of each prompt, then delegates
+    reward computation to the parent class.
+
+    Args:
+        self_consistency_threshold (`float`, *optional*, defaults to `0.0`):
+            Minimum fraction (over parseable rollouts) that the top answer must
+            reach for a prompt group to be labeled. `0.0` accepts the plurality
+            winner. When a group fails the threshold, every rollout in it receives
+            a sentinel `solution` so the accuracy reward evaluates to `0.0`.
+        log_oracle_accuracy (`bool`, *optional*, defaults to `True`):
+            If `True`, also log how often the pseudo-label matches the real
+            `solution` from the dataset (metric `self_labeling/pseudo_label_matches_gt`).
+            Purely diagnostic — the real label does not influence training.
+    """
+
+    def __init__(
+        self,
+        *args,
+        self_consistency_threshold: float = 0.0,
+        log_oracle_accuracy: bool = True,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.self_consistency_threshold = self_consistency_threshold
+        self.log_oracle_accuracy = log_oracle_accuracy
+
+    def _calculate_rewards(self, inputs, prompts, completions, completion_ids_list):
+        # A prompt's N rollouts are grouped *contiguously in the global batch* (after
+        # cross-rank concatenation), but a single rank only holds a slice of that batch —
+        # its local slice length is not necessarily a multiple of num_generations. We
+        # therefore all-gather the parsed answers, compute pseudo-labels globally, and
+        # each rank writes back only its own slice.
+        G = self.num_generations
+        N_local = len(inputs)
+        world_size = self.accelerator.num_processes
+        rank = self.accelerator.process_index
+        N_global = N_local * world_size
+        assert N_global % G == 0, (
+            f"global batch {N_global} (local {N_local} x world {world_size}) "
+            f"not divisible by num_generations {G}"
+        )
+        num_groups = N_global // G
+
+        mode = "train" if self.model.training else "eval"
+
+        local_answers = [_extract_and_normalize(c) for c in completions]
+        local_real_solutions = [inp.get("solution") for inp in inputs]
+
+        if world_size > 1:
+            gathered_answers = gather_object(local_answers)
+            gathered_real_solutions = gather_object(local_real_solutions)
+        else:
+            gathered_answers = local_answers
+            gathered_real_solutions = local_real_solutions
+        assert len(gathered_answers) == N_global, (
+            f"gather_object returned {len(gathered_answers)} items, expected {N_global}"
+        )
+
+        num_parseable = sum(a is not None for a in gathered_answers)
+        num_labeled = 0
+        top_freq_sum = 0.0
+        num_oracle_matches = 0
+        pseudo_labels_global = []
+
+        for g in range(num_groups):
+            lo, hi = g * G, (g + 1) * G
+            label, top_freq = _majority_vote(
+                gathered_answers[lo:hi], self.self_consistency_threshold
+            )
+            top_freq_sum += top_freq
+
+            if label is None:
+                pseudo = _UNLABELED_SENTINEL
+            else:
+                pseudo = label
+                num_labeled += 1
+                if self.log_oracle_accuracy:
+                    gt_norm = normalize_answer(gathered_real_solutions[lo])
+                    if gt_norm is not None and gt_norm == label:
+                        num_oracle_matches += 1
+
+            pseudo_labels_global.extend([pseudo] * G)
+
+        my_slice = pseudo_labels_global[rank * N_local : (rank + 1) * N_local]
+        for i, pseudo in enumerate(my_slice):
+            inputs[i]["solution"] = pseudo
+
+        metrics = self._metrics[mode]
+        metrics["self_labeling/fraction_labeled"].append(num_labeled / num_groups)
+        metrics["self_labeling/top_frequency_mean"].append(top_freq_sum / num_groups)
+        metrics["self_labeling/parseable_fraction"].append(num_parseable / N_global)
+        if self.log_oracle_accuracy:
+            oracle = (num_oracle_matches / num_labeled) if num_labeled > 0 else 0.0
+            metrics["self_labeling/pseudo_label_matches_gt"].append(oracle)
+
+        return super()._calculate_rewards(inputs, prompts, completions, completion_ids_list)

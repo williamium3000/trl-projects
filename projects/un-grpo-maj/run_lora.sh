@@ -1,22 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OUTPUT_DIR="projects/work_dirs/un-grpo-maj/qwen4b-1epoch-lora-r16-alpha32-opsd30k_bs1_acc4_lr2e-5_gen8_temp1.2_sct0.0"
+RUN_CONFIG="qwen4b-1epoch-lora-r16-alpha32-opsd30k-sct0.0"
+mkdir -p "$OUTPUT_DIR"
+
 wandb offline
-export DISABLE_MLFLOW_INTEGRATION=TRUE
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
-    --config_file projects/grpo/accelerate_lora.yaml \
+    --config_file projects/un-grpo-maj/accelerate_zero2.yaml \
     --num_processes 8 \
     --gradient_accumulation_steps 4 \
     --main_process_port 19346 \
-    projects/grpo/train_grpo.py \
+    projects/un-grpo-maj/train_un_grpo.py \
     --learning_rate 2e-5 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 4 \
     --model_name_or_path Qwen/Qwen3-4B \
-    --output_dir projects/grpo/work_dirs/qwen4b-1epoch-lora-r16-alpha32-opsd30k_bs1_acc4_lr2e-5_gen8_temp1.2/ \
+    --output_dir "$OUTPUT_DIR" \
     --train_dataset siyanzhao/Openthoughts_math_30k_opsd \
-    --run_config qwen4b-1epoch-lora-r16-alpha32-opsd30k \
+    --run_config "$RUN_CONFIG" \
     --num_train_epochs 1 \
-    --report_to wandb \
-    --resume_from_checkpoint projects/work_dirs/grpo/qwen4b-1epoch-lora-r16-alpha32-opsd30k_bs1_acc4_lr2e-5_gen8_temp1.2/qwen4b-1epoch-lora-r16-alpha32-opsd30k/checkpoint-200 \
     --gradient_checkpointing \
+    --gradient_checkpointing_kwargs '{"use_reentrant": false}' \
     --lora_r 16 \
     --lora_alpha 32 \
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj \
@@ -31,4 +36,5 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --beta 0.0 \
     --loss_type grpo \
     --scale_rewards group \
-    --wandb_project GRPO
+    --self_consistency_threshold 0.0 \
+    --wandb_project un-grpo-maj 2>&1 | tee -a "$OUTPUT_DIR/train.log"

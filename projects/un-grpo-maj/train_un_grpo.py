@@ -1,12 +1,11 @@
 import os
 import wandb
-import re
 
 from transformers import AutoTokenizer
 from dataset import DAPO_DATASET, OPSD_DATASET, load_dataset
+from self_label_trainer import SelfLabelingGRPOTrainer
 
 from trl import (
-    GRPOTrainer,
     GRPOConfig,
     ModelConfig,
     ScriptArguments,
@@ -36,7 +35,7 @@ class CustomScriptArguments(ScriptArguments):
         metadata={"help": "WandB entity (username or team name) to log runs under."},
     )
     wandb_project: str = field(
-        default="grpo-training",
+        default="un-grpo-maj",
         metadata={"help": "WandB project name to log runs under."},
     )
     train_dataset: str = field(
@@ -44,6 +43,21 @@ class CustomScriptArguments(ScriptArguments):
         metadata={
             "help": "Dataset to use for GRPO training.",
             "choices": [OPSD_DATASET, DAPO_DATASET],
+        },
+    )
+    self_consistency_threshold: float = field(
+        default=0.0,
+        metadata={
+            "help": "Minimum top-answer frequency (over parseable rollouts) for a prompt group "
+            "to be labeled by majority vote. 0.0 accepts the plurality winner; 0.5 requires a "
+            "strict majority."
+        },
+    )
+    log_oracle_accuracy: bool = field(
+        default=True,
+        metadata={
+            "help": "If True, log how often the majority-vote pseudo-label matches the real "
+            "ground-truth `solution` from the dataset. Diagnostic only — does not affect training."
         },
     )
 
@@ -140,11 +154,12 @@ if __name__ == "__main__":
 
         # Create concise run name
         full_wandb_run_name = (
-            f"GRPO_{model_name}_"
+            f"UnGRPO_{model_name}_"
             f"lr{lr_str}_"
             f"bs{effective_batch_size}_"
             f"gen{training_args.num_generations}_"
-            f"temp{training_args.temperature}"
+            f"temp{training_args.temperature}_"
+            f"sct{script_args.self_consistency_threshold}"
         )
 
     # Print configuration info
@@ -156,6 +171,8 @@ if __name__ == "__main__":
     print(f"Num Generations: {training_args.num_generations}")
     print(f"Temperature: {training_args.temperature}")
     print(f"Max Completion Length: {training_args.max_completion_length}")
+    print(f"Self-Consistency Threshold: {script_args.self_consistency_threshold}")
+    print(f"Log Oracle Accuracy: {script_args.log_oracle_accuracy}")
     print(f"{'='*80}\n")
 
     ################
@@ -185,6 +202,7 @@ if __name__ == "__main__":
                 "num_processes": num_processes,
                 "loss_type": training_args.loss_type,
                 "scale_rewards": training_args.scale_rewards,
+                "self_consistency_threshold": script_args.self_consistency_threshold,
             },
         )
 
@@ -250,7 +268,7 @@ if __name__ == "__main__":
     ################
     # Training
     ################
-    trainer = GRPOTrainer(
+    trainer = SelfLabelingGRPOTrainer(
         model=model_args.model_name_or_path,
         reward_funcs=reward_correctness,
         args=training_args,
@@ -258,6 +276,8 @@ if __name__ == "__main__":
         eval_dataset=eval_dataset,
         processing_class=tokenizer,
         peft_config=get_peft_config(model_args),
+        self_consistency_threshold=script_args.self_consistency_threshold,
+        log_oracle_accuracy=script_args.log_oracle_accuracy,
     )
 
     trainer.train()
