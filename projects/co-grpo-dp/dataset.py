@@ -10,4 +10,6 @@ _spec.loader.exec_module(_mod)
 
 DAPO_DATASET = _mod.DAPO_DATASET
 OPSD_DATASET = _mod.OPSD_DATASET
+MATH_LEVEL345_DATASET = _mod.MATH_LEVEL345_DATASET
+MATH_LEVEL12345_DATASET = _mod.MATH_LEVEL12345_DATASET
 load_dataset = _mod.load_dataset
