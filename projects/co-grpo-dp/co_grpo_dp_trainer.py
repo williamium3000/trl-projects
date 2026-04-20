@@ -56,17 +56,34 @@ class CoGRPOdpTrainer(GRPOTrainer):
         self.rendezvous = rendezvous
         self.self_consistency_threshold = self_consistency_threshold
         self.log_oracle_accuracy = log_oracle_accuracy
-        # Rendezvous counter advances once per call to `_calculate_rewards`
-        # (i.e., once per generation step), NOT per training_step. `_calculate_rewards`
-        # is only invoked inside `_generate_and_score_completions`, which the parent
-        # calls every `steps_per_generation * num_iterations` training steps.
-        # Train and eval counters are tracked separately because both modes trigger
-        # this hook; sharing a single counter would misalign the two groups as soon
-        # as evaluation runs.
+        # Rendezvous counter advances once per call to `_calculate_rewards` in
+        # train mode (i.e., once per train generation step), NOT per training
+        # step. `_calculate_rewards` is only invoked inside
+        # `_generate_and_score_completions`, which the parent calls every
+        # `steps_per_generation * num_iterations` training steps. Eval mode
+        # short-circuits before touching rendezvous, so no eval counter is needed.
         self._gen_counter_train = 0
-        self._gen_counter_eval = 0
 
     def _calculate_rewards(self, inputs, prompts, completions, completion_ids_list):
+        # Eval-mode short-circuit. In eval we want pass@1 accuracy on the
+        # 150-prompt validation set against the **dataset's real solution**,
+        # not against a peer-supplied pseudo-label. Skipping the cross-labeling
+        # path means:
+        #   1. inputs[i]["solution"] keeps its dataset value (not overwritten),
+        #      so the parent's reward path (reward_correctness) compares the
+        #      completion against ground truth via grade_answer.
+        #   2. self.rendezvous is never touched in eval, so the two groups do
+        #      not need to be in lockstep during eval (one can finish first).
+        #   3. self._gen_counter_train is not advanced by eval, so train-mode
+        #      rendezvous alignment with the peer survives any number of eval
+        #      runs interleaved between train steps.
+        # The "co_labeling/*" metrics are intentionally not logged in eval mode
+        # because they have no meaning without cross-labeling. The parent path
+        # logs reward stats automatically into `eval/rewards/...` via trl.
+        if not self.model.training:
+            return super()._calculate_rewards(inputs, prompts, completions, completion_ids_list)
+
+        # ---- Train mode: cross-labeling + peer rendezvous (original path) ----
         # A prompt's N rollouts are grouped contiguously in the global batch (after
         # cross-rank concatenation), but a single rank only holds a slice of that
         # batch — its local slice length is not necessarily a multiple of
@@ -83,7 +100,7 @@ class CoGRPOdpTrainer(GRPOTrainer):
             f"not divisible by num_generations {G}"
         )
         num_groups = N_global // G
-        mode = "train" if self.model.training else "eval"
+        mode = "train"
 
         # ---- 1. Gather my group's answers and the dataset's real solutions ----
         local_answers = [_extract_and_normalize(c) for c in completions]
@@ -118,12 +135,9 @@ class CoGRPOdpTrainer(GRPOTrainer):
         # ---- 3. Exchange pseudo-labels with peer group via file rendezvous ----
         # Only the main process of each group touches the filesystem; the rest
         # receive peer's pseudo-labels via in-group broadcast.
-        if mode == "train":
-            gc = self._gen_counter_train
-            self._gen_counter_train += 1
-        else:
-            gc = self._gen_counter_eval
-            self._gen_counter_eval += 1
+        # NB: only train-mode rendezvous (eval short-circuits before this).
+        gc = self._gen_counter_train
+        self._gen_counter_train += 1
 
         if self.accelerator.is_main_process:
             peer_pseudo = self.rendezvous.exchange(mode=mode, counter=gc, payload=my_pseudo)

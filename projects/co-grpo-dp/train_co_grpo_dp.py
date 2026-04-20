@@ -13,7 +13,7 @@ import wandb
 from transformers import AutoTokenizer
 
 from co_grpo_dp_trainer import CoGRPOdpTrainer
-from co_label_utils import extract_boxed_answer, normalize_answer
+from co_label_utils import extract_boxed_answer, grade_answer
 from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, load_dataset
 from rendezvous import Rendezvous
 
@@ -71,13 +71,24 @@ class CoGRPOdpScriptArguments(ScriptArguments):
 
 
 def reward_correctness(completions, solution, **kwargs):
-    """Reward function: 1.0 if \\boxed{} answer matches solution, else 0.0."""
+    """Reward function: 1.0 if completion's parsed answer is sympy-equivalent to
+    the (peer-supplied or ground-truth) solution, else 0.0.
+
+    `solution` here can be:
+      - train mode: peer's pseudo-label (from majority vote), possibly the
+        sentinel `_UNLABELED_SENTINEL` for prompts the peer dropped — sentinel
+        cannot match any parsed answer, so reward is 0 for those.
+      - eval mode: dataset's real ground-truth solution (eval branch in trainer
+        skips the cross-labeling override).
+
+    Uses qwen's `grade_answer` (sympy + latex2sympy2) so equivalent forms like
+    `1/2` vs `\\frac{1}{2}` vs `0.5` all count as correct. Slower than string
+    equality (~10-100ms per check) but eliminates spurious negative rewards.
+    """
     rewards = []
     for completion, ground_truth in zip(completions, solution):
         pred_answer = extract_boxed_answer(completion)
-        pred_normalized = normalize_answer(pred_answer)
-        gt_normalized = normalize_answer(ground_truth)
-        if pred_normalized is not None and pred_normalized == gt_normalized:
+        if pred_answer is not None and grade_answer(pred_answer, ground_truth):
             rewards.append(1.0)
         else:
             rewards.append(0.0)

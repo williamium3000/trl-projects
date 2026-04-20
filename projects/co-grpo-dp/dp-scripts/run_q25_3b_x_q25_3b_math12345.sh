@@ -86,6 +86,9 @@ COMMON=(
     --vllm_gpu_memory_utilization "$VLLM_UTIL"
     --logging_steps 10
     --save_strategy epoch
+    --eval_strategy steps
+    --eval_steps 10
+    --per_device_eval_batch_size 1
     --beta 0.0
     --loss_type grpo
     --scale_rewards group
