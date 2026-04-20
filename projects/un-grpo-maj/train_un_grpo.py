@@ -42,7 +42,6 @@ class CustomScriptArguments(ScriptArguments):
         default=OPSD_DATASET,
         metadata={
             "help": "Dataset to use for GRPO training.",
-            "choices": [OPSD_DATASET, DAPO_DATASET],
         },
     )
     self_consistency_threshold: float = field(

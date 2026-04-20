@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_DIR="projects/work_dirs/un-grpo-maj/qwen4b-1epoch-lora-r16-alpha32-opsd30k_bs1_acc4_lr2e-5_gen8_temp1.2_sct0.0"
-RUN_CONFIG="qwen4b-1epoch-lora-r16-alpha32-opsd30k-sct0.0"
+OUTPUT_DIR="projects/work_dirs/un-grpo-maj/qwen4b-1epoch-lora-r16-alpha32-math345_bs1_acc4_lr2e-5_gen8_temp1.2_sct0.0"
+RUN_CONFIG="qwen4b-1epoch-lora-r16-alpha32-math345-sct0.0"
 mkdir -p "$OUTPUT_DIR"
 
 wandb offline
@@ -17,7 +17,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --gradient_accumulation_steps 4 \
     --model_name_or_path Qwen/Qwen3-4B \
     --output_dir "$OUTPUT_DIR" \
-    --train_dataset siyanzhao/Openthoughts_math_30k_opsd \
+    --train_dataset q1716523669/MATH-Level345 \
     --run_config "$RUN_CONFIG" \
     --num_train_epochs 1 \
     --gradient_checkpointing \
@@ -25,7 +25,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --lora_r 16 \
     --lora_alpha 32 \
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj \
-    --max_completion_length 16000 \
+    --max_completion_length 4096 \
     --num_generations 8 \
     --temperature 1.2 \
     --use_vllm \

@@ -4,7 +4,7 @@ import os
 import wandb
 
 from transformers import AutoTokenizer
-from dataset import DAPO_DATASET, OPSD_DATASET, load_dataset
+from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, load_dataset
 from co_grpo_trainer import CoGRPOTrainer
 from co_label_utils import extract_boxed_answer, normalize_answer
 
@@ -40,7 +40,7 @@ class CoGRPOScriptArguments(ScriptArguments):
         default=OPSD_DATASET,
         metadata={
             "help": "Dataset to use for training.",
-            "choices": [OPSD_DATASET, DAPO_DATASET],
+            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET],
         },
     )
     self_consistency_threshold: float = field(
