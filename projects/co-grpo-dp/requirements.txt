@@ -1,0 +1,18 @@
+# co-grpo-dp extra dependencies on top of trl + accelerate + deepspeed + vllm.
+#
+# Install with:
+#   pip install -r projects/co-grpo-dp/requirements.txt
+#
+# These come from the qwen verifier (verifiers/qwen/), which co_label_utils.py
+# imports for extract_answer / grade_answer / normalize_answer.
+
+sympy
+regex
+latex2sympy2
+pylatexenc
+word2number
+
+# --- Optional ---
+# Only needed if you run final benchmarks via projects/co-grpo-dp/eval_benchmarks.sh
+# Uncomment if so:
+# lm-eval[vllm]

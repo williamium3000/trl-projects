@@ -28,26 +28,29 @@ cd /path/to/trl-projects
 pip install -e ".[dev,vllm,deepspeed]"
 ```
 
-co-grpo-dp 额外要的(来自搬过来的 MARTI verifier):
+co-grpo-dp 额外要的(来自搬过来的 MARTI verifier — 一行装齐):
 ```bash
-pip install latex2sympy2 timeout-decorator pylatexenc
-# sympy / regex 通常 trl 已带
+pip install -r projects/co-grpo-dp/requirements.txt
 ```
 
-最终 benchmark 用 lm-eval-harness:
+这会装 `sympy regex latex2sympy2 pylatexenc word2number`。**`word2number` 是 `qwen_math_parser.py` 必需的(第 13 行 `from word2number import w2n`),没装的话 trainer 启动直接 ImportError**。
+
+最终 benchmark 用 lm-eval-harness(可选,只有跑 `eval_benchmarks.sh` 才需要):
 ```bash
 pip install lm-eval[vllm]
 ```
 
-verify:
+verify 装好了:
 ```bash
 python -c "
-from verifiers.qwen.qwen_math_parser import extract_answer
-from verifiers.qwen.math_grade import grade_answer
+import sys; sys.path.insert(0, 'projects/co-grpo-dp')
+from co_label_utils import grade_answer
 print('verifier OK:', grade_answer('1/2', '\\\\frac{1}{2}'))   # → True
 " 2>/dev/null
-# 第一次会有 SyntaxWarning 是 vendored qwen 代码自带,无害
+# SyntaxWarning 来自 vendored qwen 代码自带的 raw-string regex,无害
 ```
+
+如果 import 失败,看错误里缺哪个包,`pip install <name>`。
 
 ---
 
