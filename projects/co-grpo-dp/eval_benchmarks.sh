@@ -31,6 +31,13 @@
 #   pip install lm-eval[vllm]
 #   # or: pip install lm-eval AND pip install vllm separately
 #
+# LoRA loading (IMPORTANT — vllm vs hf backend differs):
+#   - lm-eval's `vllm` model class uses  lora_local_path=...  +  enable_lora=True
+#     (it does NOT accept the `peft` kwarg the way the `hf` backend does)
+#   - lm-eval's `hf`  model class uses  peft=...
+#   This script uses vllm by default. To switch to hf (slower but more featureful),
+#   set BACKEND=hf.
+#
 # Usage:
 #   bash projects/co-grpo-dp/eval_benchmarks.sh <BASE_MODEL> <CKPT_DIR> [OUTPUT_DIR]
 #
@@ -45,9 +52,13 @@
 #       meta-llama/Llama-3.2-3B-Instruct \
 #       projects/work_dirs/co-grpo-dp/.../model_b/checkpoint-200
 #
+#   # Use hf backend instead of vllm (slower, but no LoRA quirks):
+#   BACKEND=hf bash projects/co-grpo-dp/eval_benchmarks.sh ...
+#
 # Env overrides:
-#   TENSOR_PARALLEL=2     — split model across 2 GPUs for big models / faster eval
-#   GPU_MEM_UTIL=0.90     — vLLM memory utilization (default 0.85)
+#   BACKEND=vllm|hf       — default vllm. hf is slower but uses peft= directly.
+#   TENSOR_PARALLEL=2     — split model across 2 GPUs (vllm only)
+#   GPU_MEM_UTIL=0.90     — vLLM memory utilization (vllm only, default 0.85)
 ###############################################################################
 
 set -euo pipefail
@@ -66,6 +77,7 @@ CKPT_DIR="$2"
 OUTPUT_DIR="${3:-${CKPT_DIR}/eval_results}"
 
 TASKS="math_500,gsm8k"
+BACKEND="${BACKEND:-vllm}"
 GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.85}"
 TENSOR_PARALLEL="${TENSOR_PARALLEL:-1}"
 
@@ -76,14 +88,36 @@ echo "Base model:    $BASE_MODEL" >&2
 echo "Ckpt (PEFT):   $CKPT_DIR" >&2
 echo "Tasks:         $TASKS" >&2
 echo "Output dir:    $OUTPUT_DIR" >&2
-echo "Tensor parallel: $TENSOR_PARALLEL" >&2
-echo "GPU mem util:  $GPU_MEM_UTIL" >&2
+echo "Backend:       $BACKEND" >&2
+if [ "$BACKEND" = "vllm" ]; then
+    echo "Tensor parallel: $TENSOR_PARALLEL" >&2
+    echo "GPU mem util:    $GPU_MEM_UTIL" >&2
+fi
 echo "===========================" >&2
 
-lm_eval \
-    --model vllm \
-    --model_args "pretrained=$BASE_MODEL,peft=$CKPT_DIR,tensor_parallel_size=$TENSOR_PARALLEL,gpu_memory_utilization=$GPU_MEM_UTIL,dtype=bfloat16" \
-    --tasks "$TASKS" \
-    --batch_size auto \
-    --output_path "$OUTPUT_DIR" \
-    --log_samples 2>&1 | tee -a "$OUTPUT_DIR/eval.log"
+if [ "$BACKEND" = "vllm" ]; then
+    # vllm class loads LoRA via lora_local_path + enable_lora=True.
+    # NOTE: passing `peft=` to the vllm class is silently ignored — checkpoint
+    # would not be applied, and you'd accidentally eval the base model.
+    MODEL_ARGS="pretrained=$BASE_MODEL,enable_lora=True,lora_local_path=$CKPT_DIR,tensor_parallel_size=$TENSOR_PARALLEL,gpu_memory_utilization=$GPU_MEM_UTIL,dtype=bfloat16"
+    lm_eval \
+        --model vllm \
+        --model_args "$MODEL_ARGS" \
+        --tasks "$TASKS" \
+        --batch_size auto \
+        --output_path "$OUTPUT_DIR" \
+        --log_samples 2>&1 | tee -a "$OUTPUT_DIR/eval.log"
+elif [ "$BACKEND" = "hf" ]; then
+    # hf class loads LoRA via peft=. Slower but more battle-tested for adapters.
+    MODEL_ARGS="pretrained=$BASE_MODEL,peft=$CKPT_DIR,dtype=bfloat16"
+    lm_eval \
+        --model hf \
+        --model_args "$MODEL_ARGS" \
+        --tasks "$TASKS" \
+        --batch_size auto \
+        --output_path "$OUTPUT_DIR" \
+        --log_samples 2>&1 | tee -a "$OUTPUT_DIR/eval.log"
+else
+    echo "Unknown BACKEND='$BACKEND'. Use 'vllm' or 'hf'." >&2
+    exit 1
+fi

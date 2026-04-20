@@ -18,9 +18,9 @@
 #
 # Batch 推导(每组独立计算):
 #   completions/grad_step = per_device_bsz × world_size × grad_accum
-#                         = 1 × 4 × 48 = 192
-#   prompts/grad_step     = 192 / num_generations = 192 / 8 = 24
-#   (与团队 slurm 实验等价 — slurm 用 2 GPU/group + grad_accum=96 = 24 prompts)
+#                         = 1 × 4 × 96 = 384
+#   prompts/grad_step     = 384 / num_generations = 384 / 8 = 48
+#   (effective batch = 48 prompts/grad step（slurm 是 24,这里 4 GPU/group 翻倍 GPU → 48）)
 #
 # vLLM gpu_memory_utilization = 0.70
 #   (按 max(模型) 大小定:1.7B→0.80,3B→0.70,4B→0.65;均比无问题值再下调 0.05 求稳)
@@ -74,7 +74,7 @@ COMMON=(
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
     --learning_rate 2e-5
     --per_device_train_batch_size 1
-    --gradient_accumulation_steps 48
+    --gradient_accumulation_steps 96
     --train_dataset "$DATASET"
     --num_train_epochs 1
     --gradient_checkpointing
@@ -88,8 +88,9 @@ COMMON=(
     --save_strategy epoch
     --eval_strategy steps
     --eval_steps 10
+    --num_generations_eval 1
     --per_device_eval_batch_size 1
-    --beta 0.0
+    --beta 0.001
     --loss_type grpo
     --scale_rewards group
     --self_consistency_threshold 0.0
