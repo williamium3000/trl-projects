@@ -1,41 +1,25 @@
+import os
+import sys
 from collections import Counter
 
 from accelerate.utils import gather_object
 from trl import GRPOTrainer
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from verifiers.qwen.qwen_math_parser import extract_answer
+from verifiers.qwen.math_normalize import normalize_answer as _qwen_normalize
+from verifiers.qwen.math_grade import grade_answer
 
-# Duplicated from projects/grpo/train_grpo.py so this project is self-contained.
-# Keep in sync if the baseline changes.
+
 def extract_boxed_answer(text):
-    """
-    Extract the answer from \\boxed{} format.
-    Returns the content inside the first \\boxed{} if found, otherwise None.
-    Handles nested braces correctly (e.g. \\boxed{\\frac{1}{2}}).
-    """
-    idx = text.find(r"\boxed{")
-    if idx == -1:
-        return None
-    start = idx + len(r"\boxed{")
-    depth = 1
-    i = start
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    if depth == 0:
-        return text[start : i - 1].strip()
-    return None
+    """Alias for co-grpo/co_label_utils.py importlib bridge compatibility."""
+    return extract_answer(text, "math")
 
 
 def normalize_answer(answer):
-    """
-    Normalize the answer by removing extra whitespace and converting to lowercase.
-    """
     if answer is None:
         return None
-    return answer.strip().lower()
+    return _qwen_normalize(answer)
 
 
 # Sentinel written into `solution` for prompt groups that fail the self-consistency
@@ -45,7 +29,10 @@ _UNLABELED_SENTINEL = "\x00__unlabeled__\x00"
 
 
 def _extract_and_normalize(completion):
-    return normalize_answer(extract_boxed_answer(completion))
+    result = normalize_answer(extract_answer(completion, "math"))
+    if result is None or result == "":
+        return None
+    return result
 
 
 def _majority_vote(answers, threshold):
@@ -154,8 +141,8 @@ class SelfLabelingGRPOTrainer(GRPOTrainer):
                 pseudo = label
                 num_labeled += 1
                 if self.log_oracle_accuracy:
-                    gt_norm = normalize_answer(gathered_real_solutions[lo])
-                    if gt_norm is not None and gt_norm == label:
+                    gt_real = gathered_real_solutions[lo]
+                    if gt_real is not None and grade_answer(label, gt_real):
                         num_oracle_matches += 1
 
             pseudo_labels_global.extend([pseudo] * G)

@@ -1,8 +1,13 @@
 import os
+import sys
 import wandb
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from verifiers.qwen.qwen_math_parser import extract_answer
+from verifiers.qwen.math_grade import grade_answer
+
 from transformers import AutoTokenizer
-from dataset import DAPO_DATASET, OPSD_DATASET, load_dataset
+from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, load_dataset
 from self_label_trainer import SelfLabelingGRPOTrainer
 
 from trl import (
@@ -42,6 +47,7 @@ class CustomScriptArguments(ScriptArguments):
         default=OPSD_DATASET,
         metadata={
             "help": "Dataset to use for GRPO training.",
+            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET],
         },
     )
     self_consistency_threshold: float = field(
@@ -61,63 +67,11 @@ class CustomScriptArguments(ScriptArguments):
     )
 
 
-def extract_boxed_answer(text):
-    """
-    Extract the answer from \\boxed{} format.
-    Returns the content inside the first \\boxed{} if found, otherwise None.
-    Handles nested braces correctly (e.g. \\boxed{\\frac{1}{2}}).
-    """
-    idx = text.find(r"\boxed{")
-    if idx == -1:
-        return None
-    start = idx + len(r"\boxed{")
-    depth = 1
-    i = start
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    if depth == 0:
-        return text[start : i - 1].strip()
-    return None
-
-
-def normalize_answer(answer):
-    """
-    Normalize the answer by removing extra whitespace and converting to lowercase.
-    """
-    if answer is None:
-        return None
-    return answer.strip().lower()
-
-
 def reward_correctness(completions, solution, **kwargs):
-    """
-    Reward function that checks if the completion contains the correct answer.
-
-    Args:
-        completions: List of generated completion strings
-        solution: List of ground truth answers
-        **kwargs: Additional arguments (ignored)
-
-    Returns:
-        List of rewards (1.0 for correct, 0.0 for incorrect)
-    """
     rewards = []
     for completion, ground_truth in zip(completions, solution):
-        # Extract answer from completion
-        pred_answer = extract_boxed_answer(completion)
-        # Normalize both answers
-        pred_normalized = normalize_answer(pred_answer)
-        gt_normalized = normalize_answer(ground_truth)
-
-        # Check if they match
-        if pred_normalized is not None and pred_normalized == gt_normalized:
-            rewards.append(1.0)
-        else:
-            rewards.append(0.0)
+        pred = extract_answer(completion, "math")
+        rewards.append(1.0 if pred is not None and grade_answer(pred, ground_truth) else 0.0)
     return rewards
 
 

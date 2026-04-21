@@ -6,6 +6,8 @@ RUN_CONFIG="qwen4b-1epoch-fullft-opsd30k-sct0.0"
 mkdir -p "$OUTPUT_DIR"
 
 wandb offline
+export DISABLE_MLFLOW_INTEGRATION=TRUE
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/un-grpo-maj/accelerate.yaml \
     --num_processes 8 \
@@ -26,6 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --temperature 1.2 \
     --use_vllm \
     --vllm_mode colocate \
+    --vllm_max_model_length 4096 \
     --logging_steps 10 \
     --save_steps 200 \
     --beta 0.0 \

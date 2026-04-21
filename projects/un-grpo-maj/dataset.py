@@ -29,15 +29,24 @@ def load_dataset(dataset_name):
         }
     else:
         raise ValueError(
-            f"Unsupported dataset '{dataset_name}'. Supported datasets: '{OPSD_DATASET}', '{DAPO_DATASET}', '{MATH_LEVEL345_DATASET}', '{MATH_LEVEL12345_DATASET}'."
+            f"Unsupported dataset '{dataset_name}'. Supported datasets: "
+            f"'{OPSD_DATASET}', '{DAPO_DATASET}', "
+            f"'{MATH_LEVEL345_DATASET}', '{MATH_LEVEL12345_DATASET}'."
         )
 
     dataset = hf_load_dataset(dataset_name)
-    if "test" in dataset:
+
+    if dataset_name in _PRESPLIT_DATASETS:
         train_dataset = dataset["train"].map(format_prompt, remove_columns=dataset["train"].column_names)
-        test_dataset = dataset["test"].map(format_prompt, remove_columns=dataset["test"].column_names)
-        return train_dataset, test_dataset
+        eval_dataset = dataset["test"].map(format_prompt, remove_columns=dataset["test"].column_names)
     else:
         train_dataset = dataset["train"].map(format_prompt, remove_columns=dataset["train"].column_names)
         split_dataset = train_dataset.train_test_split(test_size=0.007, seed=42)
-        return split_dataset["train"], split_dataset["test"]
+        train_dataset, eval_dataset = split_dataset["train"], split_dataset["test"]
+
+    max_samples = os.environ.get("MAX_SAMPLES")
+    if max_samples is not None:
+        n = min(int(max_samples), len(train_dataset))
+        train_dataset = train_dataset.select(range(n))
+
+    return train_dataset, eval_dataset
