@@ -92,11 +92,18 @@ class CoGRPOScriptArguments(ScriptArguments):
     )
 
 
+def _get_text(completion):
+    # TRL wraps completions as [{"role": "assistant", "content": "..."}] for conversational prompts
+    if isinstance(completion, list):
+        return completion[-1]["content"] if completion else ""
+    return completion
+
+
 def reward_correctness(completions, solution, **kwargs):
     """Reward function: 1.0 if \\boxed{} answer matches solution, else 0.0."""
     rewards = []
     for completion, ground_truth in zip(completions, solution):
-        pred_answer = extract_boxed_answer(completion)
+        pred_answer = extract_boxed_answer(_get_text(completion))
         pred_normalized = normalize_answer(pred_answer)
         gt_normalized = normalize_answer(ground_truth)
         if pred_normalized is not None and pred_normalized == gt_normalized:

@@ -57,6 +57,13 @@ def normalize_answer(answer):
     return _qwen_normalize(answer)
 
 
+def _get_text(completion):
+    # TRL wraps completions as [{"role": "assistant", "content": "..."}] for conversational prompts
+    if isinstance(completion, list):
+        return completion[-1]["content"] if completion else ""
+    return completion
+
+
 def _extract_and_normalize(completion):
     """Pipeline used by `_majority_vote`: extract from text, then canonicalize.
 
@@ -66,7 +73,7 @@ def _extract_and_normalize(completion):
     empty strings would otherwise inflate the denominator and depress
     top_frequency below threshold. Normalize to None at the boundary.
     """
-    result = normalize_answer(extract_boxed_answer(completion))
+    result = normalize_answer(extract_boxed_answer(_get_text(completion)))
     if result is None or result == "":
         return None
     return result

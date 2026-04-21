@@ -70,6 +70,13 @@ class CoGRPOdpScriptArguments(ScriptArguments):
     )
 
 
+def _get_text(completion):
+    # TRL wraps completions as [{"role": "assistant", "content": "..."}] for conversational prompts
+    if isinstance(completion, list):
+        return completion[-1]["content"] if completion else ""
+    return completion
+
+
 def reward_correctness(completions, solution, **kwargs):
     """Reward function: 1.0 if completion's parsed answer is sympy-equivalent to
     the (peer-supplied or ground-truth) solution, else 0.0.
@@ -87,7 +94,7 @@ def reward_correctness(completions, solution, **kwargs):
     """
     rewards = []
     for completion, ground_truth in zip(completions, solution):
-        pred_answer = extract_boxed_answer(completion)
+        pred_answer = extract_boxed_answer(_get_text(completion))
         if pred_answer is not None and grade_answer(pred_answer, ground_truth):
             rewards.append(1.0)
         else:

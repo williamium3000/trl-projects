@@ -28,8 +28,15 @@ def normalize_answer(answer):
 _UNLABELED_SENTINEL = "\x00__unlabeled__\x00"
 
 
+def _get_text(completion):
+    # TRL wraps completions as [{"role": "assistant", "content": "..."}] for conversational prompts
+    if isinstance(completion, list):
+        return completion[-1]["content"] if completion else ""
+    return completion
+
+
 def _extract_and_normalize(completion):
-    result = normalize_answer(extract_answer(completion, "math"))
+    result = normalize_answer(extract_answer(_get_text(completion), "math"))
     if result is None or result == "":
         return None
     return result

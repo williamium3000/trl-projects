@@ -67,10 +67,17 @@ class CustomScriptArguments(ScriptArguments):
     )
 
 
+def _get_text(completion):
+    # TRL wraps completions as [{"role": "assistant", "content": "..."}] for conversational prompts
+    if isinstance(completion, list):
+        return completion[-1]["content"] if completion else ""
+    return completion
+
+
 def reward_correctness(completions, solution, **kwargs):
     rewards = []
     for completion, ground_truth in zip(completions, solution):
-        pred = extract_answer(completion, "math")
+        pred = extract_answer(_get_text(completion), "math")
         rewards.append(1.0 if pred is not None and grade_answer(pred, ground_truth) else 0.0)
     return rewards
 
