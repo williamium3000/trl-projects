@@ -8,6 +8,7 @@ mkdir -p "$OUTPUT_DIR"
 wandb offline
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export MATH500_EVAL_PATH=data/math500/test.json
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/un-grpo-maj/accelerate_zero2.yaml \
     --num_processes 8 \

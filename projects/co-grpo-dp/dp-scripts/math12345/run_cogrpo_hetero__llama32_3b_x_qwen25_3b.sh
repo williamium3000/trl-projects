@@ -21,6 +21,7 @@ mkdir -p "$BASE_OUT/model_a" "$BASE_OUT/model_b" "$RDV_DIR"
 wandb offline 2>/dev/null || true
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export MATH500_EVAL_PATH=data/math500/test.json
 
 COMMON=(
     --use_peft
