@@ -433,6 +433,10 @@ class GRPOConfig(_BaseConfig):
         default=1.0,
         metadata={"help": "Temperature for sampling. The higher the temperature, the more random the completions."},
     )
+    temperature_eval: float = field(
+        default=0.6,
+        metadata={"help": "Temperature for sampling during evaluation. Lower than training temperature to reduce noise."},
+    )
     top_p: float = field(
         default=1.0,
         metadata={

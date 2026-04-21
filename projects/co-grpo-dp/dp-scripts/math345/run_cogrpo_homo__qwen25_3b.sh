@@ -34,9 +34,10 @@ COMMON=(
     --num_train_epochs 1
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
-    --max_completion_length 3072
+    --max_completion_length 4096
     --num_generations 8
     --temperature 1.2
+    --temperature_eval 0.6
     --use_vllm
     --vllm_mode colocate
     --vllm_max_model_length 4096

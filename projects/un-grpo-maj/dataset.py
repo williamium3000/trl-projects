@@ -14,11 +14,15 @@ _PRESPLIT_DATASETS = {MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET}
 _INSTRUCTION = "Please reason step by step, and put your final answer within \\boxed{}."
 
 
+def _make_prompt(text):
+    return [{"role": "user", "content": f"{text}\n {_INSTRUCTION}"}]
+
+
 def _load_math500_eval(path):
     with open(path) as f:
         data = json.load(f)
     return Dataset.from_list([
-        {"prompt": f"{e['prompt']}\n {_INSTRUCTION}", "solution": e["answer"]}
+        {"prompt": _make_prompt(e["prompt"]), "solution": e["answer"]}
         for e in data
     ])
 
@@ -26,17 +30,17 @@ def _load_math500_eval(path):
 def load_dataset(dataset_name):
     if dataset_name == OPSD_DATASET:
         format_prompt = lambda example: {
-            "prompt": f"{example['problem']}\n {_INSTRUCTION}",
+            "prompt": _make_prompt(example["problem"]),
             "solution": example["Answer"],
         }
     elif dataset_name == DAPO_DATASET:
         format_prompt = lambda example: {
-            "prompt": f"{example['prompt']}\n {_INSTRUCTION}",
+            "prompt": _make_prompt(example["prompt"]),
             "solution": example["solution"],
         }
     elif dataset_name in (MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET):
         format_prompt = lambda example: {
-            "prompt": f"{example['prompt']}\n {_INSTRUCTION}",
+            "prompt": _make_prompt(example["prompt"]),
             "solution": example["answer"],
         }
     else:

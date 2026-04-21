@@ -536,6 +536,7 @@ class GRPOTrainer(_BaseTrainer):
         self.num_generations_eval = args.num_generations_eval or self.num_generations
         self.chat_template_kwargs = args.chat_template_kwargs or {}
         self.temperature = args.temperature
+        self.temperature_eval = args.temperature_eval
         self.top_p = args.top_p
         self.top_k = args.top_k
         self.min_p = args.min_p
@@ -1909,6 +1910,13 @@ class GRPOTrainer(_BaseTrainer):
     ) -> dict[str, torch.Tensor | Any]:
         device = self.accelerator.device
         mode = "train" if self.model.training else "eval"
+
+        # Use lower temperature during eval to reduce single-sample noise
+        active_temperature = self.temperature_eval if mode == "eval" else self.temperature
+        if self.use_vllm:
+            self.vllm_generation.temperature = active_temperature
+        else:
+            self.generation_config.temperature = active_temperature
 
         prompts = [x["prompt"] for x in inputs]
 

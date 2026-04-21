@@ -38,9 +38,10 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --lora_r 16 \
     --lora_alpha 32 \
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj \
-    --max_completion_length 3072 \
+    --max_completion_length 4096 \
     --num_generations 8 \
     --temperature 1.2 \
+    --temperature_eval 0.6 \
     --use_vllm \
     --vllm_mode colocate \
     --vllm_max_model_length 4096 \
