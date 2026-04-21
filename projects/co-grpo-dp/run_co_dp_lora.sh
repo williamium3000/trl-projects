@@ -55,7 +55,7 @@ COMMON=(
     --train_dataset siyanzhao/Openthoughts_math_30k_opsd
     --num_train_epochs 1
     --gradient_checkpointing
-    --max_completion_length 1024
+    --max_completion_length 3072
     --num_generations 8
     --temperature 1.2
     --use_vllm

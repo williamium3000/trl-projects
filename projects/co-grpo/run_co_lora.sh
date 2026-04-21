@@ -43,7 +43,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --run_config "$RUN_CONFIG" \
     --num_train_epochs 1 \
     --gradient_checkpointing \
-    --max_completion_length 4096 \
+    --max_completion_length 3072 \
     --num_generations 8 \
     --temperature 1.2 \
     --use_vllm \

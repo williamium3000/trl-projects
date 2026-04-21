@@ -35,7 +35,7 @@ COMMON=(
     --num_train_epochs 1
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
-    --max_completion_length 4096
+    --max_completion_length 3072
     --num_generations 8
     --temperature 1.2
     --use_vllm
