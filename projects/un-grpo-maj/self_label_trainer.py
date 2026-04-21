@@ -91,6 +91,20 @@ class SelfLabelingGRPOTrainer(GRPOTrainer):
         self.log_oracle_accuracy = log_oracle_accuracy
 
     def _calculate_rewards(self, inputs, prompts, completions, completion_ids_list):
+        # Eval-mode short-circuit. In eval we want pass@1 accuracy against the
+        # dataset's real solution, not against a self-majority pseudo-label.
+        # Skipping the self-labeling path means:
+        #   1. inputs[i]["solution"] keeps its dataset value (not overwritten),
+        #      so the parent's reward path (reward_correctness) compares the
+        #      completion against ground truth via grade_answer.
+        #   2. self.num_generations (=train value, e.g. 8) is not used to divide
+        #      N_global — parent uses num_generations_eval (typically 1), so
+        #      the divisibility assertion here would crash in eval (e.g. 4 % 8).
+        #   3. self_labeling/* metrics are intentionally not logged in eval
+        #      because they have no meaning without majority-vote pseudo-labels.
+        if not self.model.training:
+            return super()._calculate_rewards(inputs, prompts, completions, completion_ids_list)
+
         # A prompt's N rollouts are grouped *contiguously in the global batch* (after
         # cross-rank concatenation), but a single rank only holds a slice of that batch —
         # its local slice length is not necessarily a multiple of num_generations. We
