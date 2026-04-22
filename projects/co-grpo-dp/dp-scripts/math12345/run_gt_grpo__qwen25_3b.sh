@@ -28,7 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
-    --learning_rate 2e-5 \
+    --learning_rate 1e-5 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 24 \
     --num_train_epochs 1 \
@@ -40,7 +40,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj \
     --max_completion_length 3072 \
     --num_generations 8 \
-    --temperature 1.2 \
+    --temperature 1.0 \
     --use_vllm \
     --vllm_mode colocate \
     --vllm_max_model_length 4096 \

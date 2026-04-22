@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Co-GRPO homo · qwen3_17b × qwen3_17b · math345
+# Co-GRPO homo · llama32_3b × llama32_3b · dapo
 # Same-family co-training. Effective batch: 4×bs1×acc48 / gen8 = 24 prompts/step
 set -euo pipefail
 
@@ -7,11 +7,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen3-1.7B-Base"
-DATASET="q1716523669/MATH-Level345"
-VLLM_MEM="0.80"
+MODEL="meta-llama/Llama-3.2-3B-Instruct"
+DATASET="open-r1/DAPO-Math-17k-Processed"
+VLLM_MEM="0.70"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen3_17b_x_qwen3_17b_homo_math345_${TS}"
+RUN="llama32_3b_x_llama32_3b_homo_dapo_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
@@ -27,7 +27,7 @@ COMMON=(
     --lora_r 16
     --lora_alpha 32
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
-    --learning_rate 2e-5
+    --learning_rate 1e-5
     --per_device_train_batch_size 1
     --gradient_accumulation_steps 48
     --train_dataset "$DATASET"
@@ -36,7 +36,7 @@ COMMON=(
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 4096
     --num_generations 8
-    --temperature 1.2
+    --temperature 1.0
     --temperature_eval 0.6
     --use_vllm
     --vllm_mode colocate

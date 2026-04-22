@@ -27,7 +27,7 @@ COMMON=(
     --lora_r 16
     --lora_alpha 32
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
-    --learning_rate 2e-5
+    --learning_rate 1e-5
     --per_device_train_batch_size 1
     --gradient_accumulation_steps 48
     --train_dataset "$DATASET"
@@ -36,7 +36,7 @@ COMMON=(
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 4096
     --num_generations 8
-    --temperature 1.2
+    --temperature 1.0
     --temperature_eval 0.6
     --use_vllm
     --vllm_mode colocate

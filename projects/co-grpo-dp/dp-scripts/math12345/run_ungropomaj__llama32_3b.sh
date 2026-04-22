@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj · qwen3_17b · dapo
+# Un-GRPO-Maj · llama32_3b · math12345
 # Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc24 / gen8 = 24 prompts/step
 set -euo pipefail
 
@@ -7,10 +7,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen3-1.7B-Base"
-DATASET="open-r1/DAPO-Math-17k-Processed"
+MODEL="meta-llama/Llama-3.2-3B-Instruct"
+DATASET="q1716523669/MATH-Level12345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen3_17b_ungropomaj_dapo_${TS}"
+RUN="llama32_3b_ungropomaj_math12345_${TS}"
 OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
@@ -28,7 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
-    --learning_rate 2e-5 \
+    --learning_rate 1e-5 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 24 \
     --num_train_epochs 1 \
@@ -38,13 +38,14 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --lora_r 16 \
     --lora_alpha 32 \
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj \
-    --max_completion_length 3072 \
+    --max_completion_length 4096 \
     --num_generations 8 \
-    --temperature 1.2 \
+    --temperature 1.0 \
+    --temperature_eval 0.6 \
     --use_vllm \
     --vllm_mode colocate \
     --vllm_max_model_length 4096 \
-    --vllm_gpu_memory_utilization 0.80 \
+    --vllm_gpu_memory_utilization 0.70 \
     --logging_steps 10 \
     --save_strategy epoch \
     --eval_strategy steps \

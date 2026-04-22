@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-# Co-GRPO hetero · llama32_3b × qwen3_17b · math12345
-# Cross-family co-training (Llama first). Effective batch: 4×bs1×acc48 / gen8 = 24 prompts/step
+# Co-GRPO homo · llama32_3b × llama32_3b · math345
+# Same-family co-training. Effective batch: 4×bs1×acc48 / gen8 = 24 prompts/step
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL_A="meta-llama/Llama-3.2-3B-Instruct"
-MODEL_B="Qwen/Qwen3-1.7B-Base"
-DATASET="q1716523669/MATH-Level12345"
+MODEL="meta-llama/Llama-3.2-3B-Instruct"
+DATASET="q1716523669/MATH-Level345"
 VLLM_MEM="0.70"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="llama32_3b_x_qwen3_17b_hetero_math12345_${TS}"
+RUN="llama32_3b_x_llama32_3b_homo_math345_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
@@ -28,16 +27,17 @@ COMMON=(
     --lora_r 16
     --lora_alpha 32
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
-    --learning_rate 2e-5
+    --learning_rate 1e-5
     --per_device_train_batch_size 1
     --gradient_accumulation_steps 48
     --train_dataset "$DATASET"
     --num_train_epochs 1
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
-    --max_completion_length 3072
+    --max_completion_length 4096
     --num_generations 8
-    --temperature 1.2
+    --temperature 1.0
+    --temperature_eval 0.6
     --use_vllm
     --vllm_mode colocate
     --vllm_max_model_length 4096
@@ -75,9 +75,9 @@ launch_group () {
         "${COMMON[@]}" 2>&1 | tee -a "$out/train.log"
 }
 
-launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19346 "$BASE_OUT/model_a" &
+launch_group A "0,1,2,3" "$MODEL" "$MODEL" 19346 "$BASE_OUT/model_a" &
 PID_A=$!
-launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19347 "$BASE_OUT/model_b" &
+launch_group B "4,5,6,7" "$MODEL" "$MODEL" 19347 "$BASE_OUT/model_b" &
 PID_B=$!
 
 cleanup() { kill "$PID_A" "$PID_B" 2>/dev/null || true; }

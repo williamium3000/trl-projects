@@ -9,6 +9,9 @@ DAPO_DATASET = "open-r1/DAPO-Math-17k-Processed"
 MATH_LEVEL345_DATASET = "q1716523669/MATH-Level345"
 MATH_LEVEL12345_DATASET = "q1716523669/MATH-Level12345"
 
+_VALIDATION_SIZE = 150
+_VALIDATION_SEED = 42
+
 _INSTRUCTION = "Please reason step by step, and put your final answer within \\boxed{}."
 
 
@@ -47,13 +50,9 @@ def load_dataset(dataset_name):
         )
 
     dataset = hf_load_dataset(dataset_name)
-    if "test" in dataset:
-        train_dataset = dataset["train"].map(format_prompt, remove_columns=dataset["train"].column_names)
-        eval_dataset = dataset["test"].map(format_prompt, remove_columns=dataset["test"].column_names)
-    else:
-        train_dataset = dataset["train"].map(format_prompt, remove_columns=dataset["train"].column_names)
-        split_dataset = train_dataset.train_test_split(test_size=0.007, seed=42)
-        train_dataset, eval_dataset = split_dataset["train"], split_dataset["test"]
+    full_train = dataset["train"].map(format_prompt, remove_columns=dataset["train"].column_names)
+    split = full_train.train_test_split(test_size=_VALIDATION_SIZE, seed=_VALIDATION_SEED)
+    train_dataset, eval_dataset = split["train"], split["test"]
 
     math500_path = os.environ.get("MATH500_EVAL_PATH")
     if math500_path is not None:
