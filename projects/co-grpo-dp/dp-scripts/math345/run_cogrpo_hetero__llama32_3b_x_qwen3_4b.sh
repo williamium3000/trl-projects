@@ -8,7 +8,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL_A="meta-llama/Llama-3.2-3B-Instruct"
-MODEL_B="Qwen/Qwen3-4B"
+MODEL_B="Qwen/Qwen3-4B-Base"
 DATASET="q1716523669/MATH-Level345"
 VLLM_MEM="0.65"
 TS="$(date +%Y%m%d_%H%M%S)"
