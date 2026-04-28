@@ -62,4 +62,5 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --data_seed 42 \
     --report_to wandb \
     --wandb_project Co-learning \
+    --attn_implementation flash_attention_2 \
     --bf16 true 2>&1 | tee -a "$OUT/train.log"

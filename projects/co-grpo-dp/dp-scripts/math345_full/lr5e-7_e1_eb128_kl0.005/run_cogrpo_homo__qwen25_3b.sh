@@ -59,6 +59,7 @@ COMMON=(
     --wandb_project Co-learning
     --rendezvous_dir "$RDV_DIR"
     --run_config "$RUN"
+    --attn_implementation flash_attention_2
     --bf16 true
 )
 
