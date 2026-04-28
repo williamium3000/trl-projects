@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Co-GRPO hetero · llama32_3b × qwen3_4b · math345
+# Co-GRPO hetero · llama32_3b × qwen25_3b · math345
 # Cross-family co-training (Llama first). Effective batch: 4×bs1×acc48 / gen8 = 24 prompts/step
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL_A="meta-llama/Llama-3.2-3B-Instruct"
-MODEL_B="Qwen/Qwen3-4B-Base"
+MODEL_B="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
-VLLM_MEM="0.65"
+VLLM_MEM="0.70"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="llama32_3b_x_qwen3_4b_hetero_math345_${TS}"
+RUN="llama32_3b_x_qwen25_3b_hetero_math345_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"

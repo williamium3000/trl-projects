@@ -4,7 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL="meta-llama/Llama-3.2-3B-Instruct"
@@ -34,7 +34,7 @@ COMMON=(
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
     --learning_rate 1e-5
     --per_device_train_batch_size 1
-    --gradient_accumulation_steps 24
+    --gradient_accumulation_steps 48
     --train_dataset "$DATASET"
     --num_train_epochs 1
     --gradient_checkpointing
@@ -72,7 +72,7 @@ launch_group () {
         --config_file projects/co-grpo-dp/accelerate_zero2.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
-        --gradient_accumulation_steps 24 \
+        --gradient_accumulation_steps 48 \
         projects/co-grpo-dp/train_co_grpo_dp.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \

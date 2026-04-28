@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# GT GRPO · llama32_3b · math345
+# GT GRPO · qwen25_3b · math345
 # Supervised upper-bound. Effective batch: 8×bs1×acc24 / gen8 = 24 prompts/step
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="meta-llama/Llama-3.2-3B-Instruct"
+MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="llama32_3b_gt_grpo_math345_${TS}"
+RUN="qwen25_3b_gt_grpo_math345_${TS}"
 OUT="projects/work_dirs/gt-grpo/$RUN"
 mkdir -p "$OUT"
 
@@ -18,7 +18,7 @@ mkdir -p "$OUT"
 wandb online
 export WANDB_API_KEY="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"                    
 export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"                                                                     
-export WANDB_PROJECT="Co-learning"       
+export WANDB_PROJECT="Co-learning"                              
 
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True

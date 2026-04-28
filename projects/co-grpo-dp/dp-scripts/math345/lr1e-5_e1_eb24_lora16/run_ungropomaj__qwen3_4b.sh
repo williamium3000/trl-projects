@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj · qwen25_3b · math345
+# Un-GRPO-Maj · qwen3_4b · math345
 # Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc24 / gen8 = 24 prompts/step
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B"
+MODEL="Qwen/Qwen3-4B-Base"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_ungropomaj_math345_${TS}"
+RUN="qwen3_4b_ungropomaj_math345_${TS}"
 OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
@@ -51,7 +51,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --use_vllm \
     --vllm_mode colocate \
     --vllm_max_model_length 4096 \
-    --vllm_gpu_memory_utilization 0.70 \
+    --vllm_gpu_memory_utilization 0.65 \
     --logging_steps 10 \
     --save_strategy epoch \
     --eval_strategy steps \

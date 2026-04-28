@@ -1,24 +1,28 @@
 #!/usr/bin/env bash
-# Co-GRPO hetero · llama32_3b × qwen25_3b · math345
-# Cross-family co-training (Llama first). Effective batch: 4×bs1×acc48 / gen8 = 24 prompts/step
+# Co-GRPO homo · qwen3_4b × qwen3_4b · math345
+# Same-family co-training. Effective batch: 4×bs1×acc48 / gen8 = 24 prompts/step
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL_A="meta-llama/Llama-3.2-3B-Instruct"
-MODEL_B="Qwen/Qwen2.5-3B"
+MODEL="Qwen/Qwen3-4B-Base"
 DATASET="q1716523669/MATH-Level345"
-VLLM_MEM="0.70"
+VLLM_MEM="0.65"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="llama32_3b_x_qwen25_3b_hetero_math345_${TS}"
+RUN="qwen3_4b_x_qwen3_4b_homo_math345_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
 mkdir -p "$BASE_OUT/model_a" "$BASE_OUT/model_b" "$RDV_DIR"
 
-wandb offline 2>/dev/null || true
+# wandb offline 2>/dev/null || true
+wandb online
+export WANDB_API_KEY="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"                    
+export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"                                                                     
+export WANDB_PROJECT="Co-learning"    
+
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export MATH500_EVAL_PATH=data/math500/test.json
@@ -68,6 +72,7 @@ launch_group () {
         --config_file projects/co-grpo-dp/accelerate_zero2.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
+        --gradient_accumulation_steps 48 \
         projects/co-grpo-dp/train_co_grpo_dp.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \
@@ -76,9 +81,9 @@ launch_group () {
         "${COMMON[@]}" 2>&1 | tee -a "$out/train.log"
 }
 
-launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19346 "$BASE_OUT/model_a" &
+launch_group A "0,1,2,3" "$MODEL" "$MODEL" 19346 "$BASE_OUT/model_a" &
 PID_A=$!
-launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19347 "$BASE_OUT/model_b" &
+launch_group B "4,5,6,7" "$MODEL" "$MODEL" 19347 "$BASE_OUT/model_b" &
 PID_B=$!
 
 cleanup() { kill "$PID_A" "$PID_B" 2>/dev/null || true; }
