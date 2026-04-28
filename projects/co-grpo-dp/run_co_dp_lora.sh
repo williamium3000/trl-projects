@@ -62,7 +62,7 @@ COMMON=(
     --vllm_mode colocate
     --vllm_gpu_memory_utilization "$VLLM_MEM"
     --logging_steps 10
-    --save_steps 200
+    --save_steps 400
     --beta 0.0
     --loss_type grpo
     --scale_rewards group

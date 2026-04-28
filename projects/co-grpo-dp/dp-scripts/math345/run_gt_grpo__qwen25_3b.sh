@@ -14,7 +14,12 @@ RUN="qwen25_3b_gt_grpo_math345_${TS}"
 OUT="projects/work_dirs/gt-grpo/$RUN"
 mkdir -p "$OUT"
 
-wandb offline 2>/dev/null || true
+# wandb offline 2>/dev/null || true
+wandb online
+export WANDB_API_KEY="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"                    
+export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"                                                                     
+export WANDB_PROJECT="Co-learning"                              
+
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export MATH500_EVAL_PATH=data/math500/test.json
@@ -23,6 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/grpo/accelerate_zero2.yaml \
     --num_processes 8 \
     --main_process_port 19346 \
+    --gradient_accumulation_steps 24 \
     projects/grpo/train_grpo.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \

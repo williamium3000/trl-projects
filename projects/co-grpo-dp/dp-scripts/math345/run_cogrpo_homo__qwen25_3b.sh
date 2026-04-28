@@ -17,7 +17,12 @@ RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
 mkdir -p "$BASE_OUT/model_a" "$BASE_OUT/model_b" "$RDV_DIR"
 
-wandb offline 2>/dev/null || true
+# wandb offline 2>/dev/null || true
+wandb online
+export WANDB_API_KEY="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"                    
+export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"                                                                     
+export WANDB_PROJECT="Co-learning"    
+
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export MATH500_EVAL_PATH=data/math500/test.json
@@ -29,7 +34,7 @@ COMMON=(
     --lora_target_modules q_proj k_proj v_proj o_proj gate_proj up_proj down_proj
     --learning_rate 1e-5
     --per_device_train_batch_size 1
-    --gradient_accumulation_steps 48
+    --gradient_accumulation_steps 24
     --train_dataset "$DATASET"
     --num_train_epochs 1
     --gradient_checkpointing
@@ -67,6 +72,7 @@ launch_group () {
         --config_file projects/co-grpo-dp/accelerate_zero2.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
+        --gradient_accumulation_steps 24 \
         projects/co-grpo-dp/train_co_grpo_dp.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \
