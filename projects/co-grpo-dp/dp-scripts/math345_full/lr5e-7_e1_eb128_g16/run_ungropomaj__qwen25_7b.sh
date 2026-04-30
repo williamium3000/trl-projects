@@ -28,7 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
     --main_process_port 19346 \
-    --gradient_accumulation_steps 256 \
+    --gradient_accumulation_steps 128 \
     projects/un-grpo-maj/train_un_grpo.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
@@ -36,7 +36,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --run_config "$RUN" \
     --learning_rate 5e-7 \
     --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 256 \
+    --gradient_accumulation_steps 128 \
     --num_train_epochs 1 \
     --gradient_checkpointing \
     --gradient_checkpointing_kwargs '{"use_reentrant": false}' \

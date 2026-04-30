@@ -30,7 +30,7 @@ export MATH500_EVAL_PATH=data/math500/test.json
 COMMON=(
     --learning_rate 5e-7
     --per_device_train_batch_size 1
-    --gradient_accumulation_steps 512
+    --gradient_accumulation_steps 256
     --train_dataset "$DATASET"
     --num_train_epochs 1
     --gradient_checkpointing
@@ -69,7 +69,7 @@ launch_group () {
         --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
-        --gradient_accumulation_steps 512 \
+        --gradient_accumulation_steps 256 \
         projects/co-grpo-dp/train_co_grpo_dp.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \
