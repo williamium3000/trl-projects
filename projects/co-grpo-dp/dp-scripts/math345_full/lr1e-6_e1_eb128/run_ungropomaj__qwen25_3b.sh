@@ -21,7 +21,6 @@ export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="Co-learning"       
 
 export DISABLE_MLFLOW_INTEGRATION=TRUE
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export MATH500_EVAL_PATH=data/math500/test.json
 
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
