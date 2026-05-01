@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj · qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
+# Un-GRPO-Maj · qwen25_7b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
 # Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc128 / gen8 = 128 prompts/step
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B"
+MODEL="Qwen/Qwen2.5-7B"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_ungropomaj_math345_full_lr1e-6_${TS}"
+RUN="qwen25_7b_ungropomaj_math345_full_lr1e-6_${TS}"
 OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
