@@ -134,6 +134,7 @@ def make_reward_4regime(tau_high, tau_mid, lambda_):
             "weak": 0,
             "unseen": 0,
             "no_valid_peer": 0,
+            "tied_top": 0,
         }
         for completion, peer in zip(completions, self_answers):
             pred_canonical = _extract_and_normalize(completion)

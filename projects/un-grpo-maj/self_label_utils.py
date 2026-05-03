@@ -106,6 +106,14 @@ def compute_4regime_reward(my_answer, peer_answers, tau_high, tau_mid, lambda_):
           - ``"unseen"``              : ``my != top`` and ``p_my == 0``         (reward = ``-lambda_``)
                                         (also when ``my_answer is None``)
           - ``"no_valid_peer"``       : ``peer_answers`` empty or all ``None``  (reward = ``0``)
+          - ``"tied_top"``            : multiple peer answers share the maximum count (reward = ``0``)
+
+    Tied-top short-circuit: when 2+ answers share the max count in `peer_answers`,
+    the "top" assignment via `Counter.most_common` would be order-dependent (first-
+    inserted wins), producing arbitrary asymmetric rewards across tied-top rollouts.
+    All such groups return ``(0.0, "tied_top")`` instead — the peer signal is treated
+    as unusable, equivalent in spirit to ``no_valid_peer``. Fires regardless of
+    ``my_answer`` (so it preempts the ``my_answer is None`` -> unseen branch).
     """
     if not peer_answers:
         return 0.0, "no_valid_peer"
@@ -116,6 +124,11 @@ def compute_4regime_reward(my_answer, peer_answers, tau_high, tau_mid, lambda_):
 
     counts = Counter(valid_peer)
     top_answer, top_count = counts.most_common(1)[0]
+
+    # Tied top -> peer signal is order-dependent noise; short-circuit to no signal.
+    if sum(1 for c in counts.values() if c == top_count) > 1:
+        return 0.0, "tied_top"
+
     c_top = top_count / N
 
     if my_answer is None:
