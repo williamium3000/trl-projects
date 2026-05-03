@@ -32,7 +32,9 @@ COMMON=(
     --per_device_train_batch_size 1
     --gradient_accumulation_steps 256
     --train_dataset "$DATASET"
-    --num_train_epochs 1
+    --num_train_epochs 3
+    --lr_scheduler_type cosine
+    --warmup_ratio 0.1
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 4096
