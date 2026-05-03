@@ -9,7 +9,7 @@ cd "$REPO_ROOT"
 
 MODEL="Qwen/Qwen2.5-7B"
 DATASET="q1716523669/MATH-Level345"
-VLLM_MEM="0.8"
+VLLM_MEM="0.6"
 TS="$(date +%Y%m%d_%H%M%S)"
 RUN="qwen25_7b_x_qwen25_7b_homo_math345_full_lr1e-6_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
