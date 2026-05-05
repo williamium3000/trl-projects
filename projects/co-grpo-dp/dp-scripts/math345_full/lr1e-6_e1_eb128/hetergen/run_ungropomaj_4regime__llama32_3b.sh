@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj · qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
-# Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc128 / gen8 = 128 prompts/step
+# Un-GRPO-Maj 4-Regime · llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
+# Self-supervised confidence-gated reward. Effective batch: 8×bs1×acc128 / gen8 = 128 prompts/step
+# 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B"
+MODEL="meta-llama/Llama-3.2-3B-Instruct"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_ungropomaj_math345_full_lr1e-6_${TS}"
-OUT="projects/work_dirs/un-grpo-maj/$RUN"
+RUN="llama32_3b_ungropomaj_4regime_math345_full_lr1e-6_${TS}"
+OUT="projects/work_dirs/un-grpo-maj-4regime/$RUN"
 mkdir -p "$OUT"
 
 # wandb offline 2>/dev/null || true
 wandb online
-export WANDB_API_KEY="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"                    
-export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"                                                                     
-export WANDB_PROJECT="Co-learning"       
+export WANDB_API_KEY="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"
+export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
+export WANDB_PROJECT="Co-learning"
 
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
@@ -27,15 +28,15 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
     --main_process_port 19346 \
-    --gradient_accumulation_steps 64 \
-    projects/un-grpo-maj/train_un_grpo.py \
+    --gradient_accumulation_steps 128 \
+    projects/un-grpo-maj/train_un_grpo_4regime.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
     --learning_rate 1e-6 \
     --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 64 \
+    --gradient_accumulation_steps 128 \
     --num_train_epochs 3 \
     --lr_scheduler_type cosine \
     --warmup_ratio 0.1 \
@@ -60,6 +61,9 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --loss_type grpo \
     --scale_rewards group \
     --self_consistency_threshold 0.0 \
+    --tau_high 0.625 \
+    --tau_mid 0.25 \
+    --lambda_4regime 0.5 \
     --seed 42 \
     --data_seed 42 \
     --report_to wandb \

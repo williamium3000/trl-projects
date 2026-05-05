@@ -1,22 +1,10 @@
-"""Math answer extraction + grading for co-grpo-dp.
+"""Math answer extraction + grading + 4-regime reward for un-grpo-maj.
 
-Extraction and grading are powered by the `verifiers/qwen/` package — adapted
-from Qwen2.5-Math evaluation/parser.py and a grader composing
-Hendrycks-MATH / OpenAI prm800k / Microsoft ToRA / DeepSeek-Math equality
-checks. This is the de-facto industry-standard math eval pipeline (lm-eval
--harness's math tasks share the same sympy + latex2sympy2 lineage).
-
-Three things share one verifier here, by design:
-1. `_majority_vote` (uses normalized strings as hash keys; canonical-ish form
-   from `normalize_answer` keeps equivalent answers in the same bucket without
-   paying sympy cost on every cluster decision).
-2. `reward_correctness` in `train_co_grpo_dp.py` (uses `grade_answer` for true
-   sympy equivalence — so train reward is robust to `1/2` vs `\\frac{1}{2}`).
-3. `co_grpo_dp_trainer._calculate_rewards` eval mode (delegates to the same
-   parent reward path, so eval accuracy uses the same `grade_answer`).
-
-Used to importlib-bridge un-grpo-maj/self_label_trainer.py; now self-contained
-per repo "trainer self-contained, share by copy" convention.
+Parallels `projects/co-grpo-dp/co_label_utils.py`. Extraction and grading are
+powered by the `verifiers/qwen/` package (Apache-2.0). Functions here are
+**deliberately byte-identical to the co-grpo-dp copy** per the repo's
+"trainer self-contained, share by copy" convention. When updating one, mirror
+the change in the other.
 """
 
 from collections import Counter
@@ -44,16 +32,7 @@ def extract_boxed_answer(text):
 
 
 def normalize_answer(answer):
-    """Canonicalize an answer for use as a hash key in majority-vote grouping.
-
-    Backed by Hendrycks-MATH's normalizer (via qwen): unifies tfrac/dfrac→frac,
-    `0.5`→`\\frac{1}{2}`, `a/b`→`\\frac{a}{b}`, strips \\text{}/\\left/\\right/
-    units/spaces/percentages, etc. Equivalent latex forms collapse into the same
-    string, so `Counter(...)` clustering in `_majority_vote` actually counts
-    semantically equal answers as one bucket (without paying sympy cost).
-
-    Returns ``None`` if input is ``None``.
-    """
+    """Canonicalize an answer for use as a hash key in majority-vote grouping."""
     return _qwen_normalize(answer)
 
 
@@ -65,14 +44,7 @@ def _get_text(completion):
 
 
 def _extract_and_normalize(completion):
-    """Pipeline used by `_majority_vote`: extract from text, then canonicalize.
-
-    Returns ``None`` when extraction fails OR yields an empty string. Qwen's
-    parser returns ``''`` (not ``None``) when no parseable answer is found, but
-    `_majority_vote` treats only ``None`` as "this rollout has no answer" — so
-    empty strings would otherwise inflate the denominator and depress
-    top_frequency below threshold. Normalize to None at the boundary.
-    """
+    """Extract from text, then canonicalize. Returns ``None`` on failure or empty."""
     result = normalize_answer(extract_boxed_answer(_get_text(completion)))
     if result is None or result == "":
         return None
@@ -80,28 +52,7 @@ def _extract_and_normalize(completion):
 
 
 def _majority_vote(answers, threshold):
-    """Group N rollouts of one prompt by canonical answer; return the plurality.
-
-    Args:
-        answers (`list[str | None]`):
-            One canonicalized parsed answer per rollout in the prompt group.
-            ``None`` means the rollout did not produce a parseable answer.
-        threshold (`float`):
-            Minimum top-answer frequency (over parseable answers) to accept the
-            majority as the pseudo-label. ``0.0`` accepts the plurality winner.
-
-    Returns:
-        `tuple[str | None, float]`: ``(pseudo_label, top_frequency)``.
-        ``pseudo_label`` is ``None`` when no rollout parses, or when the top
-        frequency is below ``threshold``. ``top_frequency`` is ``0.0`` when no
-        rollout parses.
-
-    Note: clustering uses string identity on canonicalized answers, NOT sympy
-    equivalence. This is fast (microseconds vs ~10-100ms per sympy compare) and
-    relies on the qwen normalizer to collapse equivalent latex forms upstream.
-    The downstream reward function (`reward_correctness`) does use sympy
-    equivalence, so any miss here is recovered at reward time.
-    """
+    """Group N rollouts of one prompt by canonical answer; return the plurality."""
     valid = [a for a in answers if a is not None]
     if not valid:
         return None, 0.0
@@ -203,6 +154,6 @@ __all__ = [
     "_majority_vote",
     "_UNLABELED_SENTINEL",
     "compute_4regime_reward",
-    "grade_answer",  # exported for reward_correctness in train_co_grpo_dp.py
-    "extract_answer",  # raw qwen parser, exported for completeness
+    "grade_answer",
+    "extract_answer",
 ]
