@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj · llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
-# Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc128 / gen8 = 128 prompts/step
+# Un-GRPO-Maj · llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=64
+# Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc64 / gen8 = 64 prompts/step
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,7 +27,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
     --main_process_port 19346 \
-    --gradient_accumulation_steps 128 \
+    --gradient_accumulation_steps 64 \
     projects/un-grpo-maj/train_un_grpo.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
@@ -35,7 +35,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --run_config "$RUN" \
     --learning_rate 1e-6 \
     --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 128 \
+    --gradient_accumulation_steps 64 \
     --num_train_epochs 3 \
     --lr_scheduler_type cosine \
     --warmup_ratio 0.1 \

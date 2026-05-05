@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Co-GRPO 4-Regime heter · qwen25_3b (base) × llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
-# Cross-family co-training with confidence-gated reward. Per-group EB: 4×bs1×acc256 / gen8 = 128 prompts/step
+# Co-GRPO 4-Regime heter · qwen25_3b (base) × llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=64
+# Cross-family co-training with confidence-gated reward. Per-group EB: 4×bs1×acc128 / gen8 = 64 prompts/step
 # 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
 set -euo pipefail
 
@@ -31,7 +31,7 @@ export MATH500_EVAL_PATH=data/math500/test.json
 COMMON=(
     --learning_rate 1e-6
     --per_device_train_batch_size 1
-    --gradient_accumulation_steps 256
+    --gradient_accumulation_steps 128
     --train_dataset "$DATASET"
     --num_train_epochs 3
     --lr_scheduler_type cosine
@@ -76,7 +76,7 @@ launch_group () {
         --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
-        --gradient_accumulation_steps 256 \
+        --gradient_accumulation_steps 128 \
         projects/co-grpo-dp/train_co_grpo_dp_4regime.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \
