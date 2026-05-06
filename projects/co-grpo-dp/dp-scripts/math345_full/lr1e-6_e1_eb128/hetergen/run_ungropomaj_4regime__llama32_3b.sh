@@ -28,27 +28,29 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
     --main_process_port 19346 \
-    --gradient_accumulation_steps 64 \
+    --gradient_accumulation_steps 2 \
     projects/un-grpo-maj/train_un_grpo_4regime.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
     --learning_rate 1e-6 \
-    --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 64 \
-    --num_train_epochs 3 \
-    --lr_scheduler_type cosine \
-    --warmup_ratio 0.1 \
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 2 \
+    --steps_per_generation 32 \
+    --num_train_epochs 1 \
+    --lr_scheduler_type cosine_with_min_lr \
+    --lr_scheduler_kwargs '{"min_lr_rate": 0.1}' \
+    --warmup_ratio 0.03 \
     --gradient_checkpointing \
     --gradient_checkpointing_kwargs '{"use_reentrant": false}' \
-    --max_completion_length 4096 \
+    --max_completion_length 3072 \
     --num_generations 8 \
     --temperature 1.0 \
     --temperature_eval 0.6 \
     --use_vllm \
     --vllm_mode colocate \
-    --vllm_max_model_length 4096 \
+    --vllm_max_model_length 3584 \
     --vllm_gpu_memory_utilization 0.6 \
     --vllm_enable_sleep_mode true \
     --logging_steps 10 \
@@ -58,7 +60,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --num_generations_eval 1 \
     --per_device_eval_batch_size 1 \
     --beta 0.001 \
-    --loss_type grpo \
+    --loss_type bnpo \
     --scale_rewards group \
     --self_consistency_threshold 0.0 \
     --tau_high 0.625 \
