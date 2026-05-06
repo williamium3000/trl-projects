@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj 4-Regime · qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=64
-# Self-supervised confidence-gated reward. Effective batch: 8×bs1×acc64 / gen8 = 64 prompts/step
+# Un-GRPO-Maj 4-Regime · qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
+# Self-supervised confidence-gated reward. Effective batch: 8×bs4×acc2×spg32 / gen8 = 128 prompts/step (16 opt_steps/gen)
 # 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
 set -euo pipefail
 

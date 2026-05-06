@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Co-GRPO homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=64
-# Same-family co-training. Per-group EB: 4×bs1×acc128 / gen8 = 64 prompts/step
+# Co-GRPO homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
+# Same-family co-training. Per-group EB: 4×bs4×acc4×spg64 / gen8 = 128 prompts/step (16 opt_steps/gen)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

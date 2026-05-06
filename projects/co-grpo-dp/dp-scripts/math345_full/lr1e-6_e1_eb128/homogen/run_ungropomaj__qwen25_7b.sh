@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Un-GRPO-Maj · qwen25_7b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
-# Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc128 / gen8 = 128 prompts/step
+# Self-supervised majority-vote baseline. Effective batch: 8×bs2×acc4×spg64 / gen8 = 128 prompts/step (16 opt_steps/gen)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

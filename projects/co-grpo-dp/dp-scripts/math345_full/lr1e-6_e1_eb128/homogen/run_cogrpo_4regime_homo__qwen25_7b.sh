@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Co-GRPO 4-Regime homo · qwen25_7b × qwen25_7b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
-# Same-family co-training with confidence-gated reward. Per-group EB: 4×bs1×acc256 / gen8 = 128 prompts/step
+# Same-family co-training with confidence-gated reward. Per-group EB: 4×bs2×acc8×spg128 / gen8 = 128 prompts/step (16 opt_steps/gen)
 # 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
 set -euo pipefail
 
