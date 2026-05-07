@@ -51,9 +51,11 @@ COMMON=(
     --logging_steps 10
     --save_strategy epoch
     --eval_strategy steps
-    --eval_steps 10
+    --eval_steps 80
     --num_generations_eval 1
     --per_device_eval_batch_size 1
+    --vllm_importance_sampling_correction false
+    --adam_beta2 0.95
     --beta 0.001
     --loss_type bnpo
     --scale_rewards group
