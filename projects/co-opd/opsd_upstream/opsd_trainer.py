@@ -46,7 +46,7 @@ from transformers.utils import (
     is_rich_available,
 )
 
-from trl.data_utils import is_conversational, maybe_convert_to_chatml, pack_dataset, truncate_dataset
+from trl.data_utils import is_conversational, maybe_convert_to_chatml, pack_dataset
 from trl.extras.profiling import profiling_decorator
 from trl.extras.vllm_client import VLLMClient
 from trl.import_utils import is_vllm_available
