@@ -3,8 +3,7 @@ import sys
 import wandb
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from verifiers.qwen.qwen_math_parser import extract_answer
-from verifiers.qwen.math_grade import grade_answer
+from self_label_utils import extract_boxed_answer, grade_answer
 
 from transformers import AutoTokenizer
 from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, load_dataset
@@ -75,10 +74,27 @@ def _get_text(completion):
 
 
 def reward_correctness(completions, solution, **kwargs):
+    """Reward function: 1.0 if completion's parsed answer is sympy-equivalent to
+    the (peer-supplied or ground-truth) solution, else 0.0.
+
+    `solution` here can be:
+      - train mode: peer's pseudo-label (from majority vote), possibly the
+        sentinel `_UNLABELED_SENTINEL` for prompts the peer dropped — sentinel
+        cannot match any parsed answer, so reward is 0 for those.
+      - eval mode: dataset's real ground-truth solution (eval branch in trainer
+        skips the cross-labeling override).
+
+    Uses qwen's `grade_answer` (sympy + latex2sympy2) so equivalent forms like
+    `1/2` vs `\\frac{1}{2}` vs `0.5` all count as correct. Slower than string
+    equality (~10-100ms per check) but eliminates spurious negative rewards.
+    """
     rewards = []
     for completion, ground_truth in zip(completions, solution):
-        pred = extract_answer(_get_text(completion), "math")
-        rewards.append(1.0 if pred is not None and grade_answer(pred, ground_truth) else 0.0)
+        pred_answer = extract_boxed_answer(_get_text(completion))
+        if pred_answer is not None and grade_answer(pred_answer, ground_truth):
+            rewards.append(1.0)
+        else:
+            rewards.append(0.0)
     return rewards
 
 
@@ -162,6 +178,19 @@ if __name__ == "__main__":
                 "num_processes": num_processes,
                 "loss_type": training_args.loss_type,
                 "scale_rewards": training_args.scale_rewards,
+                "steps_per_generation": training_args.steps_per_generation,
+                "vllm_importance_sampling_correction": training_args.vllm_importance_sampling_correction,
+                "adam_beta2": training_args.adam_beta2,
+                "lr_scheduler_type": training_args.lr_scheduler_type,
+                "lr_scheduler_kwargs": training_args.lr_scheduler_kwargs,
+                "warmup_ratio": training_args.warmup_ratio,
+                "max_grad_norm": training_args.max_grad_norm,
+                "weight_decay": training_args.weight_decay,
+                "eval_steps": training_args.eval_steps,
+                "num_generations_eval": training_args.num_generations_eval,
+                "per_device_eval_batch_size": training_args.per_device_eval_batch_size,
+                "seed": training_args.seed,
+                "data_seed": training_args.data_seed,
                 "self_consistency_threshold": script_args.self_consistency_threshold,
             },
         )

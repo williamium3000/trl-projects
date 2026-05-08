@@ -108,6 +108,15 @@ if __name__ == "__main__":
 
     if script_args.group not in ("A", "B"):
         raise ValueError(f"--group must be 'A' or 'B', got {script_args.group!r}")
+
+    # Group B uses an offset seed so the two groups' rollouts diverge. Without this,
+    # both groups' accelerate worlds set torch.manual_seed(seed + process_index) with
+    # identical (seed, process_index) pairs, producing byte-identical vllm rollouts
+    # and forcing peer_agreement → 1 (cross-supervision degenerates into self-vote).
+    if script_args.group == "B":
+        training_args.seed += 1
+        if training_args.data_seed is not None:
+            training_args.data_seed += 1
     if script_args.rendezvous_dir is None:
         raise ValueError("--rendezvous_dir is required for co-grpo-dp.")
 
@@ -170,6 +179,23 @@ if __name__ == "__main__":
                 "beta": training_args.beta,
                 "use_peft": model_args.use_peft,
                 "lora_r": model_args.lora_r if model_args.use_peft else None,
+                "lora_alpha": model_args.lora_alpha if model_args.use_peft else None,
+                "gradient_checkpointing": training_args.gradient_checkpointing,
+                "num_processes": num_processes,
+                "loss_type": training_args.loss_type,
+                "scale_rewards": training_args.scale_rewards,
+                "steps_per_generation": training_args.steps_per_generation,
+                "vllm_importance_sampling_correction": training_args.vllm_importance_sampling_correction,
+                "adam_beta2": training_args.adam_beta2,
+                "lr_scheduler_type": training_args.lr_scheduler_type,
+                "lr_scheduler_kwargs": training_args.lr_scheduler_kwargs,
+                "warmup_ratio": training_args.warmup_ratio,
+                "max_grad_norm": training_args.max_grad_norm,
+                "weight_decay": training_args.weight_decay,
+                "eval_steps": training_args.eval_steps,
+                "num_generations_eval": training_args.num_generations_eval,
+                "per_device_eval_batch_size": training_args.per_device_eval_batch_size,
+                "data_seed": training_args.data_seed,
                 "self_consistency_threshold": script_args.self_consistency_threshold,
                 "vllm_gpu_memory_utilization": training_args.vllm_gpu_memory_utilization,
                 "seed": training_args.seed,

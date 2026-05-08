@@ -1,3 +1,12 @@
+"""Dataset loading for un-grpo-maj.
+
+Self-contained per repo "trainer self-contained, share by copy" convention.
+
+Set MATH500_EVAL_PATH=data/math500/test.json (relative to repo root) to use
+the MATH-500 validation set (industry standard, used by MARTI / SimpleRL-Zoo).
+Without this env var, a 150-prompt holdout is carved from the train split.
+"""
+
 import json
 import os
 
@@ -53,6 +62,7 @@ def load_dataset(dataset_name):
 
     dataset = hf_load_dataset(dataset_name)
     full_train = dataset["train"].map(format_prompt, remove_columns=dataset["train"].column_names)
+
     split = full_train.train_test_split(test_size=_VALIDATION_SIZE, seed=_VALIDATION_SEED)
     train_dataset, eval_dataset = split["train"], split["test"]
 
