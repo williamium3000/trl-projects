@@ -1,15 +1,25 @@
 """Entry point for one half of a cross-supervised GRPO data-parallel run with
-4-regime confidence-gated reward.
+peer-distribution-aware rewards.
 
 Same launch shape as `train_co_grpo_dp.py` (one accelerate world per group, two
-launches per experiment, file-rendezvous coordination), but the reward function
-consumes a per-prompt peer-answer distribution instead of a single peer
-majority. See `co_label_utils.compute_4regime_reward` for the exact reward
-formula and regime semantics.
+launches per experiment, file-rendezvous coordination). The trainer
+(`CoGRPOdp4RegimeTrainer`) writes the peer's per-prompt length-G answer list
+into `inputs[i]["peer_answers"]`. Three reward functions consume that payload,
+selected at launch via `--reward_type`:
 
-The eval path is identical to baseline: `inputs[i]["peer_answers"]` is not
-written in eval mode, so `reward_4regime` falls back to binary equality against
-the dataset's ground-truth `solution`.
+  - `4regime` (default): `compute_4regime_reward` — confidence-gated 4-regime
+    scoring against peer top-1 frequency. Hyperparameters: `--tau_high`,
+    `--tau_mid`, `--lambda_4regime`.
+  - `disagree`: Method 2 — `r_final = w(q) * base_reward` where w(q) is
+    cross-group disagreement on this prompt. Hyperparameters:
+    `--disagree_variant {top1,tv,jsd}`, `--disagree_w_min`,
+    `--disagree_base_reward {binary,4regime}`.
+  - `naive`: Method 3 — `r(y) = p_A(y)`, the peer's empirical frequency of
+    `my_answer`. Reward-design ablation; no extra hyperparameters.
+
+Eval mode short-circuits in all three: `peer_answers` is None there, so each
+reward closure falls back to binary equality against ground-truth `solution`,
+matching baseline `reward_correctness`.
 """
 
 import os
@@ -24,6 +34,11 @@ from co_label_utils import (
     compute_4regime_reward,
     extract_boxed_answer,
     grade_answer,
+)
+from disagree_naive_utils import (
+    make_reward_binary,
+    make_reward_disagree,
+    make_reward_naive,
 )
 from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, load_dataset
 from rendezvous import Rendezvous
@@ -98,6 +113,40 @@ class CoGRPOdp4RegimeScriptArguments(ScriptArguments):
     lambda_4regime: float = field(
         default=0.5,
         metadata={"help": "Negative penalty magnitude for weak / unseen rollouts in 4-regime reward."},
+    )
+    reward_type: str = field(
+        default="4regime",
+        metadata={
+            "help": "Which reward function to use. '4regime' (default, backward-compatible with "
+            "existing launch scripts) uses compute_4regime_reward. 'disagree' wraps a base reward "
+            "with the per-prompt cross-group disagreement weight w(q) from disagree_naive_utils. "
+            "'naive' returns r(y) = peer empirical frequency of my_answer (Method 3 ablation).",
+            "choices": ["4regime", "disagree", "naive"],
+        },
+    )
+    disagree_variant: str = field(
+        default="top1",
+        metadata={
+            "help": "Disagreement-weight variant for --reward_type disagree. 'top1' is the lowest-"
+            "noise estimator; 'tv' / 'jsd' are recommended only for num_generations >= 32.",
+            "choices": ["top1", "tv", "jsd"],
+        },
+    )
+    disagree_w_min: float = field(
+        default=0.1,
+        metadata={
+            "help": "Lower floor for the per-prompt disagreement weight w(q). Prevents transient "
+            "low-disagreement prompts from contributing zero training signal."
+        },
+    )
+    disagree_base_reward: str = field(
+        default="binary",
+        metadata={
+            "help": "Inner reward that w(q) multiplies. 'binary' = 1.0 if my_answer matches peer "
+            "plurality else 0.0 (matches the standard cross-supervision baseline). '4regime' "
+            "stacks the 4-regime reward — uses --tau_high/--tau_mid/--lambda_4regime.",
+            "choices": ["binary", "4regime"],
+        },
     )
 
 
@@ -198,16 +247,22 @@ if __name__ == "__main__":
     if script_args.run_config:
         full_wandb_run_name = f"{script_args.run_config}_group{script_args.group}_lr{lr_str}_bs{effective_batch_size}"
     else:
+        reward_tag = script_args.reward_type
+        if reward_tag == "4regime":
+            reward_extra = f"th{script_args.tau_high}_tm{script_args.tau_mid}_lam{script_args.lambda_4regime}"
+        elif reward_tag == "disagree":
+            reward_extra = f"{script_args.disagree_variant}_wmin{script_args.disagree_w_min}_base{script_args.disagree_base_reward}"
+        else:
+            reward_extra = "naive"
         full_wandb_run_name = (
-            f"CoGRPOdp4Regime_{model_short}_x_{peer_short}_group{script_args.group}_"
+            f"CoGRPOdp_{reward_tag}_{model_short}_x_{peer_short}_group{script_args.group}_"
             f"lr{lr_str}_bs{effective_batch_size}_"
             f"gen{training_args.num_generations}_"
-            f"temp{training_args.temperature}_"
-            f"th{script_args.tau_high}_tm{script_args.tau_mid}_lam{script_args.lambda_4regime}"
+            f"temp{training_args.temperature}_{reward_extra}"
         )
 
     print(f"\n{'='*80}")
-    print(f"CO-GRPO-DP 4-REGIME (group {script_args.group}) CONFIGURATION")
+    print(f"CO-GRPO-DP {script_args.reward_type.upper()} (group {script_args.group}) CONFIGURATION")
     print(f"{'='*80}")
     print(f"This model   : {model_args.model_name_or_path}")
     print(f"Peer model   : {script_args.peer_model_name_or_path}")
@@ -215,9 +270,17 @@ if __name__ == "__main__":
     print(f"WandB run    : {full_wandb_run_name}")
     print(f"Output dir   : {training_args.output_dir}")
     print(f"SCT          : {script_args.self_consistency_threshold}")
-    print(f"tau_high     : {script_args.tau_high}")
-    print(f"tau_mid      : {script_args.tau_mid}")
-    print(f"lambda       : {script_args.lambda_4regime}")
+    print(f"reward_type  : {script_args.reward_type}")
+    if script_args.reward_type == "4regime" or (
+        script_args.reward_type == "disagree" and script_args.disagree_base_reward == "4regime"
+    ):
+        print(f"tau_high     : {script_args.tau_high}")
+        print(f"tau_mid      : {script_args.tau_mid}")
+        print(f"lambda       : {script_args.lambda_4regime}")
+    if script_args.reward_type == "disagree":
+        print(f"disagree var : {script_args.disagree_variant}")
+        print(f"disagree wmin: {script_args.disagree_w_min}")
+        print(f"disagree base: {script_args.disagree_base_reward}")
     print(f"World size   : {num_processes}")
     print(f"{'='*80}\n")
 
@@ -242,9 +305,13 @@ if __name__ == "__main__":
                 "use_peft": model_args.use_peft,
                 "lora_r": model_args.lora_r if model_args.use_peft else None,
                 "self_consistency_threshold": script_args.self_consistency_threshold,
+                "reward_type": script_args.reward_type,
                 "tau_high": script_args.tau_high,
                 "tau_mid": script_args.tau_mid,
                 "lambda_4regime": script_args.lambda_4regime,
+                "disagree_variant": script_args.disagree_variant,
+                "disagree_w_min": script_args.disagree_w_min,
+                "disagree_base_reward": script_args.disagree_base_reward,
                 "vllm_gpu_memory_utilization": training_args.vllm_gpu_memory_utilization,
                 "seed": training_args.seed,
             },
@@ -315,15 +382,39 @@ if __name__ == "__main__":
     )
 
     ################
+    # Reward function dispatch
+    ################
+    if script_args.reward_type == "4regime":
+        reward_fn = make_reward_4regime(
+            tau_high=script_args.tau_high,
+            tau_mid=script_args.tau_mid,
+            lambda_=script_args.lambda_4regime,
+        )
+    elif script_args.reward_type == "disagree":
+        if script_args.disagree_base_reward == "4regime":
+            base_reward_fn = make_reward_4regime(
+                tau_high=script_args.tau_high,
+                tau_mid=script_args.tau_mid,
+                lambda_=script_args.lambda_4regime,
+            )
+        else:
+            base_reward_fn = make_reward_binary()
+        reward_fn = make_reward_disagree(
+            variant=script_args.disagree_variant,
+            w_min=script_args.disagree_w_min,
+            base_reward_fn=base_reward_fn,
+        )
+    elif script_args.reward_type == "naive":
+        reward_fn = make_reward_naive()
+    else:
+        raise ValueError(f"Unknown --reward_type {script_args.reward_type!r}")
+
+    ################
     # Training
     ################
     trainer = CoGRPOdp4RegimeTrainer(
         model=model_args.model_name_or_path,
-        reward_funcs=make_reward_4regime(
-            tau_high=script_args.tau_high,
-            tau_mid=script_args.tau_mid,
-            lambda_=script_args.lambda_4regime,
-        ),
+        reward_funcs=reward_fn,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
