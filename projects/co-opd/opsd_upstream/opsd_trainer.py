@@ -48,15 +48,14 @@ from transformers.utils import (
 
 from trl.data_utils import is_conversational, maybe_convert_to_chatml, pack_dataset
 from trl.extras.profiling import profiling_decorator
-from trl.extras.vllm_client import VLLMClient
+from trl.generation.vllm_client import VLLMClient
 from trl.import_utils import is_vllm_available
 from trl.models import prepare_deepspeed
 from trl.models.utils import unwrap_model_for_generation
 from trl.trainer.sft_trainer import SFTTrainer
+from trl.experimental.utils import DataCollatorForChatML, empty_cache
 from trl.trainer.utils import (
-    DataCollatorForChatML,
     disable_dropout_in_model,
-    empty_cache,
     ensure_master_addr_port,
     pad,
 )
@@ -72,7 +71,11 @@ if is_wandb_available():
 
 if is_vllm_available():
     from vllm import LLM, SamplingParams
-    from vllm.sampling_params import GuidedDecodingParams
+    try:
+        from vllm.sampling_params import GuidedDecodingParams
+    except ImportError:
+        # vllm 0.18+ removed this class; guarded usage in _generate_vllm.
+        GuidedDecodingParams = None
 
 if is_rich_available():
     from rich.console import Console
@@ -273,7 +276,9 @@ class OPSDTrainer(SFTTrainer):
         self.num_completions_to_print = args.num_completions_to_print
         # maxlen is set to the total number of forward passes per step. This value of `maxlen` ensures we log only the
         # final optimization step.
-        maxlen = self.accelerator.num_processes * args.per_device_train_batch_size * args.steps_per_generation
+        # GOLDConfig (this fork's args) does not expose `steps_per_generation`; fall back to grad_accum.
+        steps_per_gen = getattr(args, "steps_per_generation", args.gradient_accumulation_steps)
+        maxlen = self.accelerator.num_processes * args.per_device_train_batch_size * steps_per_gen
         self._textual_logs = {
             "prompt": deque(maxlen=maxlen),
             "completion": deque(maxlen=maxlen),
@@ -353,7 +358,8 @@ class OPSDTrainer(SFTTrainer):
                 self.accelerator.wait_for_everyone()
             else:
                 raise ValueError(f"Unknown vllm_mode: {self.vllm_mode}")
-            self.vllm_guided_decoding_regex = args.vllm_guided_decoding_regex
+            # GOLDConfig (this fork's args) does not expose `vllm_guided_decoding_regex`; default to None.
+            self.vllm_guided_decoding_regex = getattr(args, "vllm_guided_decoding_regex", None)
             self.vllm_sync_frequency = args.vllm_sync_frequency
             self._last_vllm_sync_step = -1
 
@@ -916,7 +922,8 @@ class OPSDTrainer(SFTTrainer):
                 )
             else:
                 guided_decoding = None
-            sampling_params = SamplingParams(
+            # vllm 0.18 SamplingParams does not accept `guided_decoding` (even None); pass only when set.
+            sp_kwargs = dict(
                 n=1,
                 repetition_penalty=repetition_penalty,
                 temperature=temperature,
@@ -925,8 +932,10 @@ class OPSDTrainer(SFTTrainer):
                 min_p=min_p,
                 max_tokens=max_completion_length,
                 presence_penalty=presence_penalty,
-                guided_decoding=guided_decoding,
             )
+            if guided_decoding is not None:
+                sp_kwargs["guided_decoding"] = guided_decoding
+            sampling_params = SamplingParams(**sp_kwargs)
 
             if hasattr(self, "vllm_tp_group") and self.vllm_tensor_parallel_size > 1:
                 # Gather prompts from all ranks in the TP group and flatten.

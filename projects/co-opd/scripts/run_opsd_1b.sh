@@ -47,7 +47,7 @@ CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launc
     --save_steps 25 \
     --logging_steps 2 \
     --attn_implementation flash_attention_2 \
-    --torch_dtype bfloat16 \
+    --bf16 true --dtype bfloat16 \
     --max_length 20000 \
     --beta 0 \
     --use_vllm \
