@@ -47,7 +47,7 @@ COMMON=(
     --vllm_mode colocate
     --vllm_max_model_length 3584
     --vllm_gpu_memory_utilization "$VLLM_MEM"
-    --logging_steps 10
+    --logging_steps 1
     --save_strategy epoch
     --eval_strategy steps
     --eval_steps 10
