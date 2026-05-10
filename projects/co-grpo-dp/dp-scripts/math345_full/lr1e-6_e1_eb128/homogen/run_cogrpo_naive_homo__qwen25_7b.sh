@@ -33,6 +33,9 @@ COMMON=(
     --gradient_accumulation_steps 192
     --train_dataset "$DATASET"
     --num_train_epochs 1
+    --lr_scheduler_type cosine_with_min_lr
+    --lr_scheduler_kwargs '{"min_lr_rate": 0.1}'
+    --warmup_ratio 0.03
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 4096
@@ -49,7 +52,8 @@ COMMON=(
     --eval_steps 10
     --num_generations_eval 1
     --per_device_eval_batch_size 1
-    --beta 0.001
+    --beta 0
+    --adam_beta2 0.95
     --loss_type bnpo
     --scale_rewards group
     --self_consistency_threshold 0.0

@@ -28,7 +28,7 @@ export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
 
 COMMON=(
-    --learning_rate 5e-7
+    --learning_rate 1e-6
     --per_device_train_batch_size 2
     --gradient_accumulation_steps 192
     --train_dataset "$DATASET"
@@ -52,7 +52,6 @@ COMMON=(
     --eval_steps 10
     --num_generations_eval 1
     --per_device_eval_batch_size 1
-    --vllm_importance_sampling_correction false
     --adam_beta2 0.95
     --beta 0
     --loss_type bnpo

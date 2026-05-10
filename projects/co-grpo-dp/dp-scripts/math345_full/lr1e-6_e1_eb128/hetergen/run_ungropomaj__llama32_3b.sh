@@ -33,7 +33,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
-    --learning_rate 5e-7 \
+    --learning_rate 1e-6 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 192 \
     --num_train_epochs 1 \
@@ -56,7 +56,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --eval_steps 10 \
     --num_generations_eval 1 \
     --per_device_eval_batch_size 1 \
-    --vllm_importance_sampling_correction false \
     --adam_beta2 0.95 \
     --beta 0 \
     --loss_type bnpo \
