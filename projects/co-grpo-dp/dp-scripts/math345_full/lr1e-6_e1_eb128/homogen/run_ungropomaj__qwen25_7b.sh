@@ -53,7 +53,8 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --eval_steps 10 \
     --num_generations_eval 1 \
     --per_device_eval_batch_size 1 \
-    --beta 0.001 \
+    --beta 0 \
+    --adam_beta2 0.95 \
     --loss_type bnpo \
     --scale_rewards group \
     --self_consistency_threshold 0.0 \
