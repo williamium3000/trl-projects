@@ -10,7 +10,7 @@ cd "$REPO_ROOT"
 
 MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
-VLLM_MEM="0.6"
+VLLM_MEM="0.7"
 TS="$(date +%Y%m%d_%H%M%S)"
 RUN="qwen25_3b_x_qwen25_3b_homo_disagree_top1_math345_full_lr5e-7_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp-disagree/$RUN"
@@ -46,7 +46,6 @@ COMMON=(
     --vllm_mode colocate
     --vllm_max_model_length 3584
     --vllm_gpu_memory_utilization "$VLLM_MEM"
-    --vllm_enable_sleep_mode true
     --logging_steps 1
     --save_strategy epoch
     --eval_strategy steps
