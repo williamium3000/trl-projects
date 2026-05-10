@@ -33,6 +33,9 @@ COMMON=(
     --gradient_accumulation_steps 192
     --train_dataset "$DATASET"
     --num_train_epochs 1
+    --lr_scheduler_type cosine_with_min_lr
+    --lr_scheduler_kwargs '{"min_lr_rate": 0.1}'
+    --warmup_ratio 0.03
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 4096

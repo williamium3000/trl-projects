@@ -38,6 +38,9 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 192 \
     --num_train_epochs 1 \
+    --lr_scheduler_type cosine_with_min_lr \
+    --lr_scheduler_kwargs '{"min_lr_rate": 0.1}' \
+    --warmup_ratio 0.03 \
     --gradient_checkpointing \
     --gradient_checkpointing_kwargs '{"use_reentrant": false}' \
     --max_completion_length 4096 \
