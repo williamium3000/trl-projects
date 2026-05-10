@@ -1,7 +1,10 @@
-# hetergen 3B: llama32 un-grpo-maj baseline + co-grpo heter qwen25×llama32 (our method)
-# (qwen25 baseline already in run.sh)
-bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e1_eb128/hetergen/run_ungropomaj__llama32_3b.sh
-bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e1_eb128/hetergen/run_cogrpo_heter__qwen25_3b__llama32_3b.sh
+# 后置 sanity · 3B · 4 task (reward 层) — run.sh 5 task 通过后再挂
+# 4regime ×2 (旧, 2026-05-01) + disagree + naive (新, 2026-05-09)
 
-# 注:7B homogen 3epoch 普通版优先级降低,暂不挂(已被 run.sh 4regime 替换)
-# 之前 1epoch×eb128 的 7B 普通版已成功,先用 4regime 验方法,普通 3epoch 后补
+# ---- L3.1 / L3.2: 4regime self-sup + co-sup ----
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e1_eb128/homogen/run_ungropomaj_4regime__qwen25_3b.sh
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e1_eb128/homogen/run_cogrpo_4regime_homo__qwen25_3b.sh
+
+# ---- L3.3 / L3.4: 2026-05-09 新加的 reward (disagree + naive) ----
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e1_eb128/homogen/run_cogrpo_disagree_homo__qwen25_3b.sh
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e1_eb128/homogen/run_cogrpo_naive_homo__qwen25_3b.sh
