@@ -1,71 +1,20 @@
-import os
-import sys
-from collections import Counter
+"""Self-supervised GRPO with majority-vote pseudo-labels.
+
+Replaces the dataset's `solution` with a per-prompt majority-vote pseudo-label
+computed across the N rollouts, then delegates to the parent reward path.
+Groups below `self_consistency_threshold` get a sentinel that no parsed answer
+can match, so every rollout in the group receives reward 0.
+"""
 
 from accelerate.utils import gather_object
 from trl import GRPOTrainer
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from verifiers.qwen.qwen_math_parser import extract_answer
-from verifiers.qwen.math_normalize import normalize_answer as _qwen_normalize
-from verifiers.qwen.math_grade import grade_answer
-
-
-def extract_boxed_answer(text):
-    """Alias for co-grpo/co_label_utils.py importlib bridge compatibility."""
-    return extract_answer(text, "math")
-
-
-def normalize_answer(answer):
-    if answer is None:
-        return None
-    return _qwen_normalize(answer)
-
-
-# Sentinel written into `solution` for prompt groups that fail the self-consistency
-# threshold. It cannot match any parsed \boxed{} answer, so reward_correctness
-# returns 0.0 for every rollout in such a group — no reward-function change needed.
-_UNLABELED_SENTINEL = "\x00__unlabeled__\x00"
-
-
-def _get_text(completion):
-    # TRL wraps completions as [{"role": "assistant", "content": "..."}] for conversational prompts
-    if isinstance(completion, list):
-        return completion[-1]["content"] if completion else ""
-    return completion
-
-
-def _extract_and_normalize(completion):
-    result = normalize_answer(extract_answer(_get_text(completion), "math"))
-    if result is None or result == "":
-        return None
-    return result
-
-
-def _majority_vote(answers, threshold):
-    """
-    Args:
-        answers (`list[str | None]`):
-            One normalized parsed answer per rollout in the prompt group.
-            `None` means the rollout did not produce a parseable `\\boxed{}`.
-        threshold (`float`):
-            Minimum top-answer frequency (over parseable answers) to accept
-            the majority as the pseudo-label.
-
-    Returns:
-        `tuple[str | None, float]`: `(pseudo_label, top_frequency)`. `pseudo_label`
-        is `None` when no rollout parses, or when the top frequency is below
-        `threshold`. `top_frequency` is `0.0` when no rollout parses.
-    """
-    valid = [a for a in answers if a is not None]
-    if not valid:
-        return None, 0.0
-    counts = Counter(valid)
-    top_answer, top_count = counts.most_common(1)[0]
-    top_freq = top_count / len(valid)
-    if top_freq < threshold:
-        return None, top_freq
-    return top_answer, top_freq
+from self_label_utils import (
+    _UNLABELED_SENTINEL,
+    _extract_and_normalize,
+    _majority_vote,
+    grade_answer,
+)
 
 
 class SelfLabelingGRPOTrainer(GRPOTrainer):
@@ -127,8 +76,7 @@ class SelfLabelingGRPOTrainer(GRPOTrainer):
             f"not divisible by num_generations {G}"
         )
         num_groups = N_global // G
-
-        mode = "train" if self.model.training else "eval"
+        mode = "train"
 
         local_answers = [_extract_and_normalize(c) for c in completions]
         local_real_solutions = [inp.get("solution") for inp in inputs]

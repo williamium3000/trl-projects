@@ -25,6 +25,7 @@
 | License | Apache 2.0（上游沿用 TRL 的 license） |
 | Default base model | Qwen3-1.7B（也提供 4B、8B 版脚本） |
 | Default dataset | `siyanzhao/Openthoughts_math_30k_opsd`（HF Hub） |
+| 本地 patch | `opsd_trainer.py:49` 删除死 import `truncate_dataset`（2026-05-08，原 import 在上游全文件未使用；trl fork 中该函数位于 `trl.experimental.utils`，不在 `trl.data_utils`） |
 
 ---
 

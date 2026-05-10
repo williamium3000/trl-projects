@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Co-GRPO 4-Regime homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
-# Same-family co-training with confidence-gated reward. Per-group EB: 4×bs4×acc4×spg64 / gen8 = 128 prompts/step (16 opt_steps/gen)
+# Co-GRPO 4-Regime homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128
+# Same-family co-training with confidence-gated reward. Per-group EB: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
 # 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
 set -euo pipefail
 
@@ -10,9 +10,9 @@ cd "$REPO_ROOT"
 
 MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
-VLLM_MEM="0.6"
+VLLM_MEM="0.8"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_x_qwen25_3b_homo_4regime_math345_full_lr1e-6_${TS}"
+RUN="qwen25_3b_x_qwen25_3b_homo_4regime_math345_full_lr5e-7_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp-4regime/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
@@ -28,10 +28,9 @@ export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
 
 COMMON=(
-    --learning_rate 1e-6
-    --per_device_train_batch_size 4
-    --gradient_accumulation_steps 4
-    --steps_per_generation 64
+    --learning_rate 5e-7
+    --per_device_train_batch_size 2
+    --gradient_accumulation_steps 192
     --train_dataset "$DATASET"
     --num_train_epochs 1
     --lr_scheduler_type cosine_with_min_lr
@@ -40,7 +39,7 @@ COMMON=(
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 3072
-    --num_generations 8
+    --num_generations 12
     --temperature 1.0
     --temperature_eval 0.6
     --use_vllm
@@ -51,12 +50,12 @@ COMMON=(
     --logging_steps 10
     --save_strategy epoch
     --eval_strategy steps
-    --eval_steps 80
+    --eval_steps 10
     --num_generations_eval 1
     --per_device_eval_batch_size 1
     --vllm_importance_sampling_correction false
     --adam_beta2 0.95
-    --beta 0.001
+    --beta 0
     --loss_type bnpo
     --scale_rewards group
     --self_consistency_threshold 0.0
@@ -79,7 +78,7 @@ launch_group () {
         --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
-        --gradient_accumulation_steps 4 \
+        --gradient_accumulation_steps 192 \
         projects/co-grpo-dp/train_co_grpo_dp_4regime.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \

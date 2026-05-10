@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Co-GRPO homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128
-# Same-family co-training. Per-group EB: 4×bs4×acc4×spg64 / gen8 = 128 prompts/step (16 opt_steps/gen)
+# Co-GRPO homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128
+# Same-family co-training. Per-group EB: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -9,9 +9,9 @@ cd "$REPO_ROOT"
 
 MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
-VLLM_MEM="0.6"
+VLLM_MEM="0.8"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_x_qwen25_3b_homo_math345_full_lr1e-6_${TS}"
+RUN="qwen25_3b_x_qwen25_3b_homo_math345_full_lr5e-7_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
@@ -19,18 +19,17 @@ mkdir -p "$BASE_OUT/model_a" "$BASE_OUT/model_b" "$RDV_DIR"
 
 # wandb offline 2>/dev/null || true
 wandb online
-export WANDB_API_KEY="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"                    
-export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"                                                                     
-export WANDB_PROJECT="Co-learning"    
+export WANDB_API_KEY="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"
+export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
+export WANDB_PROJECT="Co-learning"
 
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
 
 COMMON=(
-    --learning_rate 1e-6
-    --per_device_train_batch_size 4
-    --gradient_accumulation_steps 4
-    --steps_per_generation 64
+    --learning_rate 5e-7
+    --per_device_train_batch_size 2
+    --gradient_accumulation_steps 192
     --train_dataset "$DATASET"
     --num_train_epochs 1
     --lr_scheduler_type cosine_with_min_lr
@@ -39,7 +38,7 @@ COMMON=(
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 3072
-    --num_generations 8
+    --num_generations 12
     --temperature 1.0
     --temperature_eval 0.6
     --use_vllm
@@ -50,12 +49,12 @@ COMMON=(
     --logging_steps 10
     --save_strategy epoch
     --eval_strategy steps
-    --eval_steps 80
+    --eval_steps 10
     --num_generations_eval 1
     --per_device_eval_batch_size 1
     --vllm_importance_sampling_correction false
     --adam_beta2 0.95
-    --beta 0.001
+    --beta 0
     --loss_type bnpo
     --scale_rewards group
     --self_consistency_threshold 0.0
@@ -75,7 +74,7 @@ launch_group () {
         --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
-        --gradient_accumulation_steps 4 \
+        --gradient_accumulation_steps 192 \
         projects/co-grpo-dp/train_co_grpo_dp.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \

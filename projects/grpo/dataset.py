@@ -1,3 +1,12 @@
+"""Dataset loading for grpo.
+
+Self-contained per repo "trainer self-contained, share by copy" convention.
+
+Set MATH500_EVAL_PATH=data/math500/test.json (relative to repo root) to use
+the MATH-500 validation set (industry standard, used by MARTI / SimpleRL-Zoo).
+Without this env var, a 150-prompt holdout is carved from the train split.
+"""
+
 import json
 import os
 
@@ -46,13 +55,21 @@ def load_dataset(dataset_name):
         }
     else:
         raise ValueError(
-            f"Unsupported dataset '{dataset_name}'. Supported datasets: '{OPSD_DATASET}', '{DAPO_DATASET}', '{MATH_LEVEL345_DATASET}', '{MATH_LEVEL12345_DATASET}'."
+            f"Unsupported dataset '{dataset_name}'. Supported datasets: "
+            f"'{OPSD_DATASET}', '{DAPO_DATASET}', "
+            f"'{MATH_LEVEL345_DATASET}', '{MATH_LEVEL12345_DATASET}'."
         )
 
     dataset = hf_load_dataset(dataset_name)
     full_train = dataset["train"].map(format_prompt, remove_columns=dataset["train"].column_names)
+
     split = full_train.train_test_split(test_size=_VALIDATION_SIZE, seed=_VALIDATION_SEED)
     train_dataset, eval_dataset = split["train"], split["test"]
+
+    max_samples = os.environ.get("MAX_SAMPLES")
+    if max_samples is not None:
+        n = min(int(max_samples), len(train_dataset))
+        train_dataset = train_dataset.select(range(n))
 
     math500_path = os.environ.get("MATH500_EVAL_PATH")
     if math500_path is not None:
