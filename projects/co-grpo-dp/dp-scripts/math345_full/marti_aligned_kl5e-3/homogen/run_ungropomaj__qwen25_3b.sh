@@ -62,11 +62,10 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --vllm_mode colocate \
     --vllm_max_model_length 8192 \
     --vllm_gpu_memory_utilization 0.7 \
-    --vllm_enable_sleep_mode true \
     --logging_steps 1 \
     --save_strategy epoch \
     --eval_strategy steps \
-    --eval_steps 5 \
+    --eval_steps 10 \
     --num_generations_eval 1 \
     --per_device_eval_batch_size 1 \
     --vllm_importance_sampling_correction false \

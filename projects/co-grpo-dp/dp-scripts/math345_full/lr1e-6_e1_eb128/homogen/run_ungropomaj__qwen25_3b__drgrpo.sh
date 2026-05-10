@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj 4-Regime · qwen25_3b (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128
-# Self-supervised confidence-gated reward. Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
-# 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
+# Un-GRPO-Maj · qwen25_3b (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128 · loss_type=dr_grpo
+# Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
+# Sanity variant: only difference vs run_ungropomaj__qwen25_3b.sh is --loss_type dr_grpo
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,8 +11,8 @@ cd "$REPO_ROOT"
 MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_ungropomaj_4regime_math345_full_lr5e-7_${TS}"
-OUT="projects/work_dirs/un-grpo-maj-4regime/$RUN"
+RUN="qwen25_3b_ungropomaj_math345_full_lr5e-7_drgrpo_${TS}"
+OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
 # wandb offline 2>/dev/null || true
@@ -29,7 +29,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --num_processes 8 \
     --main_process_port 19346 \
     --gradient_accumulation_steps 192 \
-    projects/un-grpo-maj/train_un_grpo_4regime.py \
+    projects/un-grpo-maj/train_un_grpo.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
@@ -60,12 +60,9 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --vllm_importance_sampling_correction false \
     --adam_beta2 0.95 \
     --beta 0 \
-    --loss_type bnpo \
+    --loss_type dr_grpo \
     --scale_rewards group \
     --self_consistency_threshold 0.0 \
-    --tau_high 0.625 \
-    --tau_mid 0.25 \
-    --lambda_4regime 0.5 \
     --seed 42 \
     --data_seed 42 \
     --report_to wandb \
