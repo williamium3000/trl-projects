@@ -50,7 +50,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --use_vllm \
     --vllm_mode colocate \
     --vllm_max_model_length 8192 \
-    --vllm_gpu_memory_utilization 0.6 \
+    --vllm_gpu_memory_utilization 0.4 \
     --logging_steps 1 \
     --save_strategy epoch \
     --eval_strategy steps \
