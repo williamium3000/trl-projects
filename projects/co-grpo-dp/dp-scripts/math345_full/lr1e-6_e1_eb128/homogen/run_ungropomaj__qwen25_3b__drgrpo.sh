@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj · qwen25_3b (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128 · loss_type=dr_grpo
-# Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
-# Sanity variant: only difference vs run_ungropomaj__qwen25_3b.sh is --loss_type dr_grpo
+# Un-GRPO-Maj · qwen25_3b (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128 · loss_type=dr_grpo (paper)
+# Paper Dr. GRPO on 4 GPUs (4-7): per_dev=2, accum=192, scale_rewards=none. Effective batch: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
+# Diverges from bnpo/dapo baselines by 3 things: loss_type=dr_grpo + scale_rewards=none + 4-GPU shape (gen_batch=1536 sequences kept identical to 8-GPU runs)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,7 +11,7 @@ cd "$REPO_ROOT"
 MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_ungropomaj_math345_full_lr5e-7_drgrpo_${TS}"
+RUN="qwen25_3b_ungropomaj_math345_full_lr5e-7_drgrpo_paper_${TS}"
 OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
@@ -24,10 +24,10 @@ export WANDB_PROJECT="Co-learning"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
 
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
+CUDA_VISIBLE_DEVICES=4,5,6,7 accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
-    --num_processes 8 \
-    --main_process_port 19346 \
+    --num_processes 4 \
+    --main_process_port 19347 \
     --gradient_accumulation_steps 192 \
     projects/un-grpo-maj/train_un_grpo.py \
     --model_name_or_path "$MODEL" \
@@ -35,7 +35,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --output_dir "$OUT" \
     --run_config "$RUN" \
     --learning_rate 1e-6 \
-    --per_device_train_batch_size 1 \
+    --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 192 \
     --num_train_epochs 1 \
     --lr_scheduler_type cosine_with_min_lr \
@@ -52,7 +52,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --vllm_max_model_length 3584 \
     --vllm_gpu_memory_utilization 0.45 \
     --logging_steps 1 \
-    --save_strategy epoch \
+    --save_strategy no \
     --eval_strategy steps \
     --eval_steps 10 \
     --num_generations_eval 1 \
@@ -60,7 +60,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --adam_beta2 0.95 \
     --beta 0 \
     --loss_type dr_grpo \
-    --scale_rewards group \
+    --scale_rewards none \
     --self_consistency_threshold 0.0 \
     --seed 42 \
     --data_seed 42 \

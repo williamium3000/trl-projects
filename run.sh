@@ -1,3 +1,10 @@
+# ---- trl metadata check (fixes _save_checkpoint → version("trl") crash) ----
+python -c "from importlib.metadata import version; version('trl')" 2>/dev/null || {
+    REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    echo ">>> trl metadata missing, installing $REPO_ROOT as editable (no-deps)..."
+    pip install -e "$REPO_ROOT" --no-deps -q
+}
+
 # 紧急 sanity · 3B · 3 task
 # 验证 sleep_mode/vllm_mem 改动 + 自方法双卡架构 (homo + heter)
 # 跑满 1 epoch (~55 step)

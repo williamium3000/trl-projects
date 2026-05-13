@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
-# Co-GRPO Naive Soft Proportion (Method 3, ablation) heter · qwen25_3b (base) × llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128 · 2 epoch
-# Cross-family co-training. r(y) = peer empirical frequency of my_answer. Reward-design ablation; no extra reward hyperparameters.
-# Per-group EB: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen).
+# Co-GRPO homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128 · 2 epoch
+# Same-family co-training (binary reward baseline). Per-group EB: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL_A="Qwen/Qwen2.5-3B"
-MODEL_B="meta-llama/Llama-3.2-3B-Instruct"
+MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
 VLLM_MEM="0.45"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_x_llama32_3b_heter_naive_math345_full_lr1e-6_e2_${TS}"
-BASE_OUT="projects/work_dirs/co-grpo-dp-naive/$RUN"
+RUN="qwen25_3b_x_qwen25_3b_homo_math345_full_lr1e-6_e2_${TS}"
+BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
 mkdir -p "$BASE_OUT/model_a" "$BASE_OUT/model_b" "$RDV_DIR"
@@ -58,7 +56,6 @@ COMMON=(
     --loss_type bnpo
     --scale_rewards group
     --self_consistency_threshold 0.0
-    --reward_type naive
     --seed 42
     --data_seed 42
     --report_to wandb
@@ -76,7 +73,7 @@ launch_group () {
         --num_processes 4 \
         --main_process_port "$port" \
         --gradient_accumulation_steps 192 \
-        projects/co-grpo-dp/train_co_grpo_dp_4regime.py \
+        projects/co-grpo-dp/train_co_grpo_dp.py \
         --group "$grp" \
         --model_name_or_path "$my_model" \
         --peer_model_name_or_path "$peer_model" \
@@ -84,9 +81,9 @@ launch_group () {
         "${COMMON[@]}" 2>&1 | tee -a "$out/train.log"
 }
 
-launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19346 "$BASE_OUT/model_a" &
+launch_group A "0,1,2,3" "$MODEL" "$MODEL" 19346 "$BASE_OUT/model_a" &
 PID_A=$!
-launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19347 "$BASE_OUT/model_b" &
+launch_group B "4,5,6,7" "$MODEL" "$MODEL" 19347 "$BASE_OUT/model_b" &
 PID_B=$!
 
 cleanup() { kill "$PID_A" "$PID_B" 2>/dev/null || true; }

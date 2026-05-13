@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-# Un-GRPO-Maj 4-Regime · llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128
-# Self-supervised confidence-gated reward. Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
-# 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
+# Un-GRPO-Maj · qwen25_7b (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128 · 2 epoch
+# Self-supervised majority-vote baseline. Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="meta-llama/Llama-3.2-3B-Instruct"
+MODEL="Qwen/Qwen2.5-7B"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="llama32_3b_ungropomaj_4regime_math345_full_lr5e-7_${TS}"
-OUT="projects/work_dirs/un-grpo-maj-4regime/$RUN"
+RUN="qwen25_7b_ungropomaj_math345_full_lr1e-6_e2_${TS}"
+OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
 # wandb offline 2>/dev/null || true
@@ -29,7 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --num_processes 8 \
     --main_process_port 19346 \
     --gradient_accumulation_steps 192 \
-    projects/un-grpo-maj/train_un_grpo_4regime.py \
+    projects/un-grpo-maj/train_un_grpo.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
@@ -37,34 +36,31 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --learning_rate 1e-6 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 192 \
-    --num_train_epochs 1 \
+    --num_train_epochs 2 \
     --lr_scheduler_type cosine_with_min_lr \
     --lr_scheduler_kwargs '{"min_lr_rate": 0.1}' \
     --warmup_ratio 0.03 \
     --gradient_checkpointing \
     --gradient_checkpointing_kwargs '{"use_reentrant": false}' \
-    --max_completion_length 3072 \
+    --max_completion_length 4096 \
     --num_generations 12 \
     --temperature 1.0 \
     --temperature_eval 0.6 \
     --use_vllm \
     --vllm_mode colocate \
-    --vllm_max_model_length 3584 \
-    --vllm_gpu_memory_utilization 0.45 \
+    --vllm_max_model_length 4096 \
+    --vllm_gpu_memory_utilization 0.4 \
     --logging_steps 1 \
     --save_strategy no \
     --eval_strategy steps \
     --eval_steps 10 \
     --num_generations_eval 1 \
     --per_device_eval_batch_size 1 \
-    --adam_beta2 0.95 \
     --beta 0 \
+    --adam_beta2 0.95 \
     --loss_type bnpo \
     --scale_rewards group \
     --self_consistency_threshold 0.0 \
-    --tau_high 0.625 \
-    --tau_mid 0.25 \
-    --lambda_4regime 0.5 \
     --seed 42 \
     --data_seed 42 \
     --report_to wandb \
