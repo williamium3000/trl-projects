@@ -244,6 +244,7 @@ class VLLMGeneration:
         max_completion_length: int = 16,
         logprobs: int | None = 0,
         generation_kwargs: dict | None = None,
+        seed: int = 0,
     ):
         self.model = model
         self.accelerator = accelerator
@@ -278,6 +279,11 @@ class VLLMGeneration:
         self.max_completion_length = max_completion_length
         self.logprobs = logprobs
         self.generation_kwargs = generation_kwargs or {}
+        # External seed factor (typically args.seed). Combined with process index
+        # in _init_vllm so two independent accelerate worlds with different args.seed
+        # produce different vLLM rollouts even on identical model weights — required
+        # for cross-supervised setups that want decorrelated peer samples.
+        self.seed = seed
 
         self._init_vllm()
 
@@ -348,8 +354,10 @@ class VLLMGeneration:
                 enable_sleep_mode=self.enable_sleep_mode,
                 model_impl=self.model_impl,
                 distributed_executor_backend="external_launcher",
-                # Feed identical seed for tp groups to ensure sampling results are the same across workers
-                seed=accelerator.process_index // self.tensor_parallel_size,
+                # Feed identical seed for tp groups to ensure sampling results are the same across workers.
+                # Mix in `self.seed` (= args.seed) so independent accelerate worlds with different args.seed
+                # diverge their RNG streams; use a large prime multiplier so the two terms don't alias.
+                seed=self.seed * 1009 + (accelerator.process_index // self.tensor_parallel_size),
                 # Latest vLLM v1 memory profiler is misled by the high default value (i.e., 32768) - thinking there's not enough memory
                 max_num_batched_tokens=4096,
                 # Important so temperature scaling/logit tweaking affects the TIS log probs

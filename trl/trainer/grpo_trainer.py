@@ -771,6 +771,7 @@ class GRPOTrainer(_BaseTrainer):
                 max_completion_length=self.max_completion_length,
                 logprobs=0,  # we only need the generated token logprobs for the importance sampling correction
                 generation_kwargs=args.generation_kwargs,
+                seed=args.seed,
             )
             self._last_loaded_step = -1  # tag to avoid useless loading during grad accumulation
         else:
@@ -915,21 +916,30 @@ class GRPOTrainer(_BaseTrainer):
         #                                          ...
         if dataset is None:
             dataset = self.train_dataset
+        # Use data_seed (transformers convention for dataloader shuffle) so that
+        # entry scripts which offset args.seed for cross-process RNG divergence
+        # (e.g. co-grpo-dp's group-B seed bump for vLLM rollout decorrelation) do
+        # not also reshuffle the prompt order — which would break any setup that
+        # relies on multiple processes seeing the same prompts at each step
+        # (cross-supervised training, etc.). Falls back to args.seed if data_seed
+        # is None (preserves prior default behaviour for runs that don't set it).
+        sampler_seed = self.args.data_seed if self.args.data_seed is not None else self.args.seed
         return RepeatSampler(
             data_source=dataset,
             mini_repeat_count=self.num_generations,
             batch_size=self.args.generation_batch_size // self.num_generations,
             repeat_count=self.num_iterations * self.args.steps_per_generation,
             shuffle=self.shuffle_dataset,
-            seed=self.args.seed,
+            seed=sampler_seed,
         )
 
     def _get_eval_sampler(self, eval_dataset) -> Sampler:
         # See _get_train_sampler for an explanation of the sampler.
+        sampler_seed = self.args.data_seed if self.args.data_seed is not None else self.args.seed
         return RepeatSampler(
             data_source=eval_dataset,
             mini_repeat_count=self.num_generations_eval,
-            seed=self.args.seed,
+            seed=sampler_seed,
         )
 
     @profiling_decorator

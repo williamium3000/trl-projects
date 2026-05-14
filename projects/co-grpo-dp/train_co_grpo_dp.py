@@ -109,14 +109,22 @@ if __name__ == "__main__":
     if script_args.group not in ("A", "B"):
         raise ValueError(f"--group must be 'A' or 'B', got {script_args.group!r}")
 
-    # Group B uses an offset seed so the two groups' rollouts diverge. Without this,
-    # both groups' accelerate worlds set torch.manual_seed(seed + process_index) with
-    # identical (seed, process_index) pairs, producing byte-identical vllm rollouts
-    # and forcing peer_agreement → 1 (cross-supervision degenerates into self-vote).
+    # Group B uses an offset `seed` so the two groups' vLLM/torch RNG diverge.
+    # Without this, both groups' accelerate worlds set torch.manual_seed(seed +
+    # process_index) with identical (seed, process_index) pairs, producing byte-
+    # identical vLLM rollouts and forcing peer_agreement → 1 (cross-supervision
+    # degenerates into self-vote).
+    # IMPORTANT: do NOT also bump `data_seed`. `data_seed` is the
+    # transformers-convention sampler seed; both groups must iterate the dataset
+    # in identical order so that `gathered_answers[g*G:(g+1)*G]` corresponds to
+    # the SAME prompt on A and B (required for cross-supervision to be meaningful).
+    # See trl/trainer/grpo_trainer.py:_get_train_sampler — it reads `data_seed`
+    # when set, otherwise falls back to `seed`. If `data_seed` is None here,
+    # bumping `seed` alone would also misalign prompts; set it explicitly.
     if script_args.group == "B":
+        if training_args.data_seed is None:
+            training_args.data_seed = training_args.seed
         training_args.seed += 1
-        if training_args.data_seed is not None:
-            training_args.data_seed += 1
     if script_args.rendezvous_dir is None:
         raise ValueError("--rendezvous_dir is required for co-grpo-dp.")
 
