@@ -1,5 +1,22 @@
 # SELF_REVIEW.md — 代码 review checklist + 已知 risk
 
+> **⚠️ ERRATA · 2026-05-16** — §1b CPU verify / §2 deviations / §3 risk(R1/R4/R6)/ §5 启动顺序均与现状不符,**先读这段,正文重写推后**。
+>
+> - **Env**:不是"独立 env 升 vllm 0.19.1 + transformers 5.8.1",而是 **marti-parity**(transformers 4.57.6 / vllm 0.18.0 严守不漂)。
+> - **Grader §2 表**:`math_verify`(HF 官方)→ **改回 `qwen-sympy`**(从 co-grpo-dp cp `verifiers/qwen/`,wrapper `verifiers/math_verify_wrapper.py` 文件名保留但 backend 已 swap)。
+> - **Model pair §2 表**:`Qwen2.5-VL-3B × Gemma-4-E2B-it` → **`Qwen2.5-VL-3B × Qwen2.5-VL-3B`(homo)**。
+> - **Attn §2 表**:`Qwen FA2 / Gemma SDPA per-group` → **统一 FA2**(homo Qwen 无 SDPA 需求)。
+> - **vllm_mem §2 表**:`0.45 / 0.35 差异化` → **0.45 / 0.45 一致**(同模型)。
+> - **R1 [HIGH→PARTIAL] Gemma-4-E4B-it 兼容性**:**整条不再适用**,Gemma 不用,risk 作废。
+> - **R4 [MEDIUM] 数学能力差距 Qwen >> Gemma**:**整条不再适用**,homo 同模型无能力差距 risk(改成新 risk:homo cross-sup 是否真有 vs single baseline 提升存疑,memory `feedback_no_4regime_in_marti_compare` 同源)。
+> - **R6 [LOW] flash-attn × Gemma-4 architecture**:**整条不再适用**。
+> - **§5 启动顺序**:Phase 0 不再"trl `grpo_vlm.py` + Gemma-4 sanity",改为 Qwen2.5-VL-3B sanity;Phase 3-4 的 cross 脚本路径全部从 `phase4_cross_qwen25vl3b_x_gemma4_*.sh` 改为 `phase4_homo_qwen25vl3b_*.sh`。
+> - **新增 R8 [PENDING]**:homo cross-sup vs single baseline 实证差异未验。homo 设置下两 group 模型相同、只是种子/优化器状态不同,理论上 majority-vote 信号弱于 hetero。Phase 4 跑完后需 wandb 看 `co_labeling/oracle_accuracy_me` 是否高于 `train_mllm_single` 基线。
+>
+> 决策依据 memory:`feedback_mllm_env_marti_parity` / `mllm_co_grpo_dp_cpu_verify` 的 ERRATA。**正文里 Gemma / math_verify 相关条目都是历史快照,不要据此实施。**
+
+---
+
 新 project 落地于 2026-05-15。本文件给未来跑 Phase 0/3/4 的人 + Claude 看:**哪些 deviation from co-grpo-dp 是 deliberate**,**哪些 risk 还没在 GPU 上 verify**,**哪些静态检查已通过**。
 
 ---
