@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-# Phase 4 — Cross-supervised mllm-co-grpo-dp: Qwen2.5-VL-3B × Gemma-4-E4B on CLEVR-Counting.
+# Phase 4 — Cross-supervised mllm-co-grpo-dp: Qwen2.5-VL-3B × Gemma-4-E2B on CLEVR-Counting.
 # Two accelerate worlds in parallel, 4 GPUs per group, file-rendezvous
 # pseudo-label exchange every generation step. Only binary cross-sup —
 # no 4regime / disagree / naive (per mllm_co_grpo_dp_plan memory).
 #
 # GROUP A: Qwen/Qwen2.5-VL-3B-Instruct on GPUs 0-3
-# GROUP B: google/gemma-4-E4B-it           on GPUs 4-7
+# GROUP B: google/gemma-4-E2B-it           on GPUs 4-7
 # Per-group EB = 1 × 4 × 16 = 64 prompts/gen step (each group).
-# Gemma-4-E4B is 8B total, vllm_mem 0.35 (vs Qwen3B 0.45).
+# Gemma-4-E2B is ~2.6B total (~5.2GB bf16 weight), vllm_mem 0.40.
+#
+# Per-group attn implementation (NOT in COMMON — model-dependent):
+#   GROUP A Qwen FA2 (head_dim ≤128, fits FA2's 256 cap)
+#   GROUP B Gemma SDPA (Gemma-4 has global_head_dim=512 on full_attention
+#                       layers — FA2 only supports ≤256, would crash on
+#                       layer 4 forward. See INSTALL.md §2.4¾.)
 #
 # Env: conda activate mllm-cogrpodp (NOT marti — see INSTALL.md §0)
 # HF token must be set (Gemma-4 is gated). See INSTALL.md §2.5.
@@ -19,10 +25,10 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL_A="Qwen/Qwen2.5-VL-3B-Instruct"
-MODEL_B="google/gemma-4-E4B-it"
+MODEL_B="google/gemma-4-E2B-it"
 DATASET="leonardPKU/clevr_cogen_a_train"
-VLLM_MEM_A="0.45"   # Qwen 3B
-VLLM_MEM_B="0.35"   # Gemma-4 8B (1.5× memory pressure)
+VLLM_MEM_A="0.45"   # Qwen 3B (~6GB bf16 weight)
+VLLM_MEM_B="0.40"   # Gemma-4-E2B ~2.6B (~5.2GB bf16 weight); estimate, GPU peak not measured yet
 TS="$(date +%Y%m%d_%H%M%S)"
 RUN="phase4_cross_qwen25vl3b_x_gemma4_counting_${TS}"
 BASE_OUT="projects/work_dirs/mllm-co-grpo-dp/$RUN"
@@ -72,12 +78,12 @@ COMMON=(
     --wandb_project mllm-co-grpo-dp
     --rendezvous_dir "$RDV_DIR"
     --run_config "$RUN"
-    --attn_implementation flash_attention_2
     --bf16 true
 )
+# NOTE: --attn_implementation is NOT in COMMON — it's per-group (see launch_group below).
 
 launch_group () {
-    local grp="$1" gpus="$2" my_model="$3" peer_model="$4" port="$5" out="$6" vllm_mem="$7"
+    local grp="$1" gpus="$2" my_model="$3" peer_model="$4" port="$5" out="$6" vllm_mem="$7" attn_impl="$8"
     CUDA_VISIBLE_DEVICES="$gpus" accelerate launch \
         --config_file projects/mllm-co-grpo-dp/accelerate_zero3.yaml \
         --num_processes 4 \
@@ -89,12 +95,13 @@ launch_group () {
         --peer_model_name_or_path "$peer_model" \
         --output_dir "$out" \
         --vllm_gpu_memory_utilization "$vllm_mem" \
+        --attn_implementation "$attn_impl" \
         "${COMMON[@]}" 2>&1 | tee -a "$out/train.log"
 }
 
-launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19410 "$BASE_OUT/model_a" "$VLLM_MEM_A" &
+launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19410 "$BASE_OUT/model_a" "$VLLM_MEM_A" "flash_attention_2" &
 PID_A=$!
-launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19411 "$BASE_OUT/model_b" "$VLLM_MEM_B" &
+launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19411 "$BASE_OUT/model_b" "$VLLM_MEM_B" "sdpa" &
 PID_B=$!
 
 cleanup() { kill "$PID_A" "$PID_B" 2>/dev/null || true; }
