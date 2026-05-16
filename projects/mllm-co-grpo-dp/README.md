@@ -54,10 +54,13 @@ projects/mllm-co-grpo-dp/
 | Extractor | `<answer>...</answer>`(R1-V) | co-grpo-dp 用 `\boxed{}` |
 | Reward variant | 只 binary cross-sup | co-grpo-dp 有 4regime / disagree / naive |
 | Prompt | 无 system role,suffix 引导 | co-grpo-dp 有 instruction prefix |
-| Model pair | Qwen2.5-VL-3B-Instruct × Gemma-4-E4B-it | co-grpo-dp 主要 Qwen2.5 系列 |
+| Model pair | Qwen2.5-VL-3B-Instruct × Gemma-4-E2B-it | co-grpo-dp 主要 Qwen2.5 系列 |
+| Attn 实现 | Qwen `flash_attention_2` / Gemma `sdpa`(per-group)| co-grpo-dp 全 FA2 |
 | Dataset | CLEVR-Counting / GEOQA(一次一个) | co-grpo-dp 是 math (OPSD/DAPO/MATH-Level345) |
 | Trainer 类名 | `CoGRPOdpTrainer`(同名,不同 module) | repo CLAUDE.md "consistency over correctness" |
 | Env | `mllm-cogrpodp` 独立 conda env | co-grpo-dp 在 `marti` env |
+
+**Attn 拆 per-group 的根因:** Gemma-4 `text_config.global_head_dim=512`(每 5 层 1 个 full_attention 用 head_dim=512),FA2 上限 256,Gemma 必须 SDPA。详见 [`INSTALL.md` §2.4¾](INSTALL.md)。
 
 ---
 

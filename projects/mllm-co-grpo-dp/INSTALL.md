@@ -98,7 +98,7 @@ pip install -r projects/mllm-co-grpo-dp/requirements.txt
 
 ### §2.4 flash-attn 预编译 wheel(关键步,容易踩坑)
 
-所有 trainer 硬编码 `attn_implementation="flash_attention_2"`,不装 flash-attn 会启动 fail。
+Qwen2.5-VL 走 `flash_attention_2`,不装 flash-attn 会启动 fail。Gemma-4 不依赖 flash-attn pip 包(走 SDPA,见 §2.4¾),但只要训练里有任一 Qwen group 就必须装。
 
 **别 `pip install flash-attn`** —— 默认从源码编译,30-90 分钟、峰值 8-15 GB RAM(经常 OOM 杀进程)、需要 nvcc。**走预编译 wheel,30 秒搞定**。
 
@@ -119,6 +119,55 @@ pip install ${WHEEL}
 python -c "import flash_attn; from flash_attn import flash_attn_func; print('OK', flash_attn.__version__)"
 ```
 报 `undefined symbol` → 99% 是 wheel 跟 torch 主.次不匹配,卸了重挑。
+
+### §2.4¾ Gemma-4 attention 实现澄清(**Gemma-4 路径必读**)
+
+**Gemma-4 不能用 FlashAttention-2,必须 SDPA。** Phase 4 cross-sup 脚本里 GROUP B(Gemma)硬编码 `--attn_implementation sdpa`,GROUP A(Qwen)继续 `flash_attention_2`。两组 attn 实现 **per-group 拆开**,不在 COMMON 里。
+
+**根因(raw bytes verified,见 `mllm_co_grpo_dp_gemma_attn_plan_2026-05-15` memory):**
+
+Gemma-4-E2B 的 `config.json.text_config` 同时持有两个独立字段:
+
+```jsonc
+"head_dim":        256,    // sliding 层 head_dim
+"global_head_dim": 512,    // ★ full_attention(global)层独立 head_dim,被我之前漏看的字段
+"layer_types": [..., "full_attention", ...]  // 35 层里 7 个 full(index [4,9,14,19,24,29,34]),其余 sliding
+```
+
+FlashAttention-2 硬上限 `head_dim ≤ 256`。Gemma-4 在每 5 层一个 full_attention 上用 `head_dim=512`,FA2 forward 第 4 层(第一个 full)会立刻崩:
+
+```
+RuntimeError: FlashAttention only supports head dimensions up to 256 (got head_dim=512)
+```
+
+`google/gemma-4-E4B-it`(42 层 / 6 个 full)同样适用。两个模型的 sliding 层 `head_dim=256` 在 FA2 上限上,但只要 forward 到 full_attention 就崩。PyTorch SDPA 路径接受任意 `head_dim`,且会在内部 dispatch flash kernel(独立于 `flash_attn` pip 包),性能差距通常 <15%(单 GPU forward)。
+
+**两件独立的事,不要混:**
+
+1. **Attention 实现**(本节):`global_head_dim=512` → FA2 forbidden → 必须 SDPA。**跟 transformers 版本无关。**
+2. **transformers / vllm 版本锁**(§2.4½):`model_type: gemma4` 在 transformers 4.x 不注册 → 必须升 transformers 5.x → 强 vllm 0.19.1。**跟 attn 实现无关。**
+
+**flash_attn pip 包(2.8.3 wheel)仍需要装**(§2.4),Qwen 那一组用得上;Gemma SDPA 路径不导入 `flash_attn` 包。
+
+**Verify Gemma SDPA forward 能跑(GPU)**:
+
+```bash
+python -c "
+import torch
+from transformers import AutoModelForCausalLM
+m = AutoModelForCausalLM.from_pretrained(
+    'google/gemma-4-E2B-it',
+    torch_dtype=torch.bfloat16,
+    attn_implementation='sdpa',
+).cuda()
+ids = torch.randint(0, 32000, (1, 8), device='cuda')
+with torch.no_grad():
+    out = m(ids)
+print('Gemma SDPA forward OK, logits', tuple(out.logits.shape))
+"
+```
+
+报 `head_dim=512` 错 → attn_implementation 没传到 from_pretrained,或脚本里 GROUP B 没拆出 sdpa,回头看 phase4 脚本 `launch_group` 第 8 参。
 
 ### §2.4½ vllm + transformers 升级解 Gemma-4 锁(**Gemma-4 路径必跑**)
 
@@ -149,7 +198,7 @@ pip install --upgrade --no-cache-dir transformers               # 5.8.1+ for gem
 **verify**:
 
 ```bash
-python -c "from transformers import AutoConfig; c = AutoConfig.from_pretrained('google/gemma-4-E4B-it'); print('model_type:', c.model_type)"
+python -c "from transformers import AutoConfig; c = AutoConfig.from_pretrained('google/gemma-4-E2B-it'); print('model_type:', c.model_type)"
 # 期望输出: model_type: gemma4
 ```
 
@@ -160,7 +209,7 @@ huggingface-cli login                            # 粘 token,Gemma-4 是 gated
 export HF_ENDPOINT=https://hf-mirror.com         # 国内才需要
 ```
 
-`google/gemma-4-E4B-it` 是 gated repo,**必须 huggingface 账号同意 license + 装 token**。Qwen2.5-VL-3B-Instruct 不 gated。
+`google/gemma-4-E2B-it` 是 gated repo,**必须 huggingface 账号同意 license + 装 token**。Qwen2.5-VL-3B-Instruct 不 gated。
 
 ⚠️ **共享机器,绝对不要把 token 写进 `.git/config`**(memory: `feedback_no_token_in_git_config`)。push 时别用 `-u`。
 
@@ -200,6 +249,15 @@ print('math_verify OK:', verify(gold, pred))   # 应该 True
 # 6. qwen-vl-utils 能 import
 python -c "from qwen_vl_utils import process_vision_info; print('qwen-vl-utils OK')"
 
+# 6½. Gemma SDPA forward smoke test(Phase 4 cross-sup 必跑;详见 §2.4¾ 完整脚本)
+python -c "
+import torch
+from transformers import AutoModelForCausalLM
+m = AutoModelForCausalLM.from_pretrained('google/gemma-4-E2B-it', torch_dtype=torch.bfloat16, attn_implementation='sdpa').cuda()
+ids = torch.randint(0, 32000, (1, 8), device='cuda')
+print('Gemma SDPA forward OK:', tuple(m(ids).logits.shape))
+"
+
 # 7. GEOQA-style GT self-match(unit + ° 归一化)
 python -c "
 from math_verify import parse, verify
@@ -231,7 +289,7 @@ for gt in ['140', '45°', '\\\\frac{1}{2}', '\\\\sqrt{2}', '2.4cm', '\\\\pi']:
 | torchvision | 0.25.0+cu128 | ✅ |
 | CUDA driver (nvidia-smi) | 12.8 | ✅ |
 | flash_attn | 2.8.3 (`cu12torch2.10cxx11abiFALSE-cp312`) | ✅ |
-| transformers | 4.57.6+(确认能识别 `google/gemma-4-E4B-it`) | ✅(marti 是 4.57.6) |
+| transformers | 4.57.6+(确认能识别 `google/gemma-4-E2B-it`) | ✅(marti 是 4.57.6) |
 | trl | editable 装在本仓库 | ✅ |
 | accelerate | 1.13.0 | ✅ |
 | deepspeed | 0.19.0(实际,2026-05-15) | ✅ |
@@ -254,7 +312,8 @@ for gt in ['140', '45°', '\\\\frac{1}{2}', '\\\\sqrt{2}', '2.4cm', '\\\\pi']:
 | `Exception: Could not deserialize ATN with version 3 (expected 4)` | 误在 `marti` env 装了 math-verify,或装错 env | 切到 `mllm-cogrpodp` env;`marti` 应保持 antlr4==4.7.2 |
 | `pip install flash-attn` 卡几十分钟 | 在编译源码 | Ctrl-C,改 §2.4 预编译 wheel |
 | `ImportError: undefined symbol` (flash_attn) | wheel 跟 torch 主.次 不匹配 | `pip uninstall flash-attn -y`,重做 §2.4 |
-| `OSError: gated repo (gemma-4-E4B-it)` | 没 HF token 或没 accept license | §2.5;到 HuggingFace 页面点 "Agree and access" |
+| `RuntimeError: FlashAttention only supports head dimensions up to 256 (got head_dim=512)` | Gemma-4 走了 FA2,但 full_attention 层 `global_head_dim=512` 超 FA2 上限 | 切 Gemma 那一组到 `--attn_implementation sdpa`(phase4 脚本 GROUP B 已默认 SDPA);Qwen 那组继续 FA2。详见 §2.4¾ |
+| `OSError: gated repo (gemma-4-E2B-it)` | 没 HF token 或没 accept license | §2.5;到 HuggingFace 页面点 "Agree and access" |
 | `KeyError: 'gemma4'` / `Unrecognized configuration class for Gemma` | transformers 4.x 不认 Gemma-4 | 跑 §2.4½:升 vllm 0.19.1 + transformers 5.x |
 | `vllm 0.17.1 requires transformers<5` (pip resolver conflict) | trl pin vllm≤0.17.1 → vllm 0.17 锁 transformers<5 | 同上 §2.4½:vllm 0.19.1 解 transformers<5 锁 |
 | `ModuleNotFoundError: math_verify` | §2.3 没跑 | `pip install -r projects/mllm-co-grpo-dp/requirements.txt` |

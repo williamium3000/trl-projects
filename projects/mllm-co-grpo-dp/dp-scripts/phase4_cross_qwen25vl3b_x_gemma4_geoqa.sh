@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
-# Phase 4 — Cross-supervised mllm-co-grpo-dp: Qwen2.5-VL-3B × Gemma-4-E4B on GEOQA.
+# Phase 4 — Cross-supervised mllm-co-grpo-dp: Qwen2.5-VL-3B × Gemma-4-E2B on GEOQA.
 # Same template as phase4_cross_qwen25vl3b_x_gemma4_counting.sh, differences:
 #   - DATASET: leonardPKU/GEOQA_R1V_Train_8K (~8k train, much smaller)
 #   - epochs: 1 (R1-V Qwen2.5VL reaches 47.5% at 1 ep; 2 ep optional)
 #   - eval set: GeoQA-Test-Direct-Answer-735 via MLLM_EVAL_PATH
+#
+# Per-group attn implementation (NOT in COMMON — model-dependent):
+#   GROUP A Qwen FA2 (head_dim ≤128, fits FA2's 256 cap)
+#   GROUP B Gemma SDPA (Gemma-4 has global_head_dim=512 on full_attention
+#                       layers — FA2 only supports ≤256, would crash on
+#                       layer 4 forward. See INSTALL.md §2.4¾.)
 
 set -euo pipefail
 
@@ -12,10 +18,10 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL_A="Qwen/Qwen2.5-VL-3B-Instruct"
-MODEL_B="google/gemma-4-E4B-it"
+MODEL_B="google/gemma-4-E2B-it"
 DATASET="leonardPKU/GEOQA_R1V_Train_8K"
-VLLM_MEM_A="0.45"
-VLLM_MEM_B="0.35"
+VLLM_MEM_A="0.45"   # Qwen 3B (~6GB bf16 weight)
+VLLM_MEM_B="0.40"   # Gemma-4-E2B ~2.6B (~5.2GB bf16 weight); estimate, GPU peak not measured yet
 TS="$(date +%Y%m%d_%H%M%S)"
 RUN="phase4_cross_qwen25vl3b_x_gemma4_geoqa_${TS}"
 BASE_OUT="projects/work_dirs/mllm-co-grpo-dp/$RUN"
@@ -65,12 +71,12 @@ COMMON=(
     --wandb_project mllm-co-grpo-dp
     --rendezvous_dir "$RDV_DIR"
     --run_config "$RUN"
-    --attn_implementation flash_attention_2
     --bf16 true
 )
+# NOTE: --attn_implementation is NOT in COMMON — it's per-group (see launch_group below).
 
 launch_group () {
-    local grp="$1" gpus="$2" my_model="$3" peer_model="$4" port="$5" out="$6" vllm_mem="$7"
+    local grp="$1" gpus="$2" my_model="$3" peer_model="$4" port="$5" out="$6" vllm_mem="$7" attn_impl="$8"
     CUDA_VISIBLE_DEVICES="$gpus" accelerate launch \
         --config_file projects/mllm-co-grpo-dp/accelerate_zero3.yaml \
         --num_processes 4 \
@@ -82,12 +88,13 @@ launch_group () {
         --peer_model_name_or_path "$peer_model" \
         --output_dir "$out" \
         --vllm_gpu_memory_utilization "$vllm_mem" \
+        --attn_implementation "$attn_impl" \
         "${COMMON[@]}" 2>&1 | tee -a "$out/train.log"
 }
 
-launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19420 "$BASE_OUT/model_a" "$VLLM_MEM_A" &
+launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19420 "$BASE_OUT/model_a" "$VLLM_MEM_A" "flash_attention_2" &
 PID_A=$!
-launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19421 "$BASE_OUT/model_b" "$VLLM_MEM_B" &
+launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19421 "$BASE_OUT/model_b" "$VLLM_MEM_B" "sdpa" &
 PID_B=$!
 
 cleanup() { kill "$PID_A" "$PID_B" 2>/dev/null || true; }
