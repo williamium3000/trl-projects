@@ -1,5 +1,20 @@
 # mllm-co-grpo-dp env setup (新机 / 切机 必读)
 
+> **⚠️ ERRATA · 2026-05-16** — 本文件正文 §0–§7 与现状不符,**先读这段 ERRATA,正文重写推后**。
+>
+> - **Env 策略反转**:不是"独立 env 版本自由",改为 **marti-parity**(`conda create --clone marti -n mllm-cogrpodp`),版本必须严格 == marti(transformers 4.57.6 / vllm 0.18.0 / torch 2.10.0)。**mllm-cogrpodp 是 marti 的镜像** + 一两个允许偏差,目的是把它当成"marti stack 能否跑 MLLM"的对比测试床。
+> - **Grader 后端反转**:`verifiers/math_verify_wrapper.py` 文件名保留(上游 `co_label_utils.py` / `dataset.py` import 不动),但**内部 backend 改为 qwen-sympy**(`from verifiers.qwen.math_grade import grade_answer`,`verifiers/qwen/` 从 `co-grpo-dp` cp 过来)。`math_verify` 不再使用(根因:`verify(parse("\sqrt{2}\pi"), parse("\sqrt{2}\pi"))` self-fail + antlr4 4.13.2 ↔ 4.7.2 冲突)。
+> - **Model B 反转**:`Qwen/Qwen2.5-VL-3B-Instruct`(homo,A==B 同模型),**不是 Gemma-4-E2B**。Gemma-4 / InternVL3.5-4B 都因需 transformers 5.x 被 env-parity 规则踢出。
+> - **场次脚本改名**:`dp-scripts/phase4_homo_qwen25vl3b_{counting,geoqa}.sh`(原 `phase4_cross_qwen25vl3b_x_gemma4_*.sh` 已删除)。
+> - **作废章节**:**§2.4¾(Gemma SDPA)/ §2.4½(transformers 5.x 升级)/ §2.5(HF gated repo)三章整体不适用 homo Qwen 路径**,保留只是历史脉络,**不要据此操作**。
+> - **§3 Verify 调整**:`§3.5 math_verify` / `§3.6½ Gemma SDPA forward smoke` 两个检查不再适用;改成 `python -c "from verifiers.math_verify_wrapper import grade_answer; print(grade_answer('140°', '140'))"` 走 qwen-sympy 路径。
+> - **§4 Reference baseline**:`vllm 0.19.1 / transformers 5.8.1 / math-verify 0.9.0 / latex2sympy2_extended` 四行全部反转;实际值 = marti(vllm 0.18 / transformers 4.57.6,math-verify NOT installed,latex2sympy2 1.9.1 来自 marti 继承)+ 新增 `qwen-vl-utils 0.0.14` + `av` + `decord`。
+> - **§6 硬规则更新**:第 2 条"绝对不要把 math-verify 装进 marti env"仍然成立(marti 不许漂);新增第 0 条"**永远不许给 mllm-cogrpodp env 升级 transformers / vllm / torch**"(parity 硬约束)。
+>
+> 决策依据 memory:`feedback_mllm_env_marti_parity`(2026-05-16 硬规则)、`mllm_co_grpo_dp_cpu_verify` 的 ERRATA。**正文里 "为什么独立 env / math_verify / Gemma" 论述是 2026-05-15 决策的历史快照,不要据此 install 或跑实验。**
+
+---
+
 > **READ THIS FIRST**
 > 这个项目 **必须用独立 conda env**(默认名 `mllm-cogrpodp`),**不能复用 `marti` env**。
 > 原因见 §0。

@@ -1,3 +1,24 @@
+# ============================================================================
+# ⚠️  ERRATA · 2026-05-16 — 本文件正文已与现状不符,不要 pip install -r 这个文件
+# ============================================================================
+#
+# 现状(2026-05-16 之后):
+#   - mllm-cogrpodp env 走 marti-parity:`conda create --clone marti -n mllm-cogrpodp`
+#   - 实际只需要在 clone 后额外装一个包:
+#         pip install 'qwen-vl-utils[decord]'
+#   - math-verify / latex2sympy2_extended / sympy / regex / pylatexenc / word2number
+#     全部 NOT 装(marti env 已经有 sympy 等;math-verify 不再使用,grader 改回
+#     qwen-sympy,见 `verifiers/qwen/`)
+#   - antlr4 仍然是 marti 的 4.7.2(latex2sympy2 1.9.1 那条线),不要装
+#     latex2sympy2_extended(antlr4 4.13.2)否则会破 marti env
+#
+# 决策依据 memory: `feedback_mllm_env_marti_parity` (env 严守 marti 版本) +
+#   `mllm_co_grpo_dp_cpu_verify` 的 ERRATA(math_verify backend 因 sqrt+pi
+#   self-fail 已 revert 到 qwen-sympy)
+#
+# 下面正文是 2026-05-15 决策的历史快照,保留只为脉络,不要据此 install。
+# ============================================================================
+
 # mllm-co-grpo-dp extra dependencies on top of trl + accelerate + deepspeed + vllm.
 #
 # ⚠️ THIS PROJECT REQUIRES A SEPARATE CONDA ENV (e.g. `mllm-cogrpodp`).

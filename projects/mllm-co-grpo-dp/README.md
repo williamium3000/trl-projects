@@ -1,5 +1,19 @@
 # mllm-co-grpo-dp
 
+> **⚠️ ERRATA · 2026-05-16** — 正文(项目结构 / 关键决策表 / 怎么跑)与现状不符,**先读这段,正文重写推后**。
+>
+> - **Env**:`mllm-cogrpodp` 是 **marti env 的 clone**(`conda create --clone marti`),版本严格 == marti(t 4.57.6 / vllm 0.18 / torch 2.10)。不是"独立版本自由"env。
+> - **Grader 后端**:`qwen-sympy`(`verifiers/qwen/` cp from co-grpo-dp),**不是 math_verify**。`verifiers/math_verify_wrapper.py` 文件名保留,内部 backend 已 swap。
+> - **Model pair**:`Qwen2.5-VL-3B-Instruct × Qwen2.5-VL-3B-Instruct`(**homo,同模型**)。**不是 Qwen × Gemma**。Gemma / InternVL3.5 都因需 transformers 5.x 被 env-parity 规则踢。
+> - **Attn 实现**:统一 `flash_attention_2`,**不再 per-group 拆分**(homo Qwen 无 Gemma SDPA 需求)。
+> - **dp-scripts**:`phase4_homo_qwen25vl3b_{counting,geoqa}.sh`(原 `phase4_cross_*_gemma4_*` 已删)。
+> - **INSTALL.md §2.4¾ / §2.4½ / §2.5 三章作废**(Gemma SDPA / transformers 5.x 升级 / HF gated repo 都不适用)。
+> - **requirements.txt 实际依赖**:只额外加 `qwen-vl-utils[decord]`,**不装** `math-verify` / `latex2sympy2_extended`(antlr4 4.7.2 ↔ 4.13.2 冲突)。
+>
+> 决策依据 memory:`feedback_mllm_env_marti_parity` / `mllm_co_grpo_dp_cpu_verify` 的 ERRATA。**正文里 "Gemma / math_verify / 独立 env" 内容是 2026-05-15 决策的历史快照,不要据此 install 或跑实验。**
+
+---
+
 **Multimodal cross-supervised GRPO with data-parallel split** — 把 `co-grpo-dp` 的 majority-vote co-learning 范式从 text math 推广到 multimodal math (R1-V baseline 对齐)。
 
 两个 VLM 物理分到 8 GPU 两半(每组 4 GPU),通过文件 rendezvous 每 generation step 互喂多数票伪标签。**唯一变量是 supervision source**(peer pseudo-label vs GT verifier);prompt / dataset / eval set 严格对齐 R1-V baseline。
