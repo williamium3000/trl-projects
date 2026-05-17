@@ -23,11 +23,10 @@ import os
 from dataclasses import dataclass, field
 
 import wandb
-from transformers import AutoProcessor
-
 from co_label_utils import extract_boxed_answer, grade_answer
 from dataset import CLEVR_COUNTING_DATASET, GEOQA_DATASET, load_dataset
 from mllm_co_grpo_dp_trainer import CoGRPOdpTrainer
+from model_patches import load_processor_for_mllm
 from rendezvous import Rendezvous
 
 from trl import (
@@ -268,7 +267,13 @@ if __name__ == "__main__":
     # either tokenizer or processor; for VLMs GRPOTrainer routes through
     # `processor.tokenizer` for text ops and `processor.image_processor`
     # for image preprocessing.
-    processor = AutoProcessor.from_pretrained(
+    #
+    # `load_processor_for_mllm` is a thin wrapper around `AutoProcessor.
+    # from_pretrained` that applies family-specific monkey-patches for
+    # InternVL3.x (tokenizer special-token attrs + chat_template image
+    # placeholder). Qwen2.5-VL is passed through unchanged. See
+    # `model_patches.py` for the full rationale.
+    processor = load_processor_for_mllm(
         model_args.model_name_or_path,
         revision=model_args.model_revision,
         trust_remote_code=model_args.trust_remote_code,

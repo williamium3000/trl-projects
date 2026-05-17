@@ -1,8 +1,14 @@
 import os
+import sys
 import wandb
 import re
+from pathlib import Path
 
-from math_verify import parse, verify
+# Grader: trl-projects shared qwen-sympy backend (see /VERIFIER.md).
+# `verifiers/` lives at `projects/co-opd/verifiers/`; this file lives at
+# `projects/co-opd/opsd_upstream/grpo_train.py`. Walk up two levels.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from verifiers.math_verify_wrapper import grade_answer as _qwen_grade_answer
 
 from datasets import load_dataset
 from transformers import AutoTokenizer
@@ -75,7 +81,7 @@ def extract_boxed_answer(text):
 
 
 def _preprocess_for_parse(answer):
-    """Convert ratio notation a:b → \\frac{a}{b} so math_verify can parse it."""
+    """Convert ratio notation a:b → \\frac{a}{b} so the grader can parse it."""
     if answer is None:
         return None
     ratio_match = re.fullmatch(r"\s*(-?\d+(?:\.\d+)?)\s*:\s*(-?\d+(?:\.\d+)?)\s*", answer)
@@ -85,27 +91,28 @@ def _preprocess_for_parse(answer):
 
 
 def reward_correctness(completions, Answer, **kwargs):
+    """Reward = 1.0 iff the model's \\boxed{} answer matches the ground truth
+    under the shared qwen-sympy grader (see /VERIFIER.md). Falls back to
+    whitespace-insensitive string match (handles MCQ like "A"/"E").
+    """
     rewards = []
-    for i, (completion, ground_truth) in enumerate(zip(completions, Answer)):
+    for completion, ground_truth in zip(completions, Answer):
         pred_answer = extract_boxed_answer(completion)
+        pred_for_parse = _preprocess_for_parse(pred_answer)
+        gt = str(ground_truth) if ground_truth is not None else None
 
         reward = 0.0
-
-        # Try math_verify for mathematical equivalence (handles fractions, algebra, etc.)
-        # Only use it when both sides actually parse to something (avoids silent None returns
-        # for MCQ answers like "E" which parse() returns None for)
-        gold_parsed = parse(ground_truth)
-        pred_parsed = parse(_preprocess_for_parse(pred_answer))
-        if gold_parsed is not None and pred_parsed is not None:
+        if pred_for_parse and gt:
             try:
-                reward = 1.0 if verify(gold_parsed, pred_parsed) else 0.0
+                if _qwen_grade_answer(pred_for_parse, gt):
+                    reward = 1.0
             except Exception:
                 pass
 
-        # Fallback: whitespace-stripped string match (handles MCQ like "E", "A", etc.)
+        # Fallback: whitespace-stripped case-insensitive match (MCQ A/B/C/D/E).
         if reward == 0.0:
             pred_norm = re.sub(r"\s+", "", pred_answer or "").lower()
-            gt_norm = re.sub(r"\s+", "", ground_truth or "").lower()
+            gt_norm = re.sub(r"\s+", "", str(gt or "")).lower()
             if pred_norm and pred_norm == gt_norm:
                 reward = 1.0
 

@@ -2,14 +2,19 @@ import torch
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 from datasets import load_dataset
 from vllm import LLM, SamplingParams
 from transformers import AutoTokenizer
 from tqdm import tqdm
 
-# Use math_verify package directly
-from math_verify import parse, verify
+# Grader: trl-projects shared qwen-sympy backend (see /VERIFIER.md).
+# `verifiers/` lives at `projects/co-opd/verifiers/`; this file lives at
+# `projects/co-opd/opsd_upstream/eval/evaluate_math.py`. Walk up to co-opd/
+# so the import works regardless of the caller's CWD.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from verifiers.math_verify_wrapper import grade_answer as _qwen_grade_answer
 
 
 def extract_boxed_answer(text: str) -> str:
@@ -53,37 +58,27 @@ def extract_boxed_answer(text: str) -> str:
 
 def grade_answer(predicted: str, ground_truth: str) -> bool:
     """
-    Grade the predicted answer against ground truth using math_verify.
+    Grade the predicted answer against ground truth using the trl-projects
+    shared qwen-sympy grader (see /VERIFIER.md). Handles latex equivalence
+    (\\frac{1}{2} == 0.5), unit-word stripping, and falls back to
+    case-insensitive string match on parse errors.
 
     Args:
-        predicted: The predicted answer (already extracted from \\boxed{})
-        ground_truth: The ground truth answer
+        predicted: The predicted answer (already extracted from \\boxed{}).
+        ground_truth: The ground truth answer.
 
     Returns:
-        True if answers match, False otherwise
+        True if answers match, False otherwise.
     """
-    if predicted is None:
+    if predicted is None or ground_truth is None:
         return False
-
-    try:
-        # Ensure answers are wrapped in $ for latex parsing
-        if not "$" in predicted:
-            predicted = f"${predicted}$"
-        if not "$" in ground_truth:
-            ground_truth = f"${ground_truth}$"
-
-        # Parse both answers
-        pred_parsed = parse(predicted, fallback_mode="no_fallback")
-        gt_parsed = parse(ground_truth, fallback_mode="no_fallback")
-
-        # Verify equivalence
-        return verify(gt_parsed, pred_parsed, timeout_seconds=5)
-    except Exception as e:
-        # If math_verify fails, try simple string comparison
-        # Normalize by removing spaces, $, and converting to lowercase
-        pred_norm = predicted.replace("$", "").replace(" ", "").lower().strip()
-        gt_norm = ground_truth.replace("$", "").replace(" ", "").lower().strip()
-        return pred_norm == gt_norm
+    # Strip leading/trailing `$` (kept by some upstream callers); the qwen
+    # grader does not want latex-math delimiters in the input strings.
+    pred = predicted.strip().strip("$").strip()
+    gt = str(ground_truth).strip().strip("$").strip()
+    if not pred or not gt:
+        return False
+    return bool(_qwen_grade_answer(pred, gt))
 
 
 def load_vllm_model(
