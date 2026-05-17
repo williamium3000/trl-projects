@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Co-GRPO heter · qwen25_3b (base) × llama32_3b_instruct (LoRA r=32, α=64, ZeRO-3) · math345 · lr=5e-5 · eb=128 · 2 epoch
+# Co-GRPO heter · qwen25_3b (base) × llama32_3b_instruct (LoRA r=32, α=64, ZeRO-2) · math345 · lr=5e-5 · eb=128 · 2 epoch
 # Sweep variant of dp-scripts/math345_full/lr1e-6_e2_eb128/hetergen/run_cogrpo_heter__qwen25_3b__llama32_3b.sh
 # Differences vs baseline:
 #   - LoRA enabled: use_peft / lora_r=32 / lora_alpha=64 (α/r=2) / 7 modules q,k,v,o + gate,up,down
 #   - learning_rate 1e-6 → 5e-5 (LoRA upper end, 50× full-FT baseline; 5× the historical r=16 lr=1e-5 since EB grew 5×)
+#   - ZeRO-2 (not ZeRO-3): LoRA + ZeRO-3 + gradient_checkpointing trips a known
+#     deepspeed/PEFT deadlock — backward recompute sees sharded (shape=[0])
+#     params while forward saved the gathered version. `use_reentrant=False`
+#     is not enough. Matches the zero2 default used in dp-scripts/dapo/ and
+#     dp-scripts/math12345/ historical LoRA sweeps.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,7 +81,7 @@ COMMON=(
 launch_group () {
     local grp="$1" gpus="$2" my_model="$3" peer_model="$4" port="$5" out="$6"
     CUDA_VISIBLE_DEVICES="$gpus" accelerate launch \
-        --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
+        --config_file projects/co-grpo-dp/accelerate_zero2.yaml \
         --num_processes 4 \
         --main_process_port "$port" \
         --gradient_accumulation_steps 192 \

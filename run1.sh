@@ -5,5 +5,9 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# 3B homo binary baseline 2-epoch (Co-GRPO · qwen25_3b × qwen25_3b · binary reward, e2)
-bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e2_eb128/homogen/run_cogrpo_homo__qwen25_3b.sh
+# mllm-co-grpo-dp · cross-family co-learning · Qwen2.5-VL-3B × InternVL3.5-4B · GEOQA
+# 8 GPUs split 4+4 (group A / group B).
+# InternVL3.5-4B in marti-parity env needs the tokenizer/chat_template
+# monkey-patch in projects/mllm-co-grpo-dp/model_patches.py (auto-applied
+# inside train_mllm_co_grpo_dp.py — no env change required).
+bash projects/mllm-co-grpo-dp/dp-scripts/phase4_heter_qwen25vl3b_x_internvl35_4b_geoqa.sh
