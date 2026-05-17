@@ -30,6 +30,8 @@ rm -rf "$RDV_DIR"
 mkdir -p "$BASE_OUT/model_a" "$BASE_OUT/model_b" "$RDV_DIR"
 
 wandb online
+export WANDB_API_KEY="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"
+export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="mllm-co-grpo-dp"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 
