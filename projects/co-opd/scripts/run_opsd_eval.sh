@@ -33,7 +33,7 @@ TEMP=1.0
 TOP_P=0.95
 TOP_K=20
 MAX_NEW_TOKENS=38912
-VAL_N=6                   # solutions per problem — paper uses 6 for pass@n
+VAL_N=12                  # solutions per problem — OPSD paper Table 2 reports Avg@12 (arxiv 2601.18734v3)
 
 cd "$OPSD_DIR"
 
