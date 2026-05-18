@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
-# Co-GRPO Disagreement-Weighted (Method 2) homo · qwen25_3b × qwen25_3b (full-param, ZeRO-3) · math345 · lr=5e-7 · eb=128
-# Same-family co-training. r_final = w(q) * r_binary, where w(q) is the cross-group disagreement weight.
-# Per-group EB: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen). Variant: top1 (low-noise default).
+# Co-GRPO 4-Regime heter · qwen25_3b (base) × llama32_3b_instruct (full-param, ZeRO-3) · math12345 · lr=1e-6 · eb=128 · 2 epoch
+# Cross-family co-training with confidence-gated reward. Per-group EB: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
+# 4-regime hyperparams: tau_high=5/8=0.625, tau_mid=2/8=0.25, lambda=0.5
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B"
-DATASET="q1716523669/MATH-Level345"
+MODEL_A="Qwen/Qwen2.5-3B"
+MODEL_B="meta-llama/Llama-3.2-3B-Instruct"
+DATASET="q1716523669/MATH-Level12345"
 VLLM_MEM="0.45"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_x_qwen25_3b_homo_disagree_top1_math345_full_lr5e-7_${TS}"
-BASE_OUT="projects/work_dirs/co-grpo-dp-disagree/$RUN"
+RUN="qwen25_3b_x_llama32_3b_heter_4regime_math12345_full_lr1e-6_e2_${TS}"
+BASE_OUT="projects/work_dirs/co-grpo-dp-4regime/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
 mkdir -p "$BASE_OUT/model_a" "$BASE_OUT/model_b" "$RDV_DIR"
@@ -32,7 +33,7 @@ COMMON=(
     --per_device_train_batch_size 2
     --gradient_accumulation_steps 192
     --train_dataset "$DATASET"
-    --num_train_epochs 1
+    --num_train_epochs 2
     --lr_scheduler_type cosine_with_min_lr
     --lr_scheduler_kwargs '{"min_lr_rate": 0.1}'
     --warmup_ratio 0.03
@@ -58,10 +59,9 @@ COMMON=(
     --loss_type bnpo
     --scale_rewards group
     --self_consistency_threshold 0.0
-    --reward_type disagree
-    --disagree_variant top1
-    --disagree_w_min 0.1
-    --disagree_base_reward binary
+    --tau_high 0.625
+    --tau_mid 0.25
+    --lambda_4regime 0.5
     --seed 42
     --data_seed 42
     --report_to wandb
@@ -87,9 +87,9 @@ launch_group () {
         "${COMMON[@]}" 2>&1 | tee -a "$out/train.log"
 }
 
-launch_group A "0,1,2,3" "$MODEL" "$MODEL" 19346 "$BASE_OUT/model_a" &
+launch_group A "0,1,2,3" "$MODEL_A" "$MODEL_B" 19346 "$BASE_OUT/model_a" &
 PID_A=$!
-launch_group B "4,5,6,7" "$MODEL" "$MODEL" 19347 "$BASE_OUT/model_b" &
+launch_group B "4,5,6,7" "$MODEL_B" "$MODEL_A" 19347 "$BASE_OUT/model_b" &
 PID_B=$!
 
 cleanup() { kill "$PID_A" "$PID_B" 2>/dev/null || true; }

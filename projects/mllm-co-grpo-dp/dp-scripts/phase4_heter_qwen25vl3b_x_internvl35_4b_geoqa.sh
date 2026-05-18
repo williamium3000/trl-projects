@@ -68,7 +68,8 @@ COMMON=(
     --vllm_mode colocate
     --vllm_max_model_length 2048
     --logging_steps 1
-    --save_strategy no
+    --save_strategy steps
+    --save_steps 10
     --eval_strategy steps
     --eval_steps 20
     --num_generations_eval 1

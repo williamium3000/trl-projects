@@ -32,9 +32,9 @@ else
     echo ">>> No OPSD checkpoint found, skipping LoRA eval"
 fi
 
-# 3. Heter Co-GRPO binary baseline · qwen25_3b × llama32_3b · math345
-#    Pure cogrpo (no reward design / no 4regime / no disagree / no naive).
+# 3. Heter Co-GRPO 4-Regime · qwen25_3b × llama32_3b · math12345 · lr=1e-6 · e2
+#    EMNLP 2026 main run (run2) · save_steps=10 · paper axis: model-view + confidence-gated reward
 #    Auto-runs once the OPSD eval sweep above finishes; bash is sequential
 #    and eval subprocesses release all 8 GPUs on exit.
-echo ">>> Eval done. Launching m345 heter cogrpo binary baseline..."
-bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e2_eb128/hetergen/run_cogrpo_heter__qwen25_3b__llama32_3b.sh
+echo ">>> Eval done. Launching m12345 heter cogrpo 4regime..."
+bash projects/co-grpo-dp/dp-scripts/math12345_full/lr1e-6_e2_eb128/hetergen/run_cogrpo_4regime_heter__qwen25_3b__llama32_3b.sh
