@@ -56,7 +56,8 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --vllm_max_model_length 2048 \
     --vllm_gpu_memory_utilization "$VLLM_MEM" \
     --logging_steps 1 \
-    --save_strategy no \
+    --save_strategy steps \
+    --save_steps 10 \
     --eval_strategy steps \
     --eval_steps 20 \
     --num_generations_eval 1 \
