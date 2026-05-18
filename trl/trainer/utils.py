@@ -1025,7 +1025,15 @@ def create_model_from_path(
         config = AutoConfig.from_pretrained(
             model_id, trust_remote_code=kwargs.get("trust_remote_code", False)
         )
-        architecture = getattr(transformers, config.architectures[0])
+        arch_name = config.architectures[0]
+        try:
+            architecture = getattr(transformers, arch_name)
+        except AttributeError:
+            # Custom-code model: class lives in a dynamic module (e.g. InternVLChatModel).
+            from transformers.dynamic_module_utils import get_class_from_dynamic_module
+
+            class_ref = config.auto_map.get("AutoModelForCausalLM", config.auto_map["AutoModel"])
+            architecture = get_class_from_dynamic_module(class_ref, model_id)
     model = architecture.from_pretrained(model_id, **kwargs)
     return model
 

@@ -4,8 +4,10 @@
 #
 # 现状(2026-05-16 之后):
 #   - mllm-cogrpodp env 走 marti-parity:`conda create --clone marti -n mllm-cogrpodp`
-#   - 实际只需要在 clone 后额外装一个包:
+#   - 实际只需要在 clone 后额外装两个包:
 #         pip install 'qwen-vl-utils[decord]'
+#         pip install timm   # InternVL3.5 vision tower(InternViT)依赖,marti env 没装
+#     (run1.sh 已加 timm 自检自装,这里 doc 化)
 #   - math-verify / latex2sympy2_extended / sympy / regex / pylatexenc / word2number
 #     全部 NOT 装(marti env 已经有 sympy 等;math-verify 不再使用,grader 改回
 #     qwen-sympy,见 `verifiers/qwen/`)

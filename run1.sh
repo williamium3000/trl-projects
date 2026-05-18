@@ -5,6 +5,12 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
+# ---- timm (InternVL3.5 vision tower dependency; not in marti-parity base env) ----
+python -c "import timm" 2>/dev/null || {
+    echo ">>> timm missing, installing..."
+    pip install timm -q
+}
+
 # mllm-co-grpo-dp · cross-family co-learning · Qwen2.5-VL-3B × InternVL3.5-4B · GEOQA
 # 8 GPUs split 4+4 (group A / group B).
 # InternVL3.5-4B in marti-parity env needs the tokenizer/chat_template
