@@ -25,6 +25,7 @@ fi
 #    always the most recently written, so head -1 gives us the latest.
 LATEST_CKPT=$(ls -td projects/work_dirs/co-opd/qwen3_1.7b_opsd_*/checkpoint-* 2>/dev/null | head -1)
 if [[ -n "$LATEST_CKPT" ]]; then
+    LATEST_CKPT=$(realpath "$LATEST_CKPT")
     echo ">>> Evaluating latest checkpoint: $LATEST_CKPT"
     bash projects/co-opd/scripts/run_opsd_eval.sh "$LATEST_CKPT"
 else
