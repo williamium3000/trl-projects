@@ -40,6 +40,7 @@ from disagree_naive_utils import (
     make_reward_disagree,
     make_reward_naive,
 )
+from log_distill_utils import make_reward_log_distill
 from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, load_dataset
 from rendezvous import Rendezvous
 
@@ -117,11 +118,19 @@ class CoGRPOdp4RegimeScriptArguments(ScriptArguments):
     reward_type: str = field(
         default="4regime",
         metadata={
-            "help": "Which reward function to use. '4regime' (default, backward-compatible with "
-            "existing launch scripts) uses compute_4regime_reward. 'disagree' wraps a base reward "
-            "with the per-prompt cross-group disagreement weight w(q) from disagree_naive_utils. "
-            "'naive' returns r(y) = peer empirical frequency of my_answer (Method 3 ablation).",
-            "choices": ["4regime", "disagree", "naive"],
+            "help": "Which reward function to use. '4regime' uses compute_4regime_reward. "
+            "'disagree' wraps a base reward with the per-prompt cross-group disagreement weight "
+            "w(q). 'naive' returns r(y) = peer empirical frequency of my_answer. 'log_distill' "
+            "(2026-05-19, Method 4) routes through `_calculate_rewards_log_distill` to compute "
+            "r(y) = (1/T) * sum_t log p_PEER(y_t | q) via two-stage rendezvous (token + scalar logp).",
+            "choices": ["4regime", "disagree", "naive", "log_distill"],
+        },
+    )
+    log_distill_epsilon: float = field(
+        default=1e-10,
+        metadata={
+            "help": "Token-probability floor for log_distill fallback when peer's forward returns "
+            "None (tokenization mismatch / crash). r_fallback = log(epsilon) per token."
         },
     )
     disagree_variant: str = field(
@@ -406,6 +415,8 @@ if __name__ == "__main__":
         )
     elif script_args.reward_type == "naive":
         reward_fn = make_reward_naive()
+    elif script_args.reward_type == "log_distill":
+        reward_fn = make_reward_log_distill(epsilon=script_args.log_distill_epsilon)
     else:
         raise ValueError(f"Unknown --reward_type {script_args.reward_type!r}")
 
@@ -422,8 +433,10 @@ if __name__ == "__main__":
         peft_config=peft_config,
         my_group_name=script_args.group,
         rendezvous=rendezvous,
+        reward_type=script_args.reward_type,
         self_consistency_threshold=script_args.self_consistency_threshold,
         log_oracle_accuracy=script_args.log_oracle_accuracy,
+        log_distill_epsilon=script_args.log_distill_epsilon,
     )
 
     trainer.train()

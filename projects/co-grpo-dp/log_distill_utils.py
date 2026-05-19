@@ -1,130 +1,136 @@
-"""Log-Distillation cross-supervision reward (paper-plan §3 Method 2 "分布" variant).
+"""Log-Distillation cross-supervision reward (paper-plan §3 Method 4 "分布" variant).
 
-For each rollout y_i of policy A, the reward is the sequence log-probability
-assigned to y_i under peer policy B:
+For each rollout y_i of policy A, the reward is the per-token average log-
+probability assigned to y_i by peer policy B (length-normalized):
 
-    r(y_i, q) = log p_B(y_i | q)
+    r(y_i, q) = (1/T) * sum_t log p_B(y_{i,t} | q, y_{i,<t})
 
-with epsilon smoothing at the token level to prevent -inf when p_B assigns
-near-zero probability to an A-generated token:
+with epsilon-floor fallback when the peer's forward fails / returns None:
 
-    log p_B(y_i | q) = sum_t log( max(p_B(y_{i,t} | q, y_{i,<t}), epsilon) )
+    r_fallback = log(epsilon)
 
-## Theoretical justification
+## Justification (policy-gradient distillation toward peer)
 
-Maximizing E_{y ~ pi_A}[ log p_B(y | q) ] is exactly minimizing
-KL(pi_A || p_B) (up to constant in pi_A's entropy). This aligns A's output
-distribution to B's empirical distribution — a principled upgrade over the
-naive "soft proportion" reward (Method 3) which just uses peer frequency of
-A's answer string.
+Maximizing E_{y ~ π_A}[ log p_B(y | q) ] under policy gradient pulls π_A toward
+high-probability regions of p_B. Not exactly KL(π_A || p_B) minimization
+because π_A's entropy is not held constant, but the signal direction matches
+distillation: A imitates B at the token level.
 
-| A 答 | Soft proportion | Log distillation |
-|------|-----------------|------------------|
-| top1 (8/16) | 0.500           | -0.69            |
-| top2 (7/16) | 0.438           | -0.83            |
-| fluke (1/16)| 0.063           | -2.77            |
-| unseen      | 0.000           | -log(1/eps) ~ -23 (eps=1e-10) |
+| A's rollout (per-token avg log p_B) | r(y) length-normalized |
+|-------------------------------------|------------------------|
+| confident peer (top1 each step)     | -0.05 to -0.5          |
+| peer somewhat surprised             | -1 to -5               |
+| out of distribution                 | -log(eps) ≈ -23 (cap)  |
 
-Low-frequency / fluke answers get exponentially-punished; soft proportion only
-penalizes them linearly. → log_distill naturally suppresses B's long-tail noise.
+## Trainer integration (co-grpo-dp branch)
 
-## Dependency on co-grpo-dp infra (scaffold gap)
+`CoGRPOdp4RegimeTrainer._calculate_rewards_log_distill` (added 2026-05-19):
+  1. Each group gathers its rollout token sequences globally (`gather_object`).
+  2. Rendezvous Exchange A (`mode='train_tokens'`): swap token sequences with peer.
+  3. Each group forwards peer's tokens through OWN model via
+     `_get_per_token_logps_and_entropies(compute_entropy=False)` (chunked).
+     Sum per-token log p over completion positions → per-rollout scalar.
+  4. Rendezvous Exchange B (`mode='train_logps'`): swap sum-logp scalars with peer.
+  5. Each rank slices peer's reply for its own rollouts and injects
+     `inputs[i]["peer_log_prob_sum"]` + `inputs[i]["completion_lens"]`.
 
-This reward requires peer-model B to forward-pass A's rollout token sequences
-and return sequence log-probabilities. The existing rendezvous payload is just
-answer strings (`list[str | None]` of length G per prompt). To enable
-log_distillation, the rendezvous protocol needs an additional channel:
+## Eval mode
 
-  Group A → B:  G token-id sequences per prompt + attention masks
-  Group B → A:  G scalar log p_B(y_i) values per prompt
-
-Implementation TODO:
-  1. Add `--peer_logprob_payload` mode to `Rendezvous` (rendezvous.py).
-  2. In `_calculate_rewards` of `co_grpo_dp_4regime_trainer.py`, after my
-     group's rollouts are tokenized but BEFORE the group A→B exchange:
-       - Group B receives A's token sequences from rendezvous.
-       - Group B does a forward pass through self.model (no_grad) on (q, y_i)
-         using `_get_per_token_logps_and_entropies` (already exists in
-         trainer base for KL computation).
-       - Group B sums per-token log p across completion mask, applies eps,
-         sends back the per-prompt scalar list.
-       - Group A receives back log p_B(y_i) per rollout, injects into
-         inputs[i]["peer_log_prob"].
-  3. Reward function below consumes `peer_log_prob` from kwargs.
-
-Estimated effort: ~150 lines (rendezvous extension + trainer hook + tests).
-Once integrated, this is a pure plug-and-play reward via `--reward_type log_distill`.
+Trainer short-circuits: `peer_log_prob_sum` is not written. The closure detects
+missing kwargs and falls back to binary equality against `solution`, matching
+baseline `reward_correctness`.
 """
 
 from __future__ import annotations
 
 import math
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from co_label_utils import extract_boxed_answer, grade_answer
 
 
 _DEFAULT_EPSILON = 1e-10
 
 
+def _get_text(completion):
+    if isinstance(completion, list):
+        return completion[-1]["content"] if completion else ""
+    return completion
+
+
+def _eval_binary_against_gt(completions, solution):
+    """Eval-mode fallback: 1.0 if extract_boxed(completion) sympy-equals solution, else 0.0."""
+    rewards = []
+    for completion, gt in zip(completions, solution):
+        text = _get_text(completion)
+        pred = extract_boxed_answer(text) if text else None
+        rewards.append(1.0 if (pred is not None and grade_answer(pred, gt)) else 0.0)
+    return rewards
+
+
 def compute_log_distill_reward(
-    peer_token_logps: list[float | None],
-    completion_lens: list[int],
+    peer_log_prob_sums,
+    completion_lens,
     epsilon: float = _DEFAULT_EPSILON,
-) -> list[float]:
-    """Sequence-level log p_B(y_i) reward, length-normalized.
+):
+    """Length-normalized log-distill reward.
 
     Args:
-        peer_token_logps (`list[float | None]`):
-            Per-rollout sum of per-token log p_B values. `None` indicates the
-            peer group failed to compute this rollout's sequence logp (e.g.,
-            tokenization mismatch or peer crash) → reward falls back to
-            `log(epsilon)` to discourage A from exploring tokens B can't
-            assign mass to.
-        completion_lens (`list[int]`):
-            Per-rollout completion length (number of tokens). Used to
-            length-normalize so that long-but-low-prob and short-but-low-prob
-            sequences get comparable rewards.
-        epsilon (`float`, *optional*, defaults to `1e-10`):
-            Token-level probability floor inside the trainer's forward pass.
-            This argument controls the FALLBACK reward when peer logp is
-            None — it should match the trainer-side smoothing constant.
+        peer_log_prob_sums: list[float | None] — per-rollout total log p_PEER(my_y)
+            over completion tokens. `None` indicates peer's forward failed
+            (tokenization mismatch / crash) and trainer fell back. Reward then
+            uses log(epsilon).
+        completion_lens: list[int] — per-rollout completion length.
+        epsilon: token-probability floor for the None / zero-length fallback.
 
     Returns:
-        `list[float]`: per-rollout reward = `peer_token_logps[i] / completion_lens[i]`
-        (per-token average log p_B), or `log(epsilon)` when peer logp is None.
+        list[float]: per-rollout reward = peer_log_prob_sums[i] / completion_lens[i]
+        (per-token average log p_PEER), or log(epsilon) on fallback.
     """
     fallback = math.log(epsilon)
     rewards = []
-    for logp, T in zip(peer_token_logps, completion_lens):
-        if logp is None or T == 0:
+    for logp_sum, T in zip(peer_log_prob_sums, completion_lens):
+        if logp_sum is None or T == 0:
             rewards.append(fallback)
         else:
-            rewards.append(logp / T)
+            rewards.append(float(logp_sum) / int(T))
     return rewards
 
 
 def make_reward_log_distill(epsilon: float = _DEFAULT_EPSILON):
-    """Return a closure-bound reward fn for `--reward_type log_distill`.
+    """Closure for `--reward_type log_distill`.
 
-    Requires `peer_token_logps` (list[float|None], length len(completions))
-    and `completion_lens` (list[int]) in **kwargs. Trainer must inject both.
-
-    See module docstring for the trainer-integration plan; this function
-    raises NotImplementedError when invoked without the kwargs to make the
-    integration gap loud.
+    Trainer injects `peer_log_prob_sum` (list[float|None]) and `completion_lens`
+    (list[int]) into `inputs[i]`. This closure surfaces them to TRL after
+    aggregation. In eval mode the closure detects missing kwargs and falls back
+    to binary equality against `solution`.
     """
 
-    def reward_log_distill(completions, peer_token_logps=None, completion_lens=None,
-                           solution=None, log_metric=None, **kwargs):
-        if peer_token_logps is None or completion_lens is None:
-            raise NotImplementedError(
-                "log_distill reward requires peer_token_logps + completion_lens. "
-                "Wire the co-grpo-dp rendezvous to exchange per-rollout peer "
-                "sequence log-prob. See projects/co-grpo-dp/log_distill_utils.py."
-            )
-        rewards = compute_log_distill_reward(peer_token_logps, completion_lens, epsilon)
+    def reward_log_distill(
+        completions,
+        peer_log_prob_sum=None,
+        completion_lens=None,
+        solution=None,
+        log_metric=None,
+        **kwargs,
+    ):
+        if peer_log_prob_sum is None or completion_lens is None:
+            return _eval_binary_against_gt(completions, solution)
+        rewards = compute_log_distill_reward(peer_log_prob_sum, completion_lens, epsilon)
         if log_metric is not None and rewards:
             log_metric("log_distill/avg_reward", sum(rewards) / len(rewards))
             log_metric("log_distill/min_reward", min(rewards))
             log_metric("log_distill/max_reward", max(rewards))
+            n_fallback = sum(1 for lp in peer_log_prob_sum if lp is None)
+            log_metric("log_distill/fraction_fallback", n_fallback / len(rewards))
         return rewards
 
     return reward_log_distill
+
+
+__all__ = [
+    "compute_log_distill_reward",
+    "make_reward_log_distill",
+]

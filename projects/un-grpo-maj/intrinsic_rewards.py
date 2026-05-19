@@ -1,158 +1,174 @@
-"""Intrinsic single-model rewards: Entropy minimization & Self-Certainty maximization.
+"""Intrinsic single-model rewards: Entropy (RENT) & Self-Certainty (Intuitor).
 
-These are baselines from Co-rewarding (arXiv 2508.00410, ICLR 2026) Table 1.
+Self-supervised baselines from Co-rewarding (arXiv 2508.00410, ICLR 2026) Table 1.
 Originally from:
-  - Self-Certainty: Zhao et al. 2025, "Learning to reason without external rewards"
-    (arXiv 2505.19590).
-  - Entropy:        Prabhudesai et al. 2025, "Maximizing confidence alone improves
-    reasoning" (arXiv 2505.22660).
+  - Intuitor (Self-Certainty): Zhao et al. 2025, "Learning to reason without external
+    rewards" (arXiv 2505.19590). Eq. 2:
+        Self-certainty(o|q) = 1/|o| · sum_i KL(U || p_πθ(·|q, o_<i))
+    NOTE the direction: KL(U || p) is *mode-seeking* — exploding when p has near-zero
+    entries (i.e. the model is concentrated on a few tokens). This is paper's
+    deliberate choice over KL(p || U), which is mode-covering and equivalent up
+    to a constant to entropy.
+  - RENT (Entropy): Prabhudesai et al. 2025, "Maximizing confidence alone improves
+    reasoning" (arXiv 2505.22660). §3.3:
+        ℛ(y) = -H(π(x)) per token; per-sequence reward = -mean_t H(p_t)
+    Sign convention: maximize negative entropy = minimize entropy = increase
+    confidence.
 
-Both rewards operate purely on the model's own per-token softmax distribution
-over the full vocabulary — they do NOT require ground-truth labels, peer
-pseudo-labels, or any external signal. This makes them the natural single-view
-baselines to compare against our cross-supervised (peer-view) methods.
+⚠️ These two rewards are NOT affine-equivalent. KL(U||p) - (-H(p)) is a non-linear
+function of p. Treat them as two distinct signals in the paper main table.
 
-## Math
+## Per-token quantities computed by the trainer
 
-Let p_t ∈ R^V be the model's softmax distribution over the vocab at position t,
-y a generated sequence of length T, and U = 1/V the uniform distribution.
+The trainer (`IntrinsicRewardTrainer`) does a chunked no-grad forward over
+prompt+completion sequences and emits two per-token tensors:
 
-  Entropy reward (we maximize NEGATIVE entropy = we minimize entropy):
-      r_entropy(y) = -1/T · sum_t H(p_t) = 1/T · sum_t sum_v p_t(v) log p_t(v)
+  entropy_per_token[b, t] = H(p_t) = -sum_v p_t(v) log p_t(v)   (positive)
+  kl_u_p_per_token[b, t]  = KL(U || p_t) = -log V - mean_v(log p_t(v))   (positive)
 
-  Self-Certainty reward (maximize KL from uniform):
-      r_sc(y) = 1/T · sum_t KL(p_t || U)
-              = 1/T · sum_t [log V - H(p_t)]
-              = log V + r_entropy(y)
+Per-sequence rewards (mean over valid completion tokens):
 
-  → r_sc = log V + r_entropy, so the two rewards are affine transforms of each
-  other in expectation. Their GRPO-normalized advantages will differ slightly
-  because of per-batch variance, but they encode the same supervision.
+  r_entropy = -mean_over_mask(entropy_per_token, completion_mask)
+              # negative; maximize == lower entropy == higher confidence
+  r_sc      =  mean_over_mask(kl_u_p_per_token, completion_mask)
+              # positive; maximize == mode-seeking concentration
 
-## Implementation note (scaffold gap)
+## Trainer-side aggregation API (used by IntrinsicRewardTrainer)
 
-Both rewards require the FULL softmax over vocabulary at each position. TRL's
-GRPO reward function signature is `reward_fn(completions, ...) -> list[float]`
-and only receives extracted text — it does NOT pass logits. To wire these as
-GRPO rewards we need EITHER:
+`aggregate_per_seq_reward(per_token_value, completion_mask, reward_type)`
+returns a Python `float` per rollout, ready to stash into `inputs[i]`.
 
-  (a) An extra forward pass on the generated tokens inside `_calculate_rewards`
-      to recover logits (memory cost: B*T*V floats per batch, ~6GB at 3B/V=152k);
-  (b) Capture vLLM's `prompt_logprobs=True` or `logprobs=K` (top-K) and
-      use the top-K approximation (faster, ~5% bias for K≥20).
+## Reward function closures (passthrough)
 
-`compute_*` below take per-token logits as input and assume the caller has
-acquired them somehow. The trainer wiring is a separate TODO.
-
-See: `projects/un-grpo-maj/self_label_4regime_trainer.py` for where to plug in.
+The closure-bound `make_reward_entropy()` / `make_reward_self_certainty()` just
+forward the trainer-computed per-rollout scalar from `inputs[i]["intrinsic_reward"]`.
+In eval mode, the trainer skips the forward pass; the closures detect missing
+`intrinsic_reward` kwargs and fall back to binary equality against the dataset's
+`solution`, matching baseline `reward_correctness`.
 """
 
 from __future__ import annotations
 
-import math
+import os
+import sys
+from typing import Sequence
 
-import torch
-
-
-# Numerical guards. Match TRL's clamp conventions in other trainers.
-_EPS = 1e-10
-
-
-def compute_entropy_reward(
-    logits: torch.Tensor,
-    completion_mask: torch.Tensor,
-) -> torch.Tensor:
-    """Negative-entropy reward (we maximize confidence ⇔ minimize H(p_t)).
-
-    Args:
-        logits (`torch.Tensor`):
-            Shape `(B, T, V)`. Raw logits at each generated position. NOT
-            softmax — function takes log-softmax internally for stability.
-        completion_mask (`torch.Tensor`):
-            Shape `(B, T)`. 1 for valid completion tokens, 0 for padding.
-            Used to mask out padded positions before averaging.
-
-    Returns:
-        `torch.Tensor`: Shape `(B,)`. Per-sequence reward = mean over valid
-        positions of `sum_v p_t(v) log p_t(v)` (= -H(p_t)). Larger = more
-        confident (peakier distribution).
-    """
-    log_probs = torch.log_softmax(logits, dim=-1)  # (B, T, V)
-    probs = log_probs.exp()
-    # Per-position negative entropy: sum_v p log p (negative, peakier=closer to 0)
-    neg_entropy_per_pos = (probs * log_probs).sum(dim=-1)  # (B, T)
-    # Mean over valid positions per sequence
-    valid_lens = completion_mask.sum(dim=-1).clamp(min=1)
-    per_seq = (neg_entropy_per_pos * completion_mask).sum(dim=-1) / valid_lens
-    return per_seq
+# Resolve self_label_utils import for eval-mode binary fallback (extract_boxed_answer,
+# grade_answer). We avoid hard-coding the import path so the closures work from any cwd.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from self_label_utils import extract_boxed_answer, grade_answer
 
 
-def compute_self_certainty_reward(
-    logits: torch.Tensor,
-    completion_mask: torch.Tensor,
-) -> torch.Tensor:
-    """Self-Certainty reward = KL(p_t || Uniform) averaged over valid positions.
+# ----------------------------------------------------------------------------
+# Per-token quantity → per-sequence reward (used by trainer, *not* by closures)
+# ----------------------------------------------------------------------------
 
-    `KL(p || U) = log V + sum_v p log p = log V - H(p)`. Equivalent up to an
-    additive constant to `compute_entropy_reward`, but kept as a separate
-    function to match the paper's exposition and to allow downstream code to
-    log them under different metric names.
+def aggregate_per_seq_reward(
+    per_token_value: Sequence[float],
+    completion_mask: Sequence[int],
+    reward_type: str,
+) -> float:
+    """Aggregate per-token entropy or KL(U||p) into a per-sequence scalar reward.
 
     Args:
-        logits (`torch.Tensor`):
-            Shape `(B, T, V)`. Raw logits at each generated position.
-        completion_mask (`torch.Tensor`):
-            Shape `(B, T)`. 1 for valid completion tokens, 0 for padding.
+        per_token_value: length-T sequence of per-token H(p_t) (if reward_type='entropy')
+            or KL(U||p_t) (if reward_type='self_certainty'). All values are
+            non-negative.
+        completion_mask: length-T sequence of 0/1 (1 = valid completion token,
+            0 = padding or post-EOS).
+        reward_type: 'entropy' or 'self_certainty'.
 
     Returns:
-        `torch.Tensor`: Shape `(B,)`. Per-sequence reward = mean over valid
-        positions of `log V - H(p_t)`. Strictly non-negative.
-    """
-    vocab_size = logits.shape[-1]
-    log_v = math.log(vocab_size)
-    return compute_entropy_reward(logits, completion_mask) + log_v
+        float: scalar reward for this rollout, signed so that *larger = better*
+        in GRPO advantage normalization:
+          - 'entropy':         r = -mean_t(H_t)   (negative; up = more confident)
+          - 'self_certainty':  r =  mean_t(KL_t)  (positive; up = more concentrated)
 
+        Returns 0.0 if the mask is all zero (no valid tokens).
+    """
+    total = 0.0
+    n = 0
+    for v, m in zip(per_token_value, completion_mask):
+        if m:
+            total += v
+            n += 1
+    if n == 0:
+        return 0.0
+    mean_val = total / n
+    if reward_type == "entropy":
+        return -mean_val  # maximize -H == minimize H
+    elif reward_type == "self_certainty":
+        return mean_val  # maximize KL(U||p) == more peaked p
+    else:
+        raise ValueError(f"reward_type must be 'entropy' or 'self_certainty', got {reward_type!r}")
+
+
+# ----------------------------------------------------------------------------
+# Eval-mode binary fallback (shared by both closures)
+# ----------------------------------------------------------------------------
+
+def _get_text(completion):
+    """Extract assistant text from completion (chat format or string)."""
+    if isinstance(completion, list):
+        return completion[-1]["content"] if completion else ""
+    return completion
+
+
+def _eval_binary_against_gt(completions, solution):
+    """Eval-mode reward: 1.0 if extract(completion) sympy-equals solution, else 0.0."""
+    rewards = []
+    for completion, gt in zip(completions, solution):
+        text = _get_text(completion)
+        pred = extract_boxed_answer(text) if text else None
+        rewards.append(1.0 if (pred is not None and grade_answer(pred, gt)) else 0.0)
+    return rewards
+
+
+# ----------------------------------------------------------------------------
+# Reward function closures (passed to GRPOTrainer as reward_funcs)
+# ----------------------------------------------------------------------------
 
 def make_reward_entropy():
-    """Return a closure-bound reward function for `--reward_type entropy`.
+    """Closure for `--reward_type entropy` (RENT, Prabhudesai et al. 2025).
 
-    The returned callable expects `per_token_logits` and `completion_mask` in
-    `**kwargs` (injected by a trainer that captures them). If absent, raises
-    NotImplementedError with the integration hint.
+    The trainer computes the per-rollout entropy reward and stashes it as
+    `inputs[i]["intrinsic_reward"]` (a scalar float, sign already set so larger
+    is better). This closure is a passthrough that surfaces those values to TRL.
+
+    In eval mode the trainer skips the chunked forward; `intrinsic_reward` is
+    absent and we fall back to binary equality against `solution`, matching the
+    baseline `reward_correctness` semantics.
     """
 
-    def reward_entropy(completions, per_token_logits=None, completion_mask=None,
-                       solution=None, log_metric=None, **kwargs):
-        if per_token_logits is None or completion_mask is None:
-            raise NotImplementedError(
-                "Entropy reward requires per-token logits + completion_mask. "
-                "Wire your trainer to capture logits and inject them via kwargs. "
-                "See projects/un-grpo-maj/intrinsic_rewards.py docstring."
-            )
-        rewards = compute_entropy_reward(per_token_logits, completion_mask).tolist()
+    def reward_entropy(completions, intrinsic_reward=None, solution=None,
+                       log_metric=None, **kwargs):
+        if intrinsic_reward is None:
+            return _eval_binary_against_gt(completions, solution)
+        rewards = list(intrinsic_reward)  # already signed by trainer
         if log_metric is not None and rewards:
             log_metric("entropy/avg_reward", sum(rewards) / len(rewards))
+            # rewards are -mean(H); negate back for "average entropy H" diagnostic
+            log_metric("entropy/avg_H", -sum(rewards) / len(rewards))
         return rewards
 
     return reward_entropy
 
 
 def make_reward_self_certainty():
-    """Return a closure-bound reward function for `--reward_type self_certainty`.
+    """Closure for `--reward_type self_certainty` (Intuitor, Zhao et al. 2025).
 
-    Same calling convention as `make_reward_entropy`.
+    Same passthrough pattern as `make_reward_entropy`: trainer computes per-rollout
+    KL(U||p) reward, stashes as `inputs[i]["intrinsic_reward"]`, closure surfaces it.
     """
 
-    def reward_self_certainty(completions, per_token_logits=None, completion_mask=None,
-                              solution=None, log_metric=None, **kwargs):
-        if per_token_logits is None or completion_mask is None:
-            raise NotImplementedError(
-                "Self-Certainty reward requires per-token logits + completion_mask. "
-                "See projects/un-grpo-maj/intrinsic_rewards.py docstring."
-            )
-        rewards = compute_self_certainty_reward(per_token_logits, completion_mask).tolist()
+    def reward_self_certainty(completions, intrinsic_reward=None, solution=None,
+                              log_metric=None, **kwargs):
+        if intrinsic_reward is None:
+            return _eval_binary_against_gt(completions, solution)
+        rewards = list(intrinsic_reward)  # already positive KL values
         if log_metric is not None and rewards:
             log_metric("self_certainty/avg_reward", sum(rewards) / len(rewards))
+            log_metric("self_certainty/avg_kl_u_p", sum(rewards) / len(rewards))
         return rewards
 
     return reward_self_certainty
