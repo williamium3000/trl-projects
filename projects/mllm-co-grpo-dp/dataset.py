@@ -57,8 +57,22 @@ _PROMPT_SUFFIX = (
 
 
 def _make_prompt(question_text):
-    """R1-V style prompt: no system role, single user content with suffix."""
-    return [{"role": "user", "content": f"{question_text}{_PROMPT_SUFFIX}"}]
+    """R1-V style prompt: no system role, multimodal user content (image + text).
+
+    Content **must** be a list with an explicit `{"type": "image"}` part — both
+    Qwen2.5-VL and InternVL3.5 chat templates branch on
+    `message['content'] is string`:
+      - string content → text is rendered as-is, **no image placeholder emitted**
+      - list content   → each `{"type": "image"}` part emits the model's image
+        placeholder token(s), required for vLLM mm processing and model forward.
+    """
+    return [{
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text": f"{question_text}{_PROMPT_SUFFIX}"},
+        ],
+    }]
 
 
 def _convert_to_rgb(example):

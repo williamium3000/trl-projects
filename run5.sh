@@ -5,6 +5,6 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# Heter Co-GRPO binary · qwen25_3b × llama32_3b · math345 · lr=1e-6 · e3 · eb=128
-# (no reward design — pure binary cross-supervision; e3 to give more training budget)
-bash projects/co-grpo-dp/dp-scripts/math345_full/lr1e-6_e2_eb128/hetergen/run_cogrpo_heter__qwen25_3b__llama32_3b.sh
+# Un-GRPO-Maj · qwen25_3b · math12345 · lr=1e-6 · e2 · eb=128
+# Single-agent majority-vote baseline, hyperparameter-aligned with Co-GRPO runs
+bash projects/co-grpo-dp/dp-scripts/math12345_full/lr1e-6_e2_eb128/homogen/run_ungropomaj__qwen25_3b.sh

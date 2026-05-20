@@ -363,6 +363,10 @@ class VLLMGeneration:
                 # Important so temperature scaling/logit tweaking affects the TIS log probs
                 logprobs_mode="processed_logprobs",
                 quantization=quantization,
+                # Required for InternVL and other custom-code models.
+                # vLLM's ModelConfig pydantic validator blocks loading without this.
+                # Upstream: https://github.com/huggingface/trl/issues/4129
+                trust_remote_code=True,
             )
             if self.enable_sleep_mode:
                 self.llm.sleep(level=2)

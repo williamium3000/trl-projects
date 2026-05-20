@@ -251,7 +251,9 @@ if __name__ == "__main__":
         trust_remote_code=model_args.trust_remote_code,
         attn_implementation=model_args.attn_implementation or "flash_attention_2",
         torch_dtype=model_dtype,
-        use_cache=False if training_args.gradient_checkpointing else True,
+        # `use_cache` deliberately omitted — Trainer auto-disables it when gradient_checkpointing
+        # is on, and GRPOTrainer's forward always passes use_cache=False. Passing it here breaks
+        # InternVL3.x whose custom __init__ has no **kwargs to absorb it.
     )
 
     quantization_config = get_quantization_config(model_args)

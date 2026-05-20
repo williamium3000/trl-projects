@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Co-GRPO heter · qwen25_3b (base) × llama32_3b_instruct (full-param, ZeRO-3) · math345 · lr=1e-6 · eb=128 · 2 epoch
+# Co-GRPO heter · qwen25_3b (base) × phi35_mini_instruct (full-param, ZeRO-3) · math12345 · lr=1e-6 · eb=128 · 2 epoch
 # Cross-family co-training (binary reward baseline). Per-group EB: 4×bs2×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
 set -euo pipefail
 
@@ -8,11 +8,11 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL_A="Qwen/Qwen2.5-3B"
-MODEL_B="meta-llama/Llama-3.2-3B-Instruct"
-DATASET="q1716523669/MATH-Level345"
+MODEL_B="microsoft/Phi-3.5-mini-instruct"
+DATASET="q1716523669/MATH-Level12345"
 VLLM_MEM="0.45"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_x_llama32_3b_heter_math345_full_lr1e-6_e3_${TS}"
+RUN="qwen25_3b_x_phi35_mini_heter_math12345_full_lr1e-6_e2_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="${BASE_OUT}/rdv"
 rm -rf "$RDV_DIR"
@@ -32,7 +32,7 @@ COMMON=(
     --per_device_train_batch_size 2
     --gradient_accumulation_steps 192
     --train_dataset "$DATASET"
-    --num_train_epochs 3
+    --num_train_epochs 2
     --lr_scheduler_type cosine_with_min_lr
     --lr_scheduler_kwargs '{"min_lr_rate": 0.1}'
     --warmup_ratio 0.03
