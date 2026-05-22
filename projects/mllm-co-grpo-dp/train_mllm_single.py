@@ -179,6 +179,19 @@ if __name__ == "__main__":
     if processor.tokenizer.pad_token is None:
         processor.tokenizer.pad_token = processor.tokenizer.eos_token
 
+    # Gemma3-IT uses <end_of_turn> (id=106) as the turn terminator, but HF
+    # tokenizer.eos_token_id still returns 1 (<eos>). vLLM never sees 106 as a
+    # stop signal and generates until max_completion_length; TRL likewise marks
+    # every completion as clipped. Fix: patch both the tokenizer and
+    # generation_kwargs so both TRL and vLLM agree on the stop token set.
+    _model_name_lower = model_args.model_name_or_path.lower()
+    if "gemma-3" in _model_name_lower or "gemma3" in _model_name_lower:
+        _GEMMA3_EOT_ID = 106  # <end_of_turn>
+        processor.tokenizer.eos_token_id = _GEMMA3_EOT_ID
+        processor.tokenizer.eos_token = "<end_of_turn>"
+        _existing = training_args.generation_kwargs or {}
+        training_args.generation_kwargs = {**_existing, "stop_token_ids": [1, _GEMMA3_EOT_ID]}
+
     train_dataset, eval_dataset = load_dataset(script_args.train_dataset)
 
     trainer = GRPOTrainer(
