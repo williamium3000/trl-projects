@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 # Vanilla GRPO · gemma3_4b_it (full-param, ZeRO-3) · math345 · lr=3e-6 · eb=128 · 2 epoch
 # Ground-truth-label baseline. Same hparam as run_grpo__qwen25_3b.sh, EXCEPT:
-#   - attn_implementation=sdpa  (Gemma-3 head_dim=512 exceeds FA2 upper bound)
+#   - attn_implementation=flash_attention_2 (Gemma-3-4B-it head_dim=256 fits FA2;
+#     SDPA-required advice was for Gemma-4-E4B-it which has head_dim=512.
+#     See projects/mllm-co-grpo-dp/docs/gemma3_4b_it_fix_2026-05-22.md Bug 2)
 #   - vllm_gpu_memory_utilization=0.40 (4B params + larger activations vs 3B)
+#   - --vllm_importance_sampling_mode token_truncate ← REQUIRED for Gemma3
+#     across all vllm versions + all modalities. Per 2026-05-22 vllm 0.14 vs 0.18
+#     A/B test (gemma3-vllm-drift-ab-test memory): per-token logp drift 0.13 is
+#     architectural (vLLM Gemma3 kernel vs HF FA2), cross-version constant.
+#     Default `sequence_mask` would multiply that across ~2000 tokens into a
+#     1e-6 IS multiplier on per_token_loss, killing gradients.
 # Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
 set -euo pipefail
 
@@ -63,9 +71,10 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --beta 0 \
     --loss_type bnpo \
     --scale_rewards group \
+    --vllm_importance_sampling_mode token_truncate \
     --seed 42 \
     --data_seed 42 \
     --report_to wandb \
     --wandb_project Co-learning \
-    --attn_implementation sdpa \
+    --attn_implementation flash_attention_2 \
     --bf16 true 2>&1 | tee -a "$OUT/train.log"
