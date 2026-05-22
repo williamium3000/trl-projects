@@ -1,0 +1,16 @@
+# projects/eval/requirements.txt
+# 只列 lm-eval-harness extras 之外、driver / aggregate / custom tasks 必需的包。
+# setup.sh §4 已经装了 lm_eval[vllm,ifeval,math,sentencepiece],这里只补差量。
+
+# --- 13-benchmark driver / aggregator ---
+pandas>=2.0,<3
+huggingface_hub>=0.24,<1.0
+
+# --- custom-task grader (AIME-25, AMC23) ---
+# math_verify 做 latex/sympy 等价判断;不跟训练侧 verifier 冲突 (那是项目内 vendored qwen,
+# 这是独立 env)。
+math-verify>=0.4
+
+# --- external runner deps ---
+# LCB 评测沙箱 (subprocess Python),不强依赖,运行时若缺再装
+# CRUX / SciBench 同上,运行时按需

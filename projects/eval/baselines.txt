@@ -1,0 +1,17 @@
+# projects/eval/baselines.txt
+#
+# Pre-RL "base" ckpts evaluated for paper §4.2 main table 第一组 row.
+# 一行 = 一个 ckpt;run_baselines.sh 读这个文件循环跑。
+#
+# Format (3 列, 空格 / tab 分隔):
+#   <hf_repo>                        <revision_or_dash>     <shortname>
+# revision 用 "-" 表示默认 (main 分支 / latest).
+#
+# ⚠️ Phi-3.5 没有公开 base 版本 (微软只发了 -instruct)。
+# 如果你确定要换成别的(比如 Phi-3-mini-4k-base),改这一行就行。
+#
+# Llama-3.2-3B-Instruct 是 gated, 需在 eval 机器先 `huggingface-cli login`。
+
+Qwen/Qwen2.5-3B                       -    qwen25_3b_base
+meta-llama/Llama-3.2-3B-Instruct      -    llama32_3b_instruct
+microsoft/Phi-3.5-mini-instruct       -    phi35_mini_instruct
