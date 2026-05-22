@@ -22,10 +22,32 @@ import os
 from dataclasses import dataclass, field
 
 import wandb
+import torch.nn as _nn
 from transformers import AutoProcessor
+from transformers.modeling_utils import PreTrainedModel as _PreTrainedModel
 
 from co_label_utils import extract_boxed_answer, grade_answer
 from dataset import CLEVR_COUNTING_DATASET, GEOQA_DATASET, load_dataset
+
+
+# Gemma-3 + ZeRO-3 fix: PreTrainedModel._init_weights for nn.Embedding does
+# `module.weight.data[module.padding_idx].zero_()`. Under ZeRO-3, non-rank-0
+# processes see size-0 weight shards because deepspeed.zero.GatheredParameters
+# only materializes on modifier_rank=0. Indexing into a size-0 tensor crashes
+# with `IndexError: index 0 is out of bounds for dimension 0 with size 0`.
+# Qwen2.5-VL embedding has padding_idx=None so its base init never hits this
+# branch; Gemma-3 sets padding_idx and crashes.
+_orig_init_weights = _PreTrainedModel._init_weights
+
+
+def _safe_init_weights(self, module):
+    if isinstance(module, _nn.Embedding) and module.weight.data.numel() == 0:
+        return
+    return _orig_init_weights(self, module)
+
+
+_PreTrainedModel._init_weights = _safe_init_weights
+
 
 from trl import (
     GRPOConfig,

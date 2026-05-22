@@ -146,13 +146,14 @@ Same-family 对照:LLM 用 Qwen2-3B(跨代)+ Qwen2.5-3B seed-perturb;MLLM 用 Qw
 - **相关 memory**:[[internvl35_hf_vllm_logp_misalign_2026-05-22]](注:这是另一个 bug,IS ratio 1e-5;tile bug 修了之后才能 surface)
 - **诊断脚本**:`tools/diag_internvl_processor.py`(待建)
 
-### 2.2 Gemma-3-4B-it 在 TRL pipeline 训练验证 [❓ 待验证]
-- **现状**:standalone forward ✅(10.05GB VRAM),`attn_implementation=sdpa` 强制(head_dim=512 超 FA2 上限);TRL training 还没跑通
-- **风险点**:
-  - vLLM colocate gemma-3 SW attention bug([[mllm_3family_vllm014_blocker_2026-05-18]],但 0.18+/0.19+ 应该已修)
-  - reward 通过性:Gemma 自带 chat template 输出 `<end_of_turn>` 是不是被 trainer EOS 正确识别
-- **验收**:Gemma-3-4B-it GT-GRPO sanity 5 step,reward 有变化(非全 0)
-- **脚本**:`projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__gemma3_4b.sh`(待建)
+### 2.2 Gemma-3-4B-it 在 TRL pipeline 训练验证 [✅ 完成 2026-05-22]
+- **结果**:MLLM 侧 GT-GRPO 8×H100 跑通,step 1: grad_norm=1.32, IS ratio mean=0.991, reward=0.34;step 4: clipped_ratio 0.16(学得动);step_time ~80s, 1 epoch ≈ 27h
+- **关键修法**(3 个 bug,详见 [`mllm-co-grpo-dp/docs/gemma3_4b_it_fix_2026-05-22.md`](mllm-co-grpo-dp/docs/gemma3_4b_it_fix_2026-05-22.md)):
+  1. ZeRO-3 + padding_idx → `IndexError`: `train_mllm_single.py` monkey-patch `PreTrainedModel._init_weights` 对 size=0 `nn.Embedding` no-op
+  2. **认知纠错**:Gemma-3-4B-it 是 head_dim=256,**用 FA2**;笔记里 "Gemma 必须 SDPA" 指的是 Gemma-4-E4B-it (global_head_dim=512),不一样
+  3. vLLM 0.14 ↔ HF logp 漂移 → 切 `vllm_importance_sampling_mode=token_truncate`(替代 default `sequence_mask`),per-token cap 旁路掉 base drift
+- **脚本(MLLM)**:✅ `projects/mllm-co-grpo-dp/dp-scripts/phase3_single_gemma3_4b_it_geoqa.sh`
+- **脚本(LLM)** 仍待写:`projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__gemma3_4b.sh` —— ⚠️ LLM 端 base model 没 padding_idx,Bug 1 patch 无效但无害;不要复制 Bug 3 的 token_truncate(LLM 端 vLLM 跟 HF logp 对齐,不需要旁路)
 
 ### 2.3 Llama-3.2-3B-Instruct 在 TRL pipeline 验证 [❓ 待验证]
 - **现状**:co-learn Qwen × Llama 已 grounding 67.2/54(但 lr 不确定);单独 Llama GT-GRPO 没跑过
