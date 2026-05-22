@@ -290,10 +290,16 @@ Same-family 对照:LLM 用 Qwen2-3B(跨代)+ Qwen2.5-3B seed-perturb;MLLM 用 Qw
 | 5.2.2 | Qwen2.5-3B × Qwen2.5-3B(seed 42 vs seed 1337) | 完全同模型 seed 微扰 | `…/run_cogrpo_homo__qwen25_3b_seed.sh` | 🛠 |
 
 ### 5.3 N=3 Cross-family(method scalability)
-- 5.3.1 🛠 Qwen2.5-3B × Llama-3.2-3B × Gemma-3-4B
-- 需要 trainer 改造支持 3-pod rendezvous(目前 co-grpo-dp 是 2-model 4-pod 设计)
-- **代码 TODO**:`co-grpo-dp/co_grpo_dp_trainer.py` 扩展 N=3 majority vote + 平票丢弃
-- **脚本**:`co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/n3/run_cogrpo_n3__qwen_llama_gemma.sh`
+- 5.3.1 ⬜ Qwen2.5-3B × Llama-3.2-3B × Gemma-3-4B (待跑)
+- ✅ **Trainer 改造完成 2026-05-22**:
+  - `rendezvous.py` 加 `exchange_n_way()`(per-(src,dst) directed file 协议, no race)
+  - `co_grpo_dp_trainer.py` 加 N-way MV + **strict-tie → UNLABELED**(per "平票丢弃")
+  - `train_co_grpo_dp.py` 加 `--peers "B,C"` arg, seed offset 一般化 (A=0/B=+1/C=+2)
+  - 2-way scripts 不破坏(wandb metric 名 + Rendezvous 旧接口都保留)
+- **脚本**:✅ `co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/n3/run_cogrpo_n3__qwen25_3b__llama32_3b__gemma3_4b.sh`(8-GPU 2+2+2 split, grad_accum=768, ~27h/run)
+- **配套 test-time ensemble (4.7.4 N=3 36-sample)**:已有 `projects/eval/run_test_time_ensemble.sh` 接受 3 个 model,pool=36 自动
+- **文档**:`projects/co-grpo-dp/docs/n3_extension_2026-05-22.md`(算法 / 8-GPU 分配 / 平票协议 / smoke test)
+- **新 wandb metric** (N-way only): `co_labeling/peer_agreement/<peer>` / `co_labeling/labeled_fraction_peer/<peer>` / `co_labeling/supervision_fraction` / `co_labeling/peer_tie_rate`
 
 ---
 

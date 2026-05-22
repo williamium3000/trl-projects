@@ -34,7 +34,15 @@ class CoGRPOdpScriptArguments(ScriptArguments):
 
     group: str = field(
         default=None,
-        metadata={"help": "'A' or 'B' — which half of the cross-supervision run this launch is."},
+        metadata={"help": "Single uppercase letter (A/B/C/...) identifying this launch's group."},
+    )
+    peers: str = field(
+        default=None,
+        metadata={
+            "help": "Comma-separated list of peer group names for N-way (N≥3) co-learning, "
+            "e.g. 'B,C' when --group A. If omitted, defaults to the legacy 2-way pair "
+            "(A↔B)."
+        },
     )
     rendezvous_dir: str = field(
         default=None,
@@ -42,7 +50,10 @@ class CoGRPOdpScriptArguments(ScriptArguments):
     )
     peer_model_name_or_path: str = field(
         default=None,
-        metadata={"help": "Peer group's model id (for logging only; peer is launched separately)."},
+        metadata={
+            "help": "Peer group's model id (for logging only; peer is launched separately). "
+            "For N-way pass a comma-separated list, e.g. 'meta-llama/Llama-3.2-3B,google/gemma-3-4b-it'."
+        },
     )
     run_config: str = field(
         default=None,
@@ -106,25 +117,45 @@ if __name__ == "__main__":
     parser = TrlParser((CoGRPOdpScriptArguments, GRPOConfig, ModelConfig))
     script_args, training_args, model_args = parser.parse_args_and_config()
 
-    if script_args.group not in ("A", "B"):
-        raise ValueError(f"--group must be 'A' or 'B', got {script_args.group!r}")
+    # `script_args.group` is one of {'A', 'B', 'C', ...}. For 2-way the legacy
+    # rule (must be in {A,B}) holds; for N-way (N≥3) any single uppercase letter is OK.
+    if not (isinstance(script_args.group, str) and len(script_args.group) == 1 and script_args.group.isupper()):
+        raise ValueError(
+            f"--group must be a single uppercase letter (A, B, C, ...); got {script_args.group!r}"
+        )
 
-    # Group B uses an offset `seed` so the two groups' vLLM/torch RNG diverge.
-    # Without this, both groups' accelerate worlds set torch.manual_seed(seed +
+    # N-way peer list. `--peers` accepts a comma-separated list of group names,
+    # e.g. "B,C" when this launch is group A. If absent, we fall back to the
+    # legacy 2-way default (A↔B).
+    if script_args.peers:
+        peer_groups = [p.strip() for p in script_args.peers.split(",") if p.strip()]
+    else:
+        if script_args.group not in ("A", "B"):
+            raise ValueError(
+                f"For N-way (N≥3) launches you must pass --peers explicitly. "
+                f"Got --group {script_args.group!r} with no --peers."
+            )
+        peer_groups = ["B" if script_args.group == "A" else "A"]
+    if script_args.group in peer_groups:
+        raise ValueError(
+            f"--group {script_args.group!r} must not appear in --peers {peer_groups!r}"
+        )
+
+    # Each group uses an offset `seed` so the groups' vLLM/torch RNG diverge.
+    # Without this, all groups' accelerate worlds set torch.manual_seed(seed +
     # process_index) with identical (seed, process_index) pairs, producing byte-
     # identical vLLM rollouts and forcing peer_agreement → 1 (cross-supervision
     # degenerates into self-vote).
     # IMPORTANT: do NOT also bump `data_seed`. `data_seed` is the
-    # transformers-convention sampler seed; both groups must iterate the dataset
+    # transformers-convention sampler seed; ALL groups must iterate the dataset
     # in identical order so that `gathered_answers[g*G:(g+1)*G]` corresponds to
-    # the SAME prompt on A and B (required for cross-supervision to be meaningful).
-    # See trl/trainer/grpo_trainer.py:_get_train_sampler — it reads `data_seed`
-    # when set, otherwise falls back to `seed`. If `data_seed` is None here,
-    # bumping `seed` alone would also misalign prompts; set it explicitly.
-    if script_args.group == "B":
+    # the SAME prompt across groups (required for cross-supervision to be meaningful).
+    # Offset by group index (A=0, B=+1, C=+2, ...).
+    seed_offset = ord(script_args.group) - ord("A")
+    if seed_offset > 0:
         if training_args.data_seed is None:
             training_args.data_seed = training_args.seed
-        training_args.seed += 1
+        training_args.seed += seed_offset
     if script_args.rendezvous_dir is None:
         raise ValueError("--rendezvous_dir is required for co-grpo-dp.")
 
@@ -159,7 +190,8 @@ if __name__ == "__main__":
     print(f"CO-GRPO-DP (group {script_args.group}) CONFIGURATION")
     print(f"{'='*80}")
     print(f"This model   : {model_args.model_name_or_path}")
-    print(f"Peer model   : {script_args.peer_model_name_or_path}")
+    print(f"Peer groups  : {peer_groups}  (N={len(peer_groups) + 1}-way co-learning)")
+    print(f"Peer models  : {script_args.peer_model_name_or_path}")
     print(f"Rendezvous   : {script_args.rendezvous_dir}")
     print(f"WandB run    : {full_wandb_run_name}")
     print(f"Output dir   : {training_args.output_dir}")
@@ -272,6 +304,7 @@ if __name__ == "__main__":
     rendezvous = Rendezvous(
         rendezvous_dir=script_args.rendezvous_dir,
         my_group_name=script_args.group,
+        peers=peer_groups,
     )
 
     ################
