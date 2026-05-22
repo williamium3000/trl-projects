@@ -7,5 +7,6 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# run4 · T1.2.A · TODO 4.2.A · Un-GRPO-Maj (TTRL) · Qwen2.5-3B-Instruct · math345 · lr=3e-6 · e2 · eb=128
-bash projects/un-grpo-maj/dp-scripts/math345_full/lr3e-6_e2_eb128/single/run_ungropomaj__qwen25_3b.sh
+# run7 · T1.3.AB · TODO 5.1.AB · Heter Co-GRPO-DP · Qwen2.5-3B × Llama-3.2-3B · math345 · lr=3e-6 · e2 · eb=128
+# 8-GPU 4+4 split, grad_accum=384, default sequence_mask IS (both models drift~0.01)
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/hetergen/run_cogrpo_heter__qwen25_3b__llama32_3b.sh

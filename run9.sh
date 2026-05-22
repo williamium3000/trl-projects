@@ -7,5 +7,6 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# run4 · T1.2.A · TODO 4.2.A · Un-GRPO-Maj (TTRL) · Qwen2.5-3B-Instruct · math345 · lr=3e-6 · e2 · eb=128
-bash projects/un-grpo-maj/dp-scripts/math345_full/lr3e-6_e2_eb128/single/run_ungropomaj__qwen25_3b.sh
+# run9 · T1.3.BC · TODO 5.1.BC · Heter Co-GRPO-DP · Llama-3.2-3B × Gemma-3-4B-it · math345 · lr=3e-6 · e2 · eb=128
+# Gemma3 ERRATA: FA2 + token_truncate IS mode (applies globally, harmless for Llama)
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/hetergen/run_cogrpo_heter__llama32_3b__gemma3_4b.sh

@@ -1,3 +1,5 @@
+set -euo pipefail
+
 # ---- trl metadata check (fixes _save_checkpoint → version("trl") crash) ----
 python -c "from importlib.metadata import version; version('trl')" 2>/dev/null || {
     REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -5,15 +7,5 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# ---- timm (InternVL3.5 vision tower dependency; not in marti-parity base env) ----
-python -c "import timm" 2>/dev/null || {
-    echo ">>> timm missing, installing..."
-    pip install timm -q
-}
-
-# mllm-co-grpo-dp · cross-family co-learning · Qwen2.5-VL-3B × InternVL3.5-4B · GEOQA
-# 8 GPUs split 4+4 (group A / group B).
-# InternVL3.5-4B in marti-parity env needs the tokenizer/chat_template
-# monkey-patch in projects/mllm-co-grpo-dp/model_patches.py (auto-applied
-# inside train_mllm_co_grpo_dp.py — no env change required).
-bash projects/mllm-co-grpo-dp/dp-scripts/phase4_heter_qwen25vl3b_x_internvl35_4b_geoqa.sh
+# run1 · T1.1.A · TODO 4.1.A · Vanilla GRPO · Qwen2.5-3B · math345 · GT · lr=3e-6 · e2 · eb=128
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__qwen25_3b.sh
