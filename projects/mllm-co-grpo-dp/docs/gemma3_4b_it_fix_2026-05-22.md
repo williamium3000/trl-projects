@@ -150,13 +150,42 @@ bash projects/mllm-co-grpo-dp/dp-scripts/phase3_single_gemma3_4b_it_geoqa.sh
 1. **`clipped_ratio` 起始 0.36** — Gemma-3 喜欢长答案,1024 max 偏紧。前 4
    step 学到 0.16 了,可继续观察;或下一轮把 `max_completion_length` 提到
    1536 / 2048(对应 `vllm_max_model_length` 调到 3072)
-2. **`sampling_logp_difference/mean: 0.13`** 是 vLLM 0.14 的 Gemma3 实现 base
-   漂移 — `token_truncate` 已经 robust 处理。如果将来升 vllm 到 0.18+ 这个数
-   字应该会显著降到 ~0.01-0.05,届时可以恢复 default `sequence_mask` mode
-3. **不要把这个 patch 复制到 LLM 训练**(`projects/co-grpo-dp/`、
-   `projects/un-grpo-maj/`) — 那边 base model 一般没 padding_idx,patch 无效
-   但无害;也不要复制 `token_truncate` — LLM 端 vLLM 跟 HF logp 是对齐的,
-   不需要 bypass
+
+## 🔴 2026-05-22 ERRATA — vllm 0.18 A/B 测试结果(推翻原假设)
+
+**之前在本文 §Bug 3 假设**:0.13/token 的 logp drift 是 vllm 0.14 实现 bug,
+升级 vllm 0.18+ 应能降到 ~0.01-0.05,届时可以恢复 default `sequence_mask`。
+
+**实测推翻**(同一脚本 v4=vllm 0.14, v6=vllm 0.18,除 venv 外完全一致):
+
+| 指标 | v4 (vllm 0.14) | v6 (vllm 0.18) | Δ |
+|---|---|---|---|
+| `sampling_logp_difference/mean` | **0.137** | **0.134** | ≈ 0 |
+| `sampling_logp_difference/max` | 15.3 | 12.6 | 略降 |
+| IS ratio mean | 0.991 | 0.989 | ≈ 0 |
+| step 2 grad_norm | 2.34 | 1.98 | 健康 |
+| step 2 IS mean | 0.988 | 0.983 | 一样 |
+| **step_time** | **73s** | **47s** | **0.18 快 35%** 🎁 |
+| 1-epoch 估算 | 27h | **~17h** | |
+
+**修正结论**:
+- per-token logp drift 0.13 **不是 vllm 0.14 bug**,是 **Gemma3 vLLM 实现 vs HF FA2 的架构级数值漂移**(可能是 `query_pre_attn_scalar=256` 的特殊缩放,或 SW attn bf16 实现差),**跨 vllm 版本一致**
+- **`token_truncate` 是 Gemma3 必备修法**,不是 0.14 specific 的 safety net,**不能去掉**
+- **跨 modality 都需要** — text 端 Gemma3 训练也得带 `--vllm_importance_sampling_mode token_truncate`(对 Qwen/Llama 无害,他们 drift 低,per-token cap=3.0 永不触发)
+- **vllm 0.18 仍然值得用**,纯为 35% 速度优势(generation 路径快)
+
+## 🟢 跨模型 patch 应用矩阵(corrected 2026-05-22)
+
+| 模型 | Bug 1 init_weights | Bug 2 attn | Bug 3 IS mode |
+|---|---|---|---|
+| Gemma-3-4B-it (MLLM) | ✅ 必加 | FA2 | **token_truncate 必加(跨 vllm 版本)** |
+| Gemma-3-4B / -4B-it (LLM) | ✅ 加(防御性,无害) | FA2 | **token_truncate 必加** |
+| Qwen2.5-VL-3B | ❌ 不需要 | FA2 | default sequence_mask ✓ |
+| Qwen2.5-3B (LLM) | ❌ 不需要 | FA2 | default sequence_mask ✓ |
+| Llama-3.2-3B (LLM) | ❌ 不需要 | FA2 | default sequence_mask ✓ |
+| InternVL3.5-* (MLLM) | 单独问题(见 internvl35_hf_vllm_logp_misalign memory) | — | — |
+
+简言之:**只要 model = Gemma3,无论 modality 无论 vllm 版本,都得 `token_truncate`**。
 
 ---
 

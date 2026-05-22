@@ -25,7 +25,12 @@
 # Gemma-3-4B-it sidebands (per docs/gemma3_4b_it_fix_2026-05-22.md):
 #   - attn_implementation=flash_attention_2 (head_dim=256 fits FA2)
 #   - vllm_gpu_memory_utilization=0.40 (4B > 3B, plus 2-GPU group is tighter than 4-GPU)
-#   - LLM 端 vLLM × HF logp 对齐良好,不需 token_truncate (那是 MLLM 侧 Bug 3 的修法)
+#   - --vllm_importance_sampling_mode token_truncate ← REQUIRED for Gemma3,
+#     applied globally (Qwen/Llama drift is ~0.01/token so per-token cap=3.0
+#     never triggers; harmless). Per other-machine 2026-05-22 vllm 0.14 vs 0.18
+#     A/B test: Gemma3 logp drift 0.13/token is ARCHITECTURAL (vLLM Gemma3 impl
+#     vs HF FA2 mismatch), cross-vllm-version constant. token_truncate is
+#     mandatory across modalities + vllm versions.
 #
 # Run dir:
 #   $REPO_ROOT/projects/work_dirs/co-grpo-dp/$RUN/group_{A,B,C}/  (model + ckpt)
@@ -94,6 +99,7 @@ COMMON_ARGS=(
     --loss_type bnpo
     --scale_rewards group
     --self_consistency_threshold 0.0
+    --vllm_importance_sampling_mode token_truncate
     --seed 42
     --data_seed 42
     --report_to wandb

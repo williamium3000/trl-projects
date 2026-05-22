@@ -151,9 +151,10 @@ Same-family 对照:LLM 用 Qwen2-3B(跨代)+ Qwen2.5-3B seed-perturb;MLLM 用 Qw
 - **关键修法**(3 个 bug,详见 [`mllm-co-grpo-dp/docs/gemma3_4b_it_fix_2026-05-22.md`](mllm-co-grpo-dp/docs/gemma3_4b_it_fix_2026-05-22.md)):
   1. ZeRO-3 + padding_idx → `IndexError`: `train_mllm_single.py` monkey-patch `PreTrainedModel._init_weights` 对 size=0 `nn.Embedding` no-op
   2. **认知纠错**:Gemma-3-4B-it 是 head_dim=256,**用 FA2**;笔记里 "Gemma 必须 SDPA" 指的是 Gemma-4-E4B-it (global_head_dim=512),不一样
-  3. vLLM 0.14 ↔ HF logp 漂移 → 切 `vllm_importance_sampling_mode=token_truncate`(替代 default `sequence_mask`),per-token cap 旁路掉 base drift
+  3. **架构级** vLLM ↔ HF logp 漂移 → 切 `vllm_importance_sampling_mode=token_truncate`(替代 default `sequence_mask`),per-token cap 旁路掉 base drift。**ERRATA 2026-05-22 PM**:vllm 0.14 vs 0.18 A/B 实测 drift 跨版本一致(0.137 vs 0.134),`token_truncate` 是 Gemma3 必备修法不是 0.14 safety net,**跨 vllm 版本 + 跨 modality 都需要**
 - **脚本(MLLM)**:✅ `projects/mllm-co-grpo-dp/dp-scripts/phase3_single_gemma3_4b_it_geoqa.sh`
-- **脚本(LLM)** 仍待写:`projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__gemma3_4b.sh` —— ⚠️ LLM 端 base model 没 padding_idx,Bug 1 patch 无效但无害;不要复制 Bug 3 的 token_truncate(LLM 端 vLLM 跟 HF logp 对齐,不需要旁路)
+- **脚本(LLM)** 仍待写:`projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__gemma3_4b.sh` —— ⚠️ **必加 `--vllm_importance_sampling_mode token_truncate`**(Gemma3 跨 modality 都需要)。Bug 1 patch LLM 端 base 没 padding_idx,加不加都行(加进 train_grpo.py 防御性安全)
+- **额外发现**:vllm 0.18 比 0.14 generation 快 **35%**(Gemma3 step_time 73s → 47s,1-epoch 27h → 17h),纯速度优势保留 0.18
 
 ### 2.3 Llama-3.2-3B-Instruct 在 TRL pipeline 验证 [❓ 待验证]
 - **现状**:co-learn Qwen × Llama 已 grounding 67.2/54(但 lr 不确定);单独 Llama GT-GRPO 没跑过
