@@ -38,7 +38,9 @@
 | lr_scheduler | cosine_with_min_lr (min_lr_rate=0.1) | 同上 |
 | warmup_ratio | 0.03 | 同上 |
 | vllm | colocate, gpu_mem 0.45 (3B) / 0.4 (7B+4B) | [[vllm_mem_3b_oom_fix_2026-05-11]] |
-| save_steps / eval_steps | 10 / 10 | 同上 |
+| save_steps / eval_steps | 10 / 10 (MLLM: 10 / 20-50) | 同上 |
+| save_total_limit | 50(默认 None 也行,~12 ckpt/run × 6GB = 72GB,/mnt/bn 够) | 2026-05-22 协议 |
+| **ckpt selection** | **all methods → best-by-val**(协议对称,跟 Co-rewarding 同) | **2026-05-22 锁** — 见 [protocol §15](#15-ckpt-selection--best-by-val) |
 | attn_implementation | flash_attention_2(Gemma-3 必须 sdpa) | INSTALL §5.2 |
 | bf16 | true(初版);后续若 Phi 训不动启用 Tier-A patches | — |
 
@@ -462,4 +464,34 @@ nvidia-smi  # 若挂,sudo systemctl restart nvidia-persistenced
 - WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 - 命名:`<model>_<method>_<dataset>_full_<lr_tag>_e<epoch>_<timestamp>`
 - 输出:`projects/work_dirs/<method>/<run_name>/`
-- ckpt 保留:save_steps=10,最后跑完只取最终一个 ckpt 上 eval(中间 ckpt 用 wandb 趋势)
+- ckpt 保留:save_steps=10,**全部 method 跑完用 `projects/eval/run_best_eval.sh` 自动 select best-by-val 再跑 13-bench**(中间 ckpt 不丢)
+
+---
+
+## 15. Ckpt selection — best-by-val(2026-05-22 锁)
+
+**协议**:**全部 method**(heter co-learn / GT-GRPO / TTRL / Intuitor / RENT / Co-rew-II / Co-rew-I)训完后,从 `checkpoint-*/` 里**按 val accuracy 最高那 step 选 ckpt**,再在那个 ckpt 上跑 13-benchmark 主表测试。
+
+**为什么不混用 best vs end**:asymmetric ckpt selection (heter best / baseline end) 是 reviewer 红旗;两边协议要对称。Co-rewarding (ICLR 2026) 用 best-by-val,我们对齐。
+
+**Val metric**:`eval_rewards/reward_correctness/mean`(trainer inline eval 在 `eval_steps=10` 自动跑出来的 val 集准确率,落进 `checkpoint-*/trainer_state.json` 的 `log_history`)。MLLM 用 GeoQA-Test-735 / SuperCLEVR-200 当 in-domain val。
+
+**工具**:
+- `projects/eval/select_best_ckpt.py` — 扫一个 run 的所有 ckpt,选 val 最高,输出 path
+- `projects/eval/run_best_eval.sh` — 一把过 (select best → run_eval_all.sh 13-bench → CSV)
+
+**用法**:
+```bash
+# 单 run:训完直接 best+eval
+bash projects/eval/run_best_eval.sh \
+    --work_dir projects/work_dirs/co-grpo-dp/<run_name>/ \
+    --gpu 0 \
+    --csv projects/work_dirs/eval/paper_main_table.csv
+
+# 批量:循环扫所有训完的 run
+for d in projects/work_dirs/co-grpo-dp/*/; do
+    bash projects/eval/run_best_eval.sh --work_dir "$d" --csv "$CSV" --gpu 0
+done
+```
+
+**Footnote 进 paper §4.1**:"For all training methods, we select the checkpoint with the highest validation reward (computed on a held-out subset of MATH-Level345) and report test scores on the selected checkpoint."

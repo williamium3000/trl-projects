@@ -63,7 +63,9 @@ projects/eval/
 ├── requirements.txt               # 我们补的 python deps (math-verify, pandas, ...)
 ├── run_eval_all.sh                # 主驱动 (4 个 vLLM run + aggregate)
 ├── run_baselines.sh               # 循环跑 baselines.txt 里的 ckpt → 1 个 CSV
+├── run_best_eval.sh               # 训完→select_best→13-bench→CSV (端到端)
 ├── run_test_time_ensemble.sh      # TODO §4.7: K=12 × N model, MV → 1 CSV row
+├── select_best_ckpt.py            # 扫 trainer_state.json 选 val 最高的 ckpt
 ├── baselines.txt                  # 3 个 pre-RL baseline 的 HF repo 列表
 ├── aggregate.py                   # 4 个输出 → 1 行 CSV
 ├── README.md                      # 本文件
@@ -122,6 +124,33 @@ cat "$RUN/qwen25_3b_base/*/lm_eval/results*.json" | head
 如果某个 baseline 跑挂了,该 row 不会进 CSV,但其它 baseline 不受影响 (parallel 模式整个脚本会非零退出;sequential 模式当前的 setting 是 fail-fast,改一行就能不挂)。
 
 要换 baseline:编辑 `projects/eval/baselines.txt`,一行一个 ckpt,format: `<hf_repo> <revision_or_dash> <shortname>`。
+
+## Best-by-val pipeline (训完 ckpt → 选 best → 13-bench)
+
+**协议**:训完一个 run(任何 method,heter / GT / TTRL / ...)→ 用 inline eval logged 在 `trainer_state.json` 的 val accuracy 选 best ckpt → 在那个 ckpt 上跑 13 benchmark。
+
+```bash
+# 单 run 端到端
+bash projects/eval/run_best_eval.sh \
+    --work_dir projects/work_dirs/co-grpo-dp/<run_name>/ \
+    --gpu 0 \
+    --csv projects/work_dirs/eval/paper_main_table.csv
+
+# 想先看 best ckpt 是哪个(不跑 13-bench),debug 用:
+python projects/eval/select_best_ckpt.py \
+    --work_dir projects/work_dirs/co-grpo-dp/<run_name>/ --top_k 5
+# → 打印 top 5 ckpt 跟它们的 val score
+
+# 批量:扫一组 run
+for d in projects/work_dirs/co-grpo-dp/*/; do
+    [ -d "$d/checkpoint-10" ] || continue
+    bash projects/eval/run_best_eval.sh --work_dir "$d" --csv "$CSV" --gpu 0
+done
+```
+
+**Val metric**:`eval_rewards/reward_correctness/mean`(默认),Trainer inline eval 在 `eval_steps=10` 时自动跑;`run_best_eval.sh` 默认读这个,要换 `--metric eval_loss --minimize`。
+
+**Why best-by-val 不是 end-of-train**:协议要全部 method 都 best,asymmetric 是 reviewer 红旗。Co-rewarding (ICLR 2026) 也是 best-by-val,我们对齐。
 
 ## Test-time SC ensemble (TODO §4.7, 不训练)
 
