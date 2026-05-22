@@ -1,6 +1,11 @@
-# mllm-co-grpo-dp env setup (新机 / 切机 必读)
+# mllm-co-grpo-dp env setup (旧版,已废)
 
-> **⚠️ ERRATA · 2026-05-16** — 本文件正文 §0–§7 与现状不符,**先读这段 ERRATA,正文重写推后**。
+> **🚫 OBSOLETE — 2026-05-22**
+> 本仓 `projects/mllm-co-grpo-dp/` 已**整体废弃**。MLLM 工作迁到独立仓 [`DrStranded/trl-projects-mllm`](https://github.com/DrStranded/trl-projects-mllm),env 装法 + 论文 GT 全部见那里的 `ENV.md` + `EMNLP_2026_TODO.md`。
+>
+> **不要按本文 install env / 跑实验**。本文保留作为历史归档。
+
+> **⚠️ ERRATA · 2026-05-16(老 erratum,跟上面的 OBSOLETE 累加)** — 本文件正文 §0–§7 与现状不符,**先读这段 ERRATA,正文重写推后**。
 >
 > - **Env 策略反转**:不是"独立 env 版本自由",改为 **marti-parity**(`conda create --clone marti -n mllm-cogrpodp`),版本必须严格 == marti(transformers 4.57.6 / vllm 0.18.0 / torch 2.10.0)。**mllm-cogrpodp 是 marti 的镜像** + 一两个允许偏差,目的是把它当成"marti stack 能否跑 MLLM"的对比测试床。
 > - **Grader 后端反转**:`verifiers/math_verify_wrapper.py` 文件名保留(上游 `co_label_utils.py` / `dataset.py` import 不动),但**内部 backend 改为 qwen-sympy**(`from verifiers.qwen.math_grade import grade_answer`,`verifiers/qwen/` 从 `co-grpo-dp` cp 过来)。`math_verify` 不再使用(根因:`verify(parse("\sqrt{2}\pi"), parse("\sqrt{2}\pi"))` self-fail + antlr4 4.13.2 ↔ 4.7.2 冲突)。

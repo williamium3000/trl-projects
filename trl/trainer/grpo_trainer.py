@@ -334,6 +334,22 @@ class GRPOTrainer(_BaseTrainer):
         self.pad_token_id = tokenizer.pad_token_id
         self.eos_token_id = tokenizer.eos_token_id
 
+        # Full set of EOS token ids used for stop-detection / truncation metrics / completion masking.
+        # Some models (Phi-3.5, Qwen3) declare a LIST of EOS tokens in `generation_config.eos_token_id`
+        # (e.g., template-specific <|end|> in addition to <|endoftext|>). If we only matched on the
+        # singular `tokenizer.eos_token_id`, valid template-stops would be wrongly counted as truncated
+        # AND their trailing padding would be folded into the loss via the EOS-cutoff mask logic.
+        gen_cfg_eos = getattr(getattr(model, "generation_config", None), "eos_token_id", None)
+        if gen_cfg_eos is None:
+            _eos_ids = [self.eos_token_id]
+        elif isinstance(gen_cfg_eos, int):
+            _eos_ids = [gen_cfg_eos]
+        else:
+            _eos_ids = list(gen_cfg_eos)
+        if self.eos_token_id is not None and self.eos_token_id not in _eos_ids:
+            _eos_ids.append(self.eos_token_id)
+        self.eos_token_ids: set[int] = {int(t) for t in _eos_ids if t is not None}
+
         if is_peft_available() and is_peft_model(model) and peft_config is not None:
             raise ValueError(
                 "You passed a `PeftModel` instance together with a `peft_config` to the trainer. Please first merge "
@@ -1413,8 +1429,9 @@ class GRPOTrainer(_BaseTrainer):
             prompt_length = generate_inputs["input_ids"].size(1)
             completion_ids = prompt_completion_ids[:, prompt_length:]
 
-            # Mask everything after the first EOS token
-            is_eos = completion_ids == self.eos_token_id
+            # Mask everything after the first EOS token (any of the registered EOS variants).
+            _eos_tensor = torch.tensor(list(self.eos_token_ids), device=completion_ids.device)
+            is_eos = torch.isin(completion_ids, _eos_tensor)
             eos_idx = torch.full((is_eos.size(0),), is_eos.size(1), dtype=torch.long, device=device)
             eos_idx[is_eos.any(dim=1)] = is_eos.int().argmax(dim=1)[is_eos.any(dim=1)]
             sequence_indices = torch.arange(is_eos.size(1), device=device).expand(is_eos.size(0), -1)
@@ -1470,7 +1487,7 @@ class GRPOTrainer(_BaseTrainer):
         # When we compute `suffix_ids` by slicing `full_ids`, we must align the slicing boundary to
         # EOS (not EOS + newline). Templates that don't use EOS as end-of-turn (e.g. Gemma uses
         # <turn|>) skip this trimming.
-        eos_positions = [i for i, tok_id in enumerate(prefix_ids) if tok_id == self.eos_token_id]
+        eos_positions = [i for i, tok_id in enumerate(prefix_ids) if tok_id in self.eos_token_ids]
         if eos_positions:
             prefix_ids = prefix_ids[: eos_positions[-1] + 1]
 
@@ -1882,7 +1899,7 @@ class GRPOTrainer(_BaseTrainer):
         self._metrics[mode]["completions/max_length"].append(agg_completion_lengths.float().max().item())
 
         # Identify sequences that terminated with EOS and log their lengths
-        eos_and_pad = [self.eos_token_id, self.pad_token_id]
+        eos_and_pad = self.eos_token_ids | {self.pad_token_id}
         is_truncated = torch.tensor([ids[-1] not in eos_and_pad for ids in completion_ids], device=device)
         agg_is_truncated = self.accelerator.gather(is_truncated)
         self._metrics[mode]["completions/clipped_ratio"].append(agg_is_truncated.float().mean().item())
@@ -2025,7 +2042,7 @@ class GRPOTrainer(_BaseTrainer):
 
         # If mask_truncated_completions is enabled, zero out truncated completions for attention and loss masking
         if self.mask_truncated_completions:
-            eos_and_pad = [self.eos_token_id, self.pad_token_id]
+            eos_and_pad = self.eos_token_ids | {self.pad_token_id}
             is_truncated = torch.tensor([ids[-1] not in eos_and_pad for ids in completion_ids_list], device=device)
             # Mask completion_mask for attention masking
             completion_mask = completion_mask * (~is_truncated).unsqueeze(1).int()

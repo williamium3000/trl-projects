@@ -1,6 +1,9 @@
-# SELF_REVIEW.md — 代码 review checklist + 已知 risk
+# SELF_REVIEW.md — 代码 review checklist + 已知 risk(旧版,已废)
 
-> **⚠️ ERRATA · 2026-05-16** — §1b CPU verify / §2 deviations / §3 risk(R1/R4/R6)/ §5 启动顺序均与现状不符,**先读这段,正文重写推后**。
+> **🚫 OBSOLETE — 2026-05-22**
+> MLLM 工作迁到独立仓 [`DrStranded/trl-projects-mllm`](https://github.com/DrStranded/trl-projects-mllm)。本文 review 内容针对旧 mllm-co-grpo-dp 实现,新仓重写后不再适用。
+
+> **⚠️ ERRATA · 2026-05-16(老 erratum)** — §1b CPU verify / §2 deviations / §3 risk(R1/R4/R6)/ §5 启动顺序均与现状不符,**先读这段,正文重写推后**。
 >
 > - **Env**:不是"独立 env 升 vllm 0.19.1 + transformers 5.8.1",而是 **marti-parity**(transformers 4.57.6 / vllm 0.18.0 严守不漂)。
 > - **Grader §2 表**:`math_verify`(HF 官方)→ **改回 `qwen-sympy`**(从 co-grpo-dp cp `verifiers/qwen/`,wrapper `verifiers/math_verify_wrapper.py` 文件名保留但 backend 已 swap)。

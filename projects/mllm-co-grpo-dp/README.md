@@ -1,6 +1,9 @@
-# mllm-co-grpo-dp
+# mllm-co-grpo-dp(旧版,已废)
 
-> **⚠️ ERRATA · 2026-05-16** — 正文(项目结构 / 关键决策表 / 怎么跑)与现状不符,**先读这段,正文重写推后**。
+> **🚫 OBSOLETE — 2026-05-22**
+> MLLM 工作迁到独立仓 [`DrStranded/trl-projects-mllm`](https://github.com/DrStranded/trl-projects-mllm)。本目录的代码 / 脚本仅作历史归档,新机 / pod 不要按本仓 install。
+
+> **⚠️ ERRATA · 2026-05-16(老 erratum)** — 正文(项目结构 / 关键决策表 / 怎么跑)与现状不符,**先读这段,正文重写推后**。
 >
 > - **Env**:`mllm-cogrpodp` 是 **marti env 的 clone**(`conda create --clone marti`),版本严格 == marti(t 4.57.6 / vllm 0.18 / torch 2.10)。不是"独立版本自由"env。
 > - **Grader 后端**:`qwen-sympy`(`verifiers/qwen/` cp from co-grpo-dp),**不是 math_verify**。`verifiers/math_verify_wrapper.py` 文件名保留,内部 backend 已 swap。
