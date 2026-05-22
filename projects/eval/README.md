@@ -58,26 +58,30 @@ Appendix 7 列: 其余。
 
 ```
 projects/eval/
-├── setup.sh                     # 一键安装 (conda + lm-eval + vllm + 3 外挂)
-├── verify.sh                    # 装完 smoke test
-├── requirements.txt             # 我们补的 python deps (math-verify, pandas, ...)
-├── run_eval_all.sh              # 主驱动 (4 个 vLLM run + aggregate)
-├── run_baselines.sh             # 循环跑 baselines.txt 里的 ckpt → 1 个 CSV
-├── baselines.txt                # 3 个 pre-RL baseline 的 HF repo 列表
-├── aggregate.py                 # 4 个输出 → 1 行 CSV
-├── README.md                    # 本文件
+├── setup.sh                       # 一键安装 (conda + lm-eval + vllm + 3 外挂)
+├── verify.sh                      # 装完 smoke test
+├── requirements.txt               # 我们补的 python deps (math-verify, pandas, ...)
+├── run_eval_all.sh                # 主驱动 (4 个 vLLM run + aggregate)
+├── run_baselines.sh               # 循环跑 baselines.txt 里的 ckpt → 1 个 CSV
+├── run_test_time_ensemble.sh      # TODO §4.7: K=12 × N model, MV → 1 CSV row
+├── baselines.txt                  # 3 个 pre-RL baseline 的 HF repo 列表
+├── aggregate.py                   # 4 个输出 → 1 行 CSV
+├── README.md                      # 本文件
 ├── lm_eval_custom_tasks/
 │   ├── aime_2025.yaml
 │   ├── amc23.yaml
-│   ├── utils.py                 # process_results_aime / amc
+│   ├── utils.py                   # process_results_aime / amc
 │   └── README.md
+├── test_time_ensemble/
+│   ├── ensemble_eval.py           # 3-phase: generate / score / aggregate
+│   └── README.md                  # SC ensemble 细节
 ├── external/
-│   ├── livecodebench_runner.py  # 包了 LCB v6 官方 runner
-│   ├── cruxeval_runner.py       # 自己拉 dataset + vLLM 跑
-│   └── scibench_runner.py       # 自己拉 dataset + vLLM 跑
-└── external_repos/              # setup.sh 拉到这里 (gitignored)
-    ├── lm-evaluation-harness/   # editable install
-    ├── LiveCodeBench/           # editable install (--no-deps)
+│   ├── livecodebench_runner.py    # 包了 LCB v6 官方 runner
+│   ├── cruxeval_runner.py         # 自己拉 dataset + vLLM 跑
+│   └── scibench_runner.py         # 自己拉 dataset + vLLM 跑
+└── external_repos/                # setup.sh 拉到这里 (gitignored)
+    ├── lm-evaluation-harness/     # editable install
+    ├── LiveCodeBench/             # editable install (--no-deps)
     ├── cruxeval/
     └── scibench/
 ```
@@ -118,6 +122,21 @@ cat "$RUN/qwen25_3b_base/*/lm_eval/results*.json" | head
 如果某个 baseline 跑挂了,该 row 不会进 CSV,但其它 baseline 不受影响 (parallel 模式整个脚本会非零退出;sequential 模式当前的 setting 是 fail-fast,改一行就能不挂)。
 
 要换 baseline:编辑 `projects/eval/baselines.txt`,一行一个 ckpt,format: `<hf_repo> <revision_or_dash> <shortname>`。
+
+## Test-time SC ensemble (TODO §4.7, 不训练)
+
+```bash
+# 4.7.1  Qwen + Llama, K=12 each, pool=24, MV, core5 benches
+bash projects/eval/run_test_time_ensemble.sh \
+    --models "Qwen/Qwen2.5-3B,meta-llama/Llama-3.2-3B-Instruct" --gpu 0
+
+# 想跟 baselines 一起看 (append 进 baselines.csv):
+bash projects/eval/run_test_time_ensemble.sh \
+    --models "Qwen/Qwen2.5-3B,meta-llama/Llama-3.2-3B-Instruct" \
+    --csv projects/work_dirs/eval/baselines_<TS>/baselines.csv --gpu 0
+```
+
+完整算法 / canonicalize 实现 / 4 个 ensemble path / 时长估算 → `test_time_ensemble/README.md`.
 
 ## 并发 (eval pod, 1 pod 8 卡)
 

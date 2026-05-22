@@ -261,7 +261,11 @@ Same-family 对照:LLM 用 Qwen2-3B(跨代)+ Qwen2.5-3B seed-perturb;MLLM 用 Qw
 - 4.7.2 ⬜ Qwen2.5-3B + Gemma-3-4B,24-sample
 - 4.7.3 ⬜ Llama-3.2-3B + Gemma-3-4B,24-sample
 - 4.7.4 ⬜ Qwen + Llama + Gemma,36-sample(N=3 配对)
-- **脚本**:`projects/eval/run_test_time_ensemble.sh <model_list> <suite>`(🛠 待写)
+- **脚本**:✅ `projects/eval/run_test_time_ensemble.sh --models "<csv>" [--bench core5|core9] [--k 12] [--gpu N]`
+  - 实现:3-phase (vLLM gen × N → MV w/ math_verify canonicalize → CSV)
+  - 默认 `core5` = GSM8K+MATH500+AMC+AIME25+GPQA-D(paper 主表减 HumanEval)
+  - 代码:`projects/eval/test_time_ensemble/ensemble_eval.py` + `run_test_time_ensemble.sh`
+  - 文档:`projects/eval/test_time_ensemble/README.md`
 
 ---
 
