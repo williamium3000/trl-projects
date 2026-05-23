@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 # ---- trl metadata check (fixes _save_checkpoint → version("trl") crash) ----
