@@ -262,21 +262,9 @@ $(green "env 装好, 训练 ready.")
   # 3) HF login (一次性, 跑 Llama 之前)
   huggingface-cli login
 
-  # 4) 启动训练 — 三种模式
-  # 4a) 单个 (bash, 当前 shell 跑)
-  bash run1.sh
-  # 4b) 顺序 10 个 (bash, ~10 天 串行, 单 pod fallback)
-  for i in 1 2 3 4 5 6 7 8 9 10; do bash run\$i.sh; done
-  # 4c) Arnold pod 并行 (每个 pod 起一个 runN.sh, 10 pod 各 ~24h 并行)
-  bash run1.sh    # 这条在 pod 1 上跑
-  # ... 其它 9 个 run 各在自己 pod 上 bash 启
-  # 4d) SLURM 集群并行 sbatch (UCSD Expanse 类) — 一行批量提
-  mkdir -p logs
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    sbatch --job-name=col-run\$i --nodes=1 --gpus=8 --time=30:00:00 \\
-           --output=logs/run\$i-%j.out --error=logs/run\$i-%j.err run\$i.sh
-  done
-  # (集群可能要补 --partition=<x> --account=<y>, 看你 cluster docs)
+  # 4) 启动训练 — 一个 pod 跑一个 run
+  bash run1.sh        # 这个 pod 跑 run1, 其它 9 个 run 各在自己 pod 上 bash 启
+  # 10 个并行 = 起 10 个 pod, 每个 pod 走完上面 1)-4) 5 行流程, 替 run1.sh 为 runN.sh
 
 10 个 run 速查 (Tier 1 + T2.1, RUN_PRIORITY.md):
   run1.sh    # T1.1.A  Qwen GT-GRPO       (~20h)
