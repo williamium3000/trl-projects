@@ -8,12 +8,12 @@
 # (mllm-co-grpo-dp) 训练 (per memory env_partition_2026-05-17 +
 # feedback_mllm_env_marti_parity).
 #
-# 用法:
-#   bash setup.sh                      # 默认 conda env `marti`
-#   ENV_NAME=marti-pod bash setup.sh
-#   USE_VENV=1 bash setup.sh           # 学长 K8s pod / 没 conda 走 venv
-#   USE_VENV=1 VENV_DIR=/mnt/bn/venvs/marti bash setup.sh
-#   SKIP_FLASH_ATTN=1 bash setup.sh    # 仅 import sanity, GPU 不在的机子
+# 用法 (auto-detect: 有 conda → conda env / 没 conda → venv, 学长 pod 自动走 venv):
+#   bash setup.sh                          # 默认 (env_name=marti / venv_dir=./.venv-marti)
+#   ENV_NAME=marti-pod bash setup.sh       # 改 conda env 名
+#   VENV_DIR=/mnt/bn/venvs/marti bash setup.sh  # 改 venv 路径
+#   USE_VENV=1 bash setup.sh               # 显式强制 venv (有 conda 也走 venv)
+#   SKIP_FLASH_ATTN=1 bash setup.sh        # 仅 import sanity, GPU 不在的机子
 #
 # Docker friendly: 全部走 conda/pip, 不需要 root, 不调系统 apt. 失败立刻 abort.
 # Eval env (`eval-rlif`) 是另一个 env, 见 projects/eval/setup.sh.
@@ -22,7 +22,14 @@
 set -euo pipefail
 
 ENV_NAME="${ENV_NAME:-marti}"
-USE_VENV="${USE_VENV:-0}"                  # 1 → 跳 conda, 用 venv (学长 pod 模式)
+# Auto-detect: 没 conda → 默认 venv (学长 K8s pod). USE_VENV=1 显式强制 venv.
+if [ -z "${USE_VENV:-}" ]; then
+    if command -v conda >/dev/null 2>&1; then
+        USE_VENV=0
+    else
+        USE_VENV=1
+    fi
+fi
 VENV_DIR="${VENV_DIR:-./.venv-${ENV_NAME}}" # 默认 repo 内 .venv 目录
 PY_VER="3.12"
 TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu128}"
@@ -45,21 +52,16 @@ header() { echo; bold "===== $* ====="; }
 # --- 1. Pre-flight ---------------------------------------------------------
 header "§1 Pre-flight"
 
-# Conda mode vs venv mode 判断
+# Conda mode vs venv mode 判断 (USE_VENV 已在文件顶部 auto-detect)
 if [ "$USE_VENV" = "1" ]; then
-    yellow "USE_VENV=1 → 走 venv 模式 (没 conda 的 K8s pod / Docker)"
+    yellow "→ venv 模式 (auto-detect: 没 conda, 或 USE_VENV=1 显式指定)"
     if ! command -v python3 >/dev/null 2>&1; then
         red "ERROR: python3 not found. Install Python 3.10+ first."
         exit 1
     fi
     echo "python3: $(python3 --version)"
 else
-    if ! command -v conda >/dev/null 2>&1; then
-        red "conda not found. 两种修法:"
-        red "  A) Install Miniconda first: https://docs.conda.io/en/latest/miniconda.html"
-        red "  B) 或 USE_VENV=1 bash setup.sh   (走 venv, 学长 pod 模式)"
-        exit 1
-    fi
+    echo "→ conda 模式 (env: $ENV_NAME)"
     echo "conda: $(conda --version)"
 fi
 
@@ -247,31 +249,38 @@ header "§10 Done — 启动检查清单"
 cat <<EOF
 $(green "env 装好, 训练 ready.")
 
-跑前必做:
-  1) 激活 env:
-       conda activate $ENV_NAME            # conda 模式
-       source $VENV_DIR/bin/activate       # venv 模式 (USE_VENV=1)
+完整启动流程 (跟学长 OPSD pod 一致, c&p 改路径即可):
 
-  2) HF login (一次性, 跑 Llama 之前):
-       huggingface-cli login
+  # 1) GPU 监控 (学长 pod 标配, 一直挂着)
+  cd /mnt/bn/tns-algo-video-vlm-ruby/yijiangli
+  python run_dynamic.py --target-util 75 --vllm-threshold 100 &
 
-跑训练 (10 个脚本对应 RUN_PRIORITY.md Tier 1 + T2.1):
-  bash run1.sh    # T1.1.A  Qwen GT-GRPO       (~20h)
-  bash run2.sh    # T1.1.B  Llama GT-GRPO      (~20h)  ← gated, 先 HF login
-  bash run3.sh    # T1.1.C  Gemma GT-GRPO      (~20h)
-  bash run4.sh    # T1.2.A  Qwen TTRL          (~22h)
-  bash run5.sh    # T1.2.B  Llama TTRL         (~22h)  ← gated
-  bash run6.sh    # T1.2.C  Gemma TTRL         (~22h)
-  bash run7.sh    # T1.3.AB Qwen × Llama heter (~24h)  ← gated
-  bash run8.sh    # T1.3.AC Qwen × Gemma heter (~24h)
-  bash run9.sh    # T1.3.BC Llama × Gemma      (~24h)  ← gated
-  bash run10.sh   # T2.1    N=3 Qwen × Llama × Gemma (~27h)  ← gated
+  # 2) 进项目装环境 (这步 = 当前 setup.sh, 已经跑完)
+  cd /mnt/bn/tns-algo-video-vlm-ruby/yijiangli/project/<your-name>/trl-projects
+  bash setup.sh
 
-或 sbatch 批量提交 (学长 K8s pod):
-  for i in {1..10}; do sbatch runN.sh; done   # 当然你想跑哪几个就提哪几个
+  # 3) HF login (一次性, 跑 Llama 之前)
+  huggingface-cli login
 
-wandb 不用 login — API key 已 inline 在每个 train script 里, 'wandb online' 自动启动.
-要换帐号: 直接改 projects/*/dp-scripts/.../*.sh 里的 WANDB_API_KEY / WANDB_ENTITY.
+  # 4) 启动训练 — 单个 or 顺序批量
+  bash run1.sh                                        # 单个
+  for i in 1 2 3 4 5 6 7 8 9 10; do bash run\$i.sh; done   # 顺序 10 个
 
-Eval env (跑 13-benchmark) 是另一个 env, 看 projects/eval/setup.sh.
+10 个 run 速查 (Tier 1 + T2.1, RUN_PRIORITY.md):
+  run1.sh    # T1.1.A  Qwen GT-GRPO       (~20h)
+  run2.sh    # T1.1.B  Llama GT-GRPO      (~20h)  ← gated, 先 HF login
+  run3.sh    # T1.1.C  Gemma GT-GRPO      (~20h)
+  run4.sh    # T1.2.A  Qwen TTRL          (~22h)
+  run5.sh    # T1.2.B  Llama TTRL         (~22h)  ← gated
+  run6.sh    # T1.2.C  Gemma TTRL         (~22h)
+  run7.sh    # T1.3.AB Qwen × Llama heter (~24h)  ← gated
+  run8.sh    # T1.3.AC Qwen × Gemma heter (~24h)
+  run9.sh    # T1.3.BC Llama × Gemma      (~24h)  ← gated
+  run10.sh   # T2.1    N=3 Qwen × Llama × Gemma  (~27h)  ← gated
+
+env 信息:
+  - 训练 (LLM run1-10 + MLLM phase3/4) 共用本 env (transformers 4.57.6 / vllm 0.18.0).
+  - $([ "$USE_VENV" = "1" ] && echo "venv 已激活: $VENV_DIR" || echo "conda 激活: conda activate $ENV_NAME")
+  - wandb 不用 login, API key inline 在 train script 里, 一律进 'Co-learning' project.
+  - Eval (跑 13-benchmark) 是另一个 env, 看 projects/eval/setup.sh.
 EOF
