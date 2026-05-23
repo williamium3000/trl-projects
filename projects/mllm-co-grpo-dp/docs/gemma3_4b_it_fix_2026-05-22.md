@@ -183,9 +183,11 @@ bash projects/mllm-co-grpo-dp/dp-scripts/phase3_single_gemma3_4b_it_geoqa.sh
 | Qwen2.5-VL-3B | ❌ 不需要 | FA2 | default sequence_mask ✓ |
 | Qwen2.5-3B (LLM) | ❌ 不需要 | FA2 | default sequence_mask ✓ |
 | Llama-3.2-3B (LLM) | ❌ 不需要 | FA2 | default sequence_mask ✓ |
-| InternVL3.5-* (MLLM) | 单独问题(见 internvl35_hf_vllm_logp_misalign memory) | — | — |
+| InternVL3.5-* (MLLM) | ❌ 不需要 (own bug = crop_to_patches tiling, 见 [`internvl35_hf_geoqa_only_fix_2026-05-23.md`](internvl35_hf_geoqa_only_fix_2026-05-23.md)) | FA2 | **token_truncate 必加** ⚠️ |
 
-简言之:**只要 model = Gemma3,无论 modality 无论 vllm 版本,都得 `token_truncate`**。
+> **2026-05-23 ADDENDUM**(推翻 commit `721d215d` body 里的 extrapolation): 该 commit message 写 "Qwen/Llama/Intern* drift ~0.01/token, per-token cap=3.0 never fires" 是**没单独 A/B 测 Intern** 的推断,**错**。本机 2026-05-23 InternVL3.5-2B-HF sanity (35 step) 实测 `sampling_logp_difference/mean ≈ 0.13`,跟 Gemma3 完全同档,`IS ratio min` 频繁打到 1e-7~1e-11,**`token_truncate` cap 在救场**。InternVL3.5-HF 跟 Gemma3 是同源 architectural drift,跨 vllm 版本都需要 `token_truncate`。phase3/phase4 InternVL 脚本已带,**禁止 drop**。
+
+简言之:**只要 model ∈ {Gemma3, InternVL3.5-HF},无论 modality 无论 vllm 版本,都得 `token_truncate`**。
 
 ---
 
