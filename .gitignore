@@ -153,3 +153,16 @@ uv.lock
 mlflow.db*
 .claude
 projects/work_dirs
+
+# Claude state files / credentials (never commit)
+/.claude.json
+/.credentials.json
+/.last-cleanup
+/history.jsonl
+/backups/
+/cache/
+/cmd/
+/file-history/
+/plugins/
+/projects/-mnt-*/
+/.venv-marti/

@@ -26,7 +26,9 @@ import os
 from dataclasses import dataclass, field
 
 import wandb
+import torch.nn as _nn
 from transformers import AutoTokenizer
+from transformers.modeling_utils import PreTrainedModel as _PreTrainedModel
 
 from co_grpo_dp_4regime_trainer import CoGRPOdp4RegimeTrainer
 from co_label_utils import (
@@ -43,6 +45,17 @@ from disagree_naive_utils import (
 from log_distill_utils import make_reward_log_distill
 from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, load_dataset
 from rendezvous import Rendezvous
+
+# Gemma-3 + ZeRO-3 fix: _init_weights 对 nn.Embedding 做 weight[padding_idx].zero_(),
+# ZeRO-3 下非 rank-0 是 size-0 shard → IndexError。Gemma-3 有 padding_idx 会触发。
+_orig_init_weights = _PreTrainedModel._init_weights
+
+def _safe_init_weights(self, module):
+    if isinstance(module, _nn.Embedding) and module.weight.data.numel() == 0:
+        return
+    return _orig_init_weights(self, module)
+
+_PreTrainedModel._init_weights = _safe_init_weights
 
 from trl import (
     GRPOConfig,
@@ -351,7 +364,6 @@ if __name__ == "__main__":
         trust_remote_code=model_args.trust_remote_code,
         attn_implementation=model_args.attn_implementation or "flash_attention_2",
         torch_dtype=model_dtype,
-        use_cache=False if training_args.gradient_checkpointing else True,
     )
 
     quantization_config = get_quantization_config(model_args)
