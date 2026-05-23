@@ -23,7 +23,7 @@ mkdir -p "$OUT"
 wandb online
 export WANDB_API_KEY="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"
 export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
-export WANDB_PROJECT="un-grpo-maj"
+export WANDB_PROJECT="Co-learning"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
 
@@ -70,6 +70,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --seed 42 \
     --data_seed 42 \
     --report_to wandb \
-    --wandb_project un-grpo-maj \
+    --wandb_project Co-learning \
     --attn_implementation flash_attention_2 \
     --bf16 true 2>&1 | tee -a "$OUT/train.log"
