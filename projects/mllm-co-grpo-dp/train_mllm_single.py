@@ -201,6 +201,30 @@ if __name__ == "__main__":
     if processor.tokenizer.pad_token is None:
         processor.tokenizer.pad_token = processor.tokenizer.eos_token
 
+    # InternVL3.5-HF crashes step 0 with "Image features and image tokens do not
+    # match: tokens: 3328, features 256" because InternVLProcessor defaults
+    # crop_to_patches=True → 1 image → up to 13 tiles in pixel_values; TRL's
+    # split_pixel_values_by_grid only handles Qwen image_grid_thw / Gemma
+    # image_position_ids, returns the batch unchanged, then split_tensor_dict
+    # naively chunks pixel_values by shape[0]/num_chunks and drops most tiles.
+    # Fix: force no-tiling on processor instance + class-level kwargs defaults.
+    # Lossy for high-detail images, OK for GeoQA (geometry diagrams <300px
+    # already tile to 1 patch with the processor's default min/max_patches=1/12).
+    # See projects/mllm-co-grpo-dp/docs/internvl35_hf_geoqa_only_fix_2026-05-23.md.
+    if "internvl" in model_args.model_name_or_path.lower():
+        if hasattr(processor, "image_processor"):
+            if hasattr(processor.image_processor, "crop_to_patches"):
+                processor.image_processor.crop_to_patches = False
+            if hasattr(processor.image_processor, "max_patches"):
+                processor.image_processor.max_patches = 1
+            if hasattr(processor.image_processor, "min_patches"):
+                processor.image_processor.min_patches = 1
+        try:
+            from transformers.models.internvl.processing_internvl import InternVLProcessorKwargs
+            InternVLProcessorKwargs._defaults["images_kwargs"]["crop_to_patches"] = False
+        except Exception:
+            pass
+
     # Gemma3-IT uses <end_of_turn> (id=106) as the turn terminator, but HF
     # tokenizer.eos_token_id still returns 1 (<eos>). vLLM never sees 106 as a
     # stop signal and generates until max_completion_length; TRL likewise marks
