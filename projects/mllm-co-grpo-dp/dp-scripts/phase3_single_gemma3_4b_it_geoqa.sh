@@ -19,10 +19,20 @@
 # ZeRO-3 + Gemma-3 padding_idx _init_weights monkey-patch also lives in
 # train_mllm_single.py (no-op on size-0 nn.Embedding shards under DS gather).
 #
-# Verified 2026-05-22 on 8×H100:
+# Verified 2026-05-22 on 8×H100 (step-4 sanity, old 1024/2048/beta=0):
 #   step 1: grad_norm=1.32, IS ratio mean=0.991, loss=0.0012, reward=0.34
 #   step 4: clipped_ratio 0.36→0.16 (model learning), step_time ~80s
 #   full 1-epoch (985 step) ≈ 27h
+#
+# Updated 2026-05-24 to v12 long-run config (peer-validated on remote box):
+#   - max_completion_length 1024→1536 + vllm_max_model_length 2048→3072
+#     (Gemma3 is verbose; ~30% generations were getting clipped at 1024 →
+#     reward signal degraded; v8 verified)
+#   - beta 0→0.04 (v11 silent CUDA-assert at step 93: model drift drove
+#     logp_diff > 40 → bf16 overflow; KL anchor to ref keeps drift bounded.
+#     Stacks with token_truncate: IS clips per-step, KL bounds cumulative.)
+#   - save_steps 10→20 + save_total_limit 5 (MLLM manual-selection protocol;
+#     reduces save/delete I/O without changing keep-count).
 
 set -euo pipefail
 
@@ -63,23 +73,24 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --warmup_ratio 0.03 \
     --gradient_checkpointing \
     --gradient_checkpointing_kwargs '{"use_reentrant": false}' \
-    --max_completion_length 1024 \
+    --max_completion_length 1536 \
     --num_generations 8 \
     --temperature 1.0 \
     --temperature_eval 0.6 \
     --use_vllm \
     --vllm_mode colocate \
-    --vllm_max_model_length 2048 \
+    --vllm_max_model_length 3072 \
     --vllm_gpu_memory_utilization "$VLLM_MEM" \
     --logging_steps 1 \
     --save_strategy steps \
-    --save_steps 10 \
+    --save_steps 20 \
+    --save_total_limit 5 \
     --eval_strategy steps \
     --eval_steps 20 \
     --num_generations_eval 1 \
     --per_device_eval_batch_size 1 \
     --adam_beta2 0.95 \
-    --beta 0 \
+    --beta 0.04 \
     --loss_type bnpo \
     --scale_rewards group \
     --vllm_importance_sampling_mode token_truncate \
