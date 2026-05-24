@@ -19,6 +19,11 @@ mkdir -p "$OUT"
 
 # wandb offline 2>/dev/null || true
 wandb online
+# Force public wandb.ai endpoint; on pods with the ByteDance MLX wandb fork,
+# the run otherwise gets silently routed to the internal ml.tiktok-row.net
+# (it still prints a wandb.ai-looking URL — misleading). Requires a real
+# upstream wandb (e.g. 0.18.7) in the active env to take effect.
+export WANDB_BASE_URL="https://api.wandb.ai"
 export WANDB_API_KEY="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"
 export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="Co-learning"
@@ -56,6 +61,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --logging_steps 1 \
     --save_strategy steps \
     --save_steps 10 \
+    --save_total_limit 5 \
     --eval_strategy steps \
     --eval_steps 10 \
     --num_generations_eval 1 \

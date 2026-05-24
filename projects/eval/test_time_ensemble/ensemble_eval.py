@@ -15,6 +15,7 @@ Phase 3 (aggregate): emit one row in 15-col CSV matching `projects/eval/aggregat
 schema; code/ifeval columns are NA (MV not applicable).
 
 Benchmarks (only single-final-answer ones):
+  smoke  : gsm8k, math_500, amc                         ← public-only pipeline shakedown
   core5  : gsm8k, math_500, amc, aime_25, gpqa_d        ← paper main table (minus HumanEval)
   core9  : core5 + mmlu, mmlu_pro, crux, scibench       ← + appendix MV-applicable
   all    : alias of core9 (HumanEval/MBPP/LCB/IFEval not supported)
@@ -121,7 +122,10 @@ def load_problems(bench: str, limit: int | None = None) -> list[dict]:
             })
 
     elif bench == "aime_25":
-        ds = load_dataset("HuggingFaceH4/aime_2025", split="train")
+        # HuggingFaceH4/aime_2025 is gone (404 on multiple tokens as of 2026-05-23).
+        # yentinglin/aime_2025 is a drop-in: same 30 AIME-2025 problems, same
+        # `problem` / `answer` field names.
+        ds = load_dataset("yentinglin/aime_2025", split="train")
         out = []
         for i, ex in enumerate(ds):
             out.append({
@@ -226,6 +230,8 @@ def load_problems(bench: str, limit: int | None = None) -> list[dict]:
 
 
 BENCH_SETS = {
+    # smoke: public-only datasets (no gated aime/gpqa) for pipeline shakedown
+    "smoke": ["gsm8k", "math_500", "amc"],
     "core5": ["gsm8k", "math_500", "amc", "aime_25", "gpqa_d"],
     "core9": ["gsm8k", "math_500", "amc", "aime_25", "gpqa_d",
               "mmlu", "mmlu_pro", "crux", "scibench"],
