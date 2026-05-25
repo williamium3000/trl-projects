@@ -207,20 +207,19 @@ fi
 # --- 8. HF login (Llama-3.2 是 gated, run2/5/7/9/10 需要) ----------------
 header "§8 HuggingFace login (Llama-3.2 gated)"
 
-if huggingface-cli whoami >/dev/null 2>&1; then
+# Unconditional re-login: overwrites `~/.cache/huggingface/token` every
+# setup.sh run, so a collaborator's stale token (from a prior manual login
+# with their own account that lacks Gemma3 / Llama3.2 gating approval)
+# never blocks the run. $HF_TOKEN env var wins; else falls back to the
+# repo-default token (yubian, has gating approval for Gemma3 + Llama3.2).
+# Same trust model as the inline WANDB_API_KEY in run scripts.
+HF_TOKEN_USE="${HF_TOKEN:-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}"
+if huggingface-cli login --token "$HF_TOKEN_USE" --add-to-git-credential >/dev/null 2>&1; then
     HF_USER=$(huggingface-cli whoami 2>/dev/null | head -1)
-    green "已登录 HF as $HF_USER, 跳过."
+    green "HF logged in as $HF_USER (token from \$HF_TOKEN or repo default)."
 else
-    # Auto-login: $HF_TOKEN env wins, else fall back to project default token
-    # (yubian, read-only). Same precedent as the inline WANDB_API_KEY in run
-    # scripts. Override by `export HF_TOKEN=hf_…` before bash setup.sh.
-    HF_TOKEN_USE="${HF_TOKEN:-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}"
-    if huggingface-cli login --token "$HF_TOKEN_USE" --add-to-git-credential >/dev/null 2>&1; then
-        green "Auto-logged HF (token from \$HF_TOKEN or repo default)."
-    else
-        yellow "⚠️ HF auto-login 失败. Llama-3.2 / Gemma3 是 gated, run2/3/5/6/7/8/9/10 都需要."
-        yellow "  手动: huggingface-cli login --token <hf_…>"
-    fi
+    red "⚠️ HF login 失败. Llama-3.2 / Gemma3 是 gated, run2/3/5/6/7/8/9/10 都需要."
+    red "  手动: huggingface-cli login --token <hf_…>"
 fi
 
 # --- 9. Verify -----------------------------------------------------------
