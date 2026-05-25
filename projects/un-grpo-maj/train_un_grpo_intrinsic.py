@@ -19,6 +19,8 @@ See `projects/un-grpo-maj/intrinsic_rewards.py` and `intrinsic_trainer.py`.
 """
 
 import os
+import json
+import shutil
 import sys
 from dataclasses import dataclass, field
 
@@ -95,6 +97,55 @@ class IntrinsicScriptArguments(ScriptArguments):
             "memory scales with chunk_size * T * V * 4 bytes fp32)."
         },
     )
+
+
+
+from transformers.trainer_callback import TrainerCallback
+
+
+class BestKeeperCallback(TrainerCallback):
+    """DeepSpeed-compatible substitute for `load_best_model_at_end=True`,
+    which HF Trainer rejects (trainer.py:5547) when combined with
+    DeepSpeed/FSDP + `save_only_model=True`. On every save, if the latest
+    eval metric beat the prior best, hardlink the just-written checkpoint
+    to `$output_dir/best_model/` (0 byte / 0 time via inode refcount;
+    survives ring-buffer deletion of the source ckpt).
+    """
+
+    def __init__(self, metric_name="eval_reward", greater_is_better=True):
+        self.metric_name = metric_name
+        self.greater_is_better = greater_is_better
+        self.best = None
+        self.last_metrics = {}
+
+    def on_evaluate(self, args, state, control, metrics=None, **kw):
+        if metrics:
+            self.last_metrics = metrics
+
+    def on_save(self, args, state, control, **kw):
+        if not state.is_world_process_zero:
+            return
+        v = self.last_metrics.get(self.metric_name)
+        if v is None:
+            return
+        better = self.best is None or (
+            (v > self.best) if self.greater_is_better else (v < self.best)
+        )
+        if not better:
+            return
+        self.best = v
+        src = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
+        dst = os.path.join(args.output_dir, "best_model")
+        if not os.path.exists(src):
+            return
+        if os.path.exists(dst):
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst, copy_function=os.link)
+        with open(os.path.join(args.output_dir, "best_metric.json"), "w") as f:
+            json.dump(
+                {"step": state.global_step, "metric": self.metric_name, "value": float(v)},
+                f, indent=2,
+            )
 
 
 if __name__ == "__main__":
@@ -246,6 +297,8 @@ if __name__ == "__main__":
         intrinsic_reward_type=script_args.reward_type,
         intrinsic_chunk_size=script_args.intrinsic_chunk_size,
     )
+
+    trainer.add_callback(BestKeeperCallback())
 
     trainer.train()
 
