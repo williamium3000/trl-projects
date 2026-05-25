@@ -68,6 +68,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --logging_steps 1 \
     --save_strategy steps \
     --save_steps 10 \
+    --save_total_limit 5 \
     --eval_strategy steps \
     --eval_steps 10 \
     --num_generations_eval 1 \
