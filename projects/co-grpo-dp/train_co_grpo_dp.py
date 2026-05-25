@@ -77,8 +77,25 @@ class CoGRPOdpScriptArguments(ScriptArguments):
     train_dataset: str = field(
         default=OPSD_DATASET,
         metadata={
-            "help": "Dataset to use for training.",
-            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET],
+            "help": "Dataset to use for training. Group A always uses this. "
+            "Group B (and N-way C/D/...) also use this UNLESS "
+            "--train_dataset_per_group is set for that group's letter.",
+        },
+    )
+    train_dataset_per_group: str = field(
+        default=None,
+        metadata={
+            "help": "Optional per-group dataset override for data-side cross-view "
+            "(Co-rewarding-I replication on co-grpo-dp infra). "
+            "Format: 'B=coreward/math_rephrased' or 'B=coreward/math_rephrased,C=...' "
+            "(comma-separated 'GROUP=dataset' pairs). Group letters NOT listed fall "
+            "back to --train_dataset. Group A is always --train_dataset (cannot be "
+            "overridden via this flag — pass --train_dataset for A). For Co-I "
+            "replication: --train_dataset coreward/math_original "
+            "--train_dataset_per_group B=coreward/math_rephrased. Row-index "
+            "alignment between paired parquets is REQUIRED (same underlying "
+            "problem at position i in both datasets) — rendezvous payload[i] "
+            "carries the MV of model-i's view of problem-i."
         },
     )
     self_consistency_threshold: float = field(
@@ -302,8 +319,41 @@ if __name__ == "__main__":
     # Dataset — two groups use the same seed/world_size so RepeatSampler
     # yields identical index sequences, ensuring both groups train on the
     # same prompts at every generation step (required for cross-labeling).
+    #
+    # Co-rewarding-I replication on co-grpo-dp infra: group A may load the
+    # ORIGINAL parquet and group B the REPHRASED parquet (same underlying
+    # problems, different surface form, identical answers, row-aligned).
+    # `--train_dataset_per_group` overrides this group's dataset; if absent
+    # for this letter, fall back to `--train_dataset`.
     ################
-    train_dataset, eval_dataset = load_dataset(script_args.train_dataset)
+    _ds_for_this_group = script_args.train_dataset
+    if script_args.train_dataset_per_group:
+        # Parse 'B=coreward/math_rephrased,C=...' into a dict.
+        _per_group_map = {}
+        for piece in script_args.train_dataset_per_group.split(","):
+            piece = piece.strip()
+            if not piece:
+                continue
+            if "=" not in piece:
+                raise ValueError(
+                    f"--train_dataset_per_group entries must be 'GROUP=dataset'; "
+                    f"got {piece!r}"
+                )
+            grp, name = piece.split("=", 1)
+            grp, name = grp.strip(), name.strip()
+            if grp == "A":
+                raise ValueError(
+                    f"--train_dataset_per_group cannot override group A; pass "
+                    f"--train_dataset for group A's dataset (got A={name!r})"
+                )
+            _per_group_map[grp] = name
+        if script_args.group in _per_group_map:
+            _ds_for_this_group = _per_group_map[script_args.group]
+            print(
+                f"[dataset] group {script_args.group} using per-group override: "
+                f"{_ds_for_this_group} (vs --train_dataset {script_args.train_dataset})"
+            )
+    train_dataset, eval_dataset = load_dataset(_ds_for_this_group)
 
     ################
     # PEFT
