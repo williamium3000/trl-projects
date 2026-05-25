@@ -4,15 +4,18 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"
 
-# Activate marti venv (built by setup.sh). Without this, runX.sh inherits
-# the pod's system python which on Arnold/MLX has a ByteDance wandb fork
-# (routes to internal ml.tiktok-row.net) AND lacks word2number/latex2sympy2.
+# Try marti venv if present; otherwise fall back to whatever python is in
+# PATH. On the user's pods + this machine, .venv-marti is missing/empty
+# (setup.sh's shell got created but pip-install steps weren't reached) AND
+# the system / conda env already has torch + vllm + transformers + wandb +
+# word2number + latex2sympy2 installed. wandb public-routing is forced via
+# WANDB_BASE_URL in each dispatched run_*.sh (works for clean system wandb
+# AND for Arnold/MLX pods that ship the ByteDance fork).
 if [ -f "$REPO_ROOT/.venv-marti/bin/activate" ]; then
     # shellcheck disable=SC1091
     source "$REPO_ROOT/.venv-marti/bin/activate"
 else
-    echo ">>> ERROR: .venv-marti not found at $REPO_ROOT. Run 'bash setup.sh' first." >&2
-    exit 1
+    echo ">>> .venv-marti not present — using $(which python3) (system / conda env)" >&2
 fi
 
 # ---- trl metadata check (fixes _save_checkpoint → version("trl") crash) ----
