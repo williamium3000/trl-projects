@@ -24,8 +24,7 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# run10 (re-purposed 2026-05-25) · Binary Homo G×G · math345 · lr=3e-6 · e2 · eb=128
-# Original run10 (N=3 Q×L×G co-grpo-dp) completed; slot reused for §4.4.2
-# Heter-vs-Homo ablation (G×G same-family pair).
-# Gemma3 sidebands: FA2 + token_truncate (architectural drift, both groups).
-bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_cogrpo_binary_homo__gemma3_4b.sh
+# run11 · Disagree heter Q×L · math345 · lr=3e-6 · e2 · eb=128
+# Winner=disagree per 2026-05-25 user pin (lowest priority but goes on the
+# §4.2 main table as the canonical Heter row).
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/hetergen/run_cogrpo_disagree_heter__qwen25_3b__llama32_3b.sh

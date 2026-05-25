@@ -24,5 +24,7 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# run1 · T1.1.A · TODO 4.1.A · Vanilla GRPO · Qwen2.5-3B · math345 · GT · lr=3e-6 · e2 · eb=128
-bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__qwen25_3b.sh
+# run1 (re-purposed 2026-05-25) · Binary Homo Q×Q · math345 · lr=3e-6 · e2 · eb=128
+# Original run1 (Q GT-GRPO) completed; slot reused for §4.4.2 Heter-vs-Homo
+# ablation (Q×Q same-family pair).
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_cogrpo_binary_homo__qwen25_3b.sh

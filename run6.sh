@@ -24,6 +24,7 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# run6 · T1.2.C · TODO 4.2.C · Un-GRPO-Maj (TTRL) · Gemma-3-4B-it · math345 · lr=3e-6 · e2 · eb=128
-# Gemma3 ERRATA: FA2 + token_truncate IS mode
-bash projects/un-grpo-maj/dp-scripts/math345_full/lr3e-6_e2_eb128/single/run_ungropomaj__gemma3_4b.sh
+# run6 (re-purposed 2026-05-25) · Binary Homo L×L · math345 · lr=3e-6 · e2 · eb=128
+# Original run6 (Gemma3 TTRL-MV) completed; slot reused for §4.4.2
+# Heter-vs-Homo ablation (L×L same-family pair).
+bash projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_cogrpo_binary_homo__llama32_3b.sh
