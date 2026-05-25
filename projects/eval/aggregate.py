@@ -29,14 +29,24 @@ from pathlib import Path
 
 
 # (csv column, lm-eval task key, metric key)
+# Notes:
+#   - minerva_math500 (no underscore) is the actual lm-eval task name. The
+#     custom math_500_chat (chat-friendly 0-shot \boxed{}) is preferred when
+#     present — see _PREFER below.
+#   - math_500: math_verify (sympy-based equivalence). "exact_match,none" is
+#     too strict (e.g. "1/2" vs "0.5" miscount as wrong).
+#   - gpqa_d: flexible-extract, not strict-match. Strict yields 0 for most chat models.
+#   - mbpp metric key is `pass_at_1` (underscore), not `pass@1`.
+#   - humaneval/mbpp _instruct variants override the default when present
+#     (chat-aware extractor handles markdown code fences).
 _LM_EVAL_TASKS = [
     ("gsm8k",      "gsm8k",                       "exact_match,strict-match"),
-    ("math_500",   "minerva_math_500",            "exact_match,none"),
+    ("math_500",   "minerva_math500",             "math_verify,none"),
     ("aime_25",    "aime_2025",                   "exact_match,none"),
     ("amc",        "amc23",                       "exact_match,none"),
     ("humaneval",  "humaneval",                   "pass@1,create_test"),
-    ("mbpp",       "mbpp",                        "pass@1,none"),
-    ("gpqa_d",     "gpqa_diamond_cot_zeroshot",   "exact_match,strict-match"),
+    ("mbpp",       "mbpp",                        "pass_at_1,none"),
+    ("gpqa_d",     "gpqa_diamond_cot_zeroshot",   "exact_match,flexible-extract"),
     ("mmlu",       "mmlu",                        "acc,none"),
     ("mmlu_pro",   "mmlu_pro",                    "exact_match,custom-extract"),
     ("ifeval",     "ifeval",                      "prompt_level_strict_acc,none"),
@@ -44,25 +54,43 @@ _LM_EVAL_TASKS = [
 
 
 def _read_lm_eval(run_dir: Path) -> dict[str, float | None]:
-    """lm-eval-harness writes results.json with a `results` dict keyed by task name."""
+    """lm-eval-harness writes results.json with a `results` dict keyed by task name.
+    Multiple results*.json files may coexist (e.g. main 10-task suite + a follow-up
+    humaneval_instruct run). Merge all of them; newer files overwrite per task key."""
     out: dict[str, float | None] = {c: None for c, _, _ in _LM_EVAL_TASKS}
     candidates = list(run_dir.rglob("results*.json"))
     if not candidates:
         return out
-    # Use the most recently modified.
-    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    data = json.loads(candidates[0].read_text())
-    res = data.get("results", {})
+    candidates.sort(key=lambda p: p.stat().st_mtime)  # oldest → newest
+    res: dict = {}
+    for p in candidates:
+        try:
+            data = json.loads(p.read_text())
+        except json.JSONDecodeError:
+            continue
+        for task_key, task_node in (data.get("results") or {}).items():
+            res[task_key] = task_node  # later (newer) wins
+
+    # Prefer chat-aware / chat-friendly variants when present.
+    _PREFER = {
+        "humaneval":       "humaneval_instruct",   # chat-aware extractor
+        "mbpp":            "mbpp_instruct",        # chat-aware extractor
+        "minerva_math500": "math_500_chat",        # 0-shot chat-friendly prompt (better for all models)
+    }
+    _SKIP = ("stderr", "sample_len", "alias", "bypass", "n,")
     for csv_col, task_key, metric_key in _LM_EVAL_TASKS:
-        node = res.get(task_key)
+        preferred = _PREFER.get(task_key)
+        if preferred and preferred in res:
+            node = res[preferred]
+        else:
+            node = res.get(task_key)
         if not node:
             continue
-        # lm-eval keys metrics like "exact_match,strict-match". If our guess is
-        # wrong, fall back to the first numeric value that looks like a score.
         val = node.get(metric_key)
         if val is None:
+            # Fallback: first numeric metric, skipping sample-count / alias keys.
             for k, v in node.items():
-                if isinstance(v, (int, float)) and "stderr" not in k:
+                if isinstance(v, (int, float)) and not any(s in k for s in _SKIP):
                     val = v
                     break
         if isinstance(val, (int, float)):

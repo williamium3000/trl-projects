@@ -30,7 +30,7 @@ _SUBJECTS = ["chemmc", "atkins", "calculus", "class", "diff", "fund", "matter",
 
 _PROMPT_TMPL = (
     "Solve the following problem step by step. Put your final answer in "
-    "\\boxed{...}.\n\nProblem: {q}\n"
+    "\\boxed{{...}}.\n\nProblem: {q}\n"  # {{...}} = literal {...} for str.format
 )
 
 _BOXED_RE = re.compile(r"\\boxed\{([^}]+)\}")
@@ -66,6 +66,8 @@ def main() -> int:
     ap.add_argument("--max_model_len", default="4096")
     ap.add_argument("--gpu_mem", default="0.9")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--chat_template", action="store_true",
+                    help="Wrap prompts as chat messages for instruct/chat models.")
     args = ap.parse_args()
 
     if not DATA_DIR.exists():
@@ -115,7 +117,11 @@ def main() -> int:
 
     sp = SamplingParams(temperature=0.0, max_tokens=1024)
     prompts = [p for _, p, _ in problems]
-    outs = llm.generate(prompts, sp)
+    if args.chat_template:
+        messages_list = [[{"role": "user", "content": p}] for p in prompts]
+        outs = llm.chat(messages_list, sp)
+    else:
+        outs = llm.generate(prompts, sp)
 
     per_subj_correct: dict[str, list[int]] = {}
     total = 0
@@ -148,4 +154,22 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as e:
+        # Non-fatal: write NA result and exit 0 so downstream aggregate.py still runs.
+        import argparse, traceback
+        traceback.print_exc()
+        ap = argparse.ArgumentParser(add_help=False)
+        ap.add_argument("--output", required=True)
+        a, _ = ap.parse_known_args()
+        try:
+            Path(a.output).parent.mkdir(parents=True, exist_ok=True)
+            Path(a.output).write_text(json.dumps(
+                {"benchmark": "scibench", "score": None, "n": 0,
+                 "error": f"{type(e).__name__}: {e}"}, indent=2,
+            ))
+            print(f"[scibench] FAILED ({type(e).__name__}); wrote NA → {a.output}", file=sys.stderr)
+        except Exception:
+            pass
+        sys.exit(0)

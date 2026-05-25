@@ -51,6 +51,9 @@ def main() -> int:
         return 2
 
     # Build the LCB runner command.
+    # NOTE: LCB has NO `--model_provider` flag — it routes by name via lm_styles.py.
+    # Models must be registered in lm_styles.py first (see external_repos/LiveCodeBench
+    # patches in the eval setup docs).
     cmd = [
         sys.executable, "-m", "lcb_runner.runner.main",
         "--model", args.model,
@@ -58,28 +61,31 @@ def main() -> int:
         "--release_version", args.release_version,
         "--n", str(args.n),
         "--evaluate",
-        "--model_provider", "vllm",
     ]
-    # LCB doesn't have first-class --revision; rely on env-var passthrough.
     env = os.environ.copy()
     if args.revision:
-        env["HF_REVISION"] = args.revision  # best-effort, LCB respects this in newer versions
+        env["HF_REVISION"] = args.revision
     env["VLLM_GPU_MEMORY_UTILIZATION"] = str(args.gpu_mem)
     env["VLLM_MAX_MODEL_LEN"] = str(args.max_model_len)
     if args.limit:
-        cmd += ["--num_process_evaluate", "1"]  # debug-friendly
-        # LCB has no global --limit; we approximate via `--end_date` selection
-        # if exposed. Fallback: run full set; downstream `--limit` is mostly
-        # for lm-eval. We still honor it for symmetry by passing num_problems
-        # if the runner accepts it.
-        cmd += ["--num_problems", str(args.limit)]  # newer LCB supports this
+        cmd += ["--num_process_evaluate", "1"]
 
     print("[lcb] cwd:", REPO_DIR)
     print("[lcb] cmd:", " ".join(cmd))
     rc = subprocess.call(cmd, cwd=str(REPO_DIR), env=env)
     if rc != 0:
-        print(f"[lcb] runner exited {rc}", file=sys.stderr)
-        return rc
+        # Non-fatal: write NA result and exit 0 so CRUX / SciBench / aggregate run.
+        # LCB integration is fragile (model registry in lm_styles.py; gated tokenizers
+        # hardcoded in prompt files; datasets script-loader compat). See setup docs.
+        print(f"[lcb] runner exited {rc} — writing NA result and continuing.", file=sys.stderr)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(json.dumps(
+            {"benchmark": "lcb_v6", "score": None, "n": 0,
+             "error": f"LCB runner exited {rc}; likely model not in lm_styles.py "
+                      "or dataset/tokenizer load issue."},
+            indent=2,
+        ))
+        return 0
 
     # Find the LCB metric JSON. LCB writes `output/<model>/Scenario.codegeneration_*_eval_all.json`.
     # We look for the most recent one.

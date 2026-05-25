@@ -44,6 +44,10 @@ def main() -> int:
     ap.add_argument("--gpu_mem", default="0.9")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--subtask", choices=("output", "input"), default="output")
+    ap.add_argument("--chat_template", action="store_true",
+                    help="Wrap prompts as chat messages for instruct/chat models. "
+                         "Without this, instruct models will produce verbose explanations "
+                         "instead of the <answer>...</answer> format we expect.")
     args = ap.parse_args()
 
     if not REPO_DIR.exists():
@@ -73,7 +77,11 @@ def main() -> int:
     llm = LLM(**llm_kwargs)
 
     sp = SamplingParams(temperature=0.0, max_tokens=512, stop=["</answer>"])
-    outs = llm.generate(prompts, sp)
+    if args.chat_template:
+        messages_list = [[{"role": "user", "content": p}] for p in prompts]
+        outs = llm.chat(messages_list, sp)
+    else:
+        outs = llm.generate(prompts, sp)
 
     correct = 0
     n = len(ds)

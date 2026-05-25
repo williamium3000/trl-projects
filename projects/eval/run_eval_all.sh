@@ -46,6 +46,7 @@ MAX_MODEL_LEN="4096"
 GPU_MEM="0.9"
 LIMIT=""
 CSV=""                                    # if set, aggregate.py appends here instead of RUN_DIR/results.csv
+CHAT_TEMPLATE=0                           # default OFF — base models like Qwen2.5-3B mis-handle chat tokens
 SKIP_LM_EVAL=0
 SKIP_LCB=0
 SKIP_CRUX=0
@@ -62,6 +63,7 @@ while [ $# -gt 0 ]; do
         --gpu_mem)       GPU_MEM="$2"; shift 2;;
         --limit)         LIMIT="$2"; shift 2;;
         --csv)           CSV="$2"; shift 2;;
+        --chat_template) CHAT_TEMPLATE=1; shift;;
         --skip_lm_eval)  SKIP_LM_EVAL=1; shift;;
         --skip_lcb)      SKIP_LCB=1; shift;;
         --skip_crux)     SKIP_CRUX=1; shift;;
@@ -115,23 +117,39 @@ if [ "$SKIP_LM_EVAL" = "0" ]; then
     LM_EVAL_OUT="$RUN_DIR/lm_eval"
     mkdir -p "$LM_EVAL_OUT"
 
-    LM_EVAL_TASKS="gsm8k,minerva_math_500,humaneval,mbpp,gpqa_diamond_cot_zeroshot,mmlu,mmlu_pro,ifeval,aime_2025,amc23"
+    # NOTES on task choices:
+    # - minerva_math500 (no underscore) is the actual lm-eval task name.
+    # - We also run math_500_chat (custom 0-shot \boxed{} prompt) — works much better for chat
+    #   models (Gemma3 0.28 → 0.76) AND base models (Qwen 0.39 → 0.59). aggregate.py prefers it.
+    # - For chat/instruct models: humaneval_instruct + mbpp_instruct (chat-aware extractor;
+    #   default humaneval/mbpp fail on instruct outputs because they wrap code in markdown).
+    # - GPQA default `max_gen_toks` is too short (256), instruct models get truncated before
+    #   emitting an answer letter → [invalid]. Override via --gen_kwargs below.
+    if [ "$CHAT_TEMPLATE" = "1" ]; then
+        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval_instruct,mbpp_instruct,gpqa_diamond_cot_zeroshot,mmlu,mmlu_pro,ifeval,aime_2025,amc23"
+    else
+        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval,mbpp,gpqa_diamond_cot_zeroshot,mmlu,mmlu_pro,ifeval,aime_2025,amc23"
+    fi
 
     EXTRA=()
     [ -n "$LIMIT" ] && EXTRA+=(--limit "$LIMIT")
 
+    # `--apply_chat_template`: ONLY for instruct/chat ckpts. Base models like Qwen2.5-3B
+    # *have* a chat_template in their tokenizer but aren't trained for it — forcing it
+    # tanks HumanEval/MBPP/MMLU. Opt-in via --chat_template flag.
+    [ "$CHAT_TEMPLATE" = "1" ] && EXTRA+=(--apply_chat_template)
+
     # HumanEval / MBPP need unsafe code flag + env var.
     export HF_ALLOW_CODE_EVAL=1
 
-    # `apply_chat_template`: respect each ckpt's chat template (matches Co-rew).
     lm_eval \
         --model vllm \
         --model_args "$VLLM_ARGS" \
         --tasks "$LM_EVAL_TASKS" \
         --include_path "$CUSTOM_TASKS_DIR" \
         --batch_size auto \
-        --apply_chat_template \
         --confirm_run_unsafe_code \
+        --gen_kwargs "max_gen_toks=2048" \
         --output_path "$LM_EVAL_OUT" \
         --log_samples \
         "${EXTRA[@]}"
@@ -165,12 +183,14 @@ if [ "$SKIP_CRUX" = "0" ]; then
     bold "Run 3/4  CRUXEval"
     CRUX_OUT="$RUN_DIR/crux"
     mkdir -p "$CRUX_OUT"
+    CRUX_CHAT=""; [ "$CHAT_TEMPLATE" = "1" ] && CRUX_CHAT="--chat_template"
     python "$SCRIPT_DIR/external/cruxeval_runner.py" \
         --model "$MODEL" \
         ${REVISION:+--revision "$REVISION"} \
         --output "$CRUX_OUT/cruxeval.json" \
         --max_model_len "$MAX_MODEL_LEN" \
         --gpu_mem "$GPU_MEM" \
+        $CRUX_CHAT \
         ${LIMIT:+--limit "$LIMIT"}
 else
     bold "Run 3/4  CRUXEval  [SKIPPED]"
@@ -183,12 +203,14 @@ if [ "$SKIP_SCIBENCH" = "0" ]; then
     bold "Run 4/4  SciBench"
     SCIBENCH_OUT="$RUN_DIR/scibench"
     mkdir -p "$SCIBENCH_OUT"
+    SCI_CHAT=""; [ "$CHAT_TEMPLATE" = "1" ] && SCI_CHAT="--chat_template"
     python "$SCRIPT_DIR/external/scibench_runner.py" \
         --model "$MODEL" \
         ${REVISION:+--revision "$REVISION"} \
         --output "$SCIBENCH_OUT/scibench.json" \
         --max_model_len "$MAX_MODEL_LEN" \
         --gpu_mem "$GPU_MEM" \
+        $SCI_CHAT \
         ${LIMIT:+--limit "$LIMIT"}
 else
     bold "Run 4/4  SciBench  [SKIPPED]"

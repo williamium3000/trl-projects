@@ -1,8 +1,8 @@
 # AIME 2025 — 30 problems, integer answers 000..999.
-# Source: HuggingFaceH4/aime_2025 (train split = the 30 problems)
+# Source: yentinglin/aime_2025 (train split = the 30 problems). HuggingFaceH4 mirror is gone (404).
 # Held in Feb 2025; some 2025-released bases may have minor leakage — disclose in paper.
 task: aime_2025
-dataset_path: HuggingFaceH4/aime_2025
+dataset_path: yentinglin/aime_2025
 dataset_name: null
 test_split: train
 training_split: null

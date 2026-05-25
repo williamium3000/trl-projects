@@ -237,6 +237,8 @@ BENCH_SETS = {
               "mmlu", "mmlu_pro", "crux", "scibench"],
     "all":   ["gsm8k", "math_500", "amc", "aime_25", "gpqa_d",
               "mmlu", "mmlu_pro", "crux", "scibench"],
+    # For supplementing greedy@1 baselines with maj@K on high-variance small-n math sets.
+    "aime_amc": ["amc", "aime_25"],
 }
 
 
@@ -440,9 +442,13 @@ def phase_generate(args) -> int:
             if not problems:
                 print(f"[gen] {bench}: 0 problems (skipping)")
                 continue
-            print(f"[gen] {bench}: {len(problems)} problems × K={args.k}")
+            print(f"[gen] {bench}: {len(problems)} problems × K={args.k}  chat={args.chat_template}")
             prompts = [p["prompt"] for p in problems]
-            outs = llm.generate(prompts, sp)
+            if args.chat_template:
+                messages_list = [[{"role": "user", "content": p}] for p in prompts]
+                outs = llm.chat(messages_list, sp)
+            else:
+                outs = llm.generate(prompts, sp)
             for p, out in zip(problems, outs):
                 rec = {
                     "bench": bench,
@@ -620,6 +626,8 @@ def main() -> int:
     pg.add_argument("--max_model_len", type=int, default=4096)
     pg.add_argument("--gpu_mem", type=float, default=0.9)
     pg.add_argument("--out", required=True)
+    pg.add_argument("--chat_template", action="store_true",
+                    help="Wrap prompts as chat messages (use llm.chat) for instruct/chat models.")
     pg.add_argument("--limit", type=int, default=None,
                     help="debug: limit problems per benchmark")
 

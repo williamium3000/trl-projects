@@ -108,7 +108,14 @@ launch_one () {
     local gpu_arg=""
     [ -n "$gpu" ] && gpu_arg="--gpu $gpu"
 
-    echo "[$short] launching on GPU '${gpu:-default}' → $out_dir"
+    # chat_template: ON for instruct/-it/chat ckpts, OFF for base.
+    # Heuristic from shortname: if it contains "instruct"/"_it"/"chat", pass --chat_template.
+    local chat_arg=""
+    case "$short" in
+        *instruct*|*_it*|*chat*) chat_arg="--chat_template" ;;
+    esac
+
+    echo "[$short] launching on GPU '${gpu:-default}' → $out_dir  (chat=${chat_arg:-no})"
 
     # `--out_dir` puts this run's RUN_DIR under our shortname folder.
     # `--csv $SHARED_CSV` appends 1 row to the shared CSV.
@@ -120,6 +127,7 @@ launch_one () {
         --max_model_len "$MAX_MODEL_LEN" \
         --gpu_mem "$GPU_MEM" \
         $gpu_arg \
+        $chat_arg \
         $limit_arg \
         2>&1 | sed "s/^/[$short] /"
 }
