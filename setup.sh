@@ -160,6 +160,17 @@ fi
 # (会升 antlr4 4.13.2 → qwen-sympy 链炸). 见 memory env_partition_2026-05-17.
 python -c "from latex2sympy2 import latex2sympy; print('latex2sympy2 OK')" || true
 
+# Force upstream wandb 0.18.7 from pypi.org. The pod's default pip mirror
+# (bytedpypi) ships an internal MLX fork of wandb (faked as 0.13.95) which
+# routes every run to ml.tiktok-row.net regardless of WANDB_BASE_URL and
+# prints a misleading wandb.ai URL. 0.18.7 is the highest <0.26 that
+# keeps protobuf<6 (vllm 0.18 needs protobuf 3.20.x). See memory
+# wandb_bytedance_fork_routing_2026-05-24.
+pip install --no-cache-dir --force-reinstall \
+    --index-url https://pypi.org/simple/ \
+    "wandb==0.18.7"
+python -c "import wandb; print('wandb', wandb.__version__, 'from', wandb.__file__)"
+
 # --- 6. MLLM extras ------------------------------------------------------
 header "§6 MLLM extras (qwen-vl-utils, opencv, timm, av)"
 
