@@ -37,7 +37,7 @@ Label-free self-supervised RL 框架下,单 agent 或同 family 自训易陷入 
 | LLM | MATH levels 3/4/5(MATH345) 和 Co-rewarding 公开 release 的 MATH 1-5 rephrased 集 分别测试 |
 | MLLM | R1-V 的 GEOQA-8k + CLEVR-70k-Counting;CLEVR-70k-Complex 作为可选扩展 |
 
-LLM 训练采用 cross-family pseudo-label + data-side rephrasing 叠加策略(对应 Co-rewarding 提出但未充分验证的 III 类组合),既扩大训练池又在数据侧补充 cross-view。
+LLM 训练在两套数据上**分别独立**进行:MATH345 一组,Co-rewarding 公开 release 的 MATH 1-5 rephrased 集另一组。两组各自跑完整 baseline + co-learn 矩阵,结果分别汇报,**不做训练池叠加** —— 这样 data source 对效果的 attribution 干净不混淆,同时也是对 Co-rewarding-I data-side cross-view 框架的独立复现对照。
 
 ### Eval Suite
 
@@ -119,7 +119,7 @@ motivation 核心验证,在 2-4 完成后立刻执行。
 **7. LLM 关键 ablation**
 
 - Self-consistency 确定K为12
-- 数据规模 ablation:MATH345 only vs MATH345 和 rephrased (使用两个数据集)
+- 数据来源 robustness:MATH345-only 单独训 vs rephrased-only 单独训,两组独立 run、各自 eval 对照(**不叠加两数据集**)
 
 **8. LLM 7B 复跑**
 
