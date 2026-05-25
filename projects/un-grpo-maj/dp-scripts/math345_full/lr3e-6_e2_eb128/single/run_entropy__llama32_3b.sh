@@ -54,7 +54,11 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --logging_steps 1 \
     --save_strategy steps \
     --save_steps 10 \
-    --save_total_limit 5 \
+    --save_total_limit 1 \
+    --save_only_model true \
+    --load_best_model_at_end true \
+    --metric_for_best_model reward \
+    --greater_is_better true \
     --eval_strategy steps \
     --eval_steps 10 \
     --num_generations_eval 1 \

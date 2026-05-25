@@ -52,7 +52,12 @@ COMMON=(
     --vllm_max_model_length 2048
     --logging_steps 1
     --save_strategy steps
-    --save_steps 10
+    --save_steps 20
+    --save_total_limit 1
+    --save_only_model true
+    --load_best_model_at_end true
+    --metric_for_best_model reward
+    --greater_is_better true
     --eval_strategy steps
     --eval_steps 20
     --num_generations_eval 1
