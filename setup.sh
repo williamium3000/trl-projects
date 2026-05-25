@@ -93,12 +93,60 @@ fi
 header "§2 Activate env"
 
 if [ "$USE_VENV" = "1" ]; then
-    if [ ! -d "$VENV_DIR" ]; then
-        python3 -m venv "$VENV_DIR"
-        green "Created venv at $VENV_DIR"
-    else
-        green "Re-using existing venv at $VENV_DIR"
+    # Robustness 2026-05-25: detect an empty / broken venv (directory exists
+    # but bin/pip is missing). Common on hosts where the system python lacks
+    # ensurepip (apt python3-venv not installed) — `python3 -m venv` then
+    # "succeeds" by creating just the directory + python symlinks, with no
+    # pip and sometimes no activate either. On every later setup.sh run the
+    # naive "directory exists?" check would happily re-use the broken shell,
+    # and the subsequent `python -m pip` would fail with no diagnostic.
+    if [ -d "$VENV_DIR" ] && [ ! -x "$VENV_DIR/bin/pip" ]; then
+        yellow "WARN: $VENV_DIR exists but bin/pip is missing — empty shell from"
+        yellow "      a prior broken setup.sh (host likely lacks python3-venv"
+        yellow "      ensurepip). Removing and rebuilding."
+        rm -rf "$VENV_DIR"
     fi
+
+    if [ ! -d "$VENV_DIR" ]; then
+        # Prefer `uv venv` — bundles its own pip, no ensurepip dependency.
+        # If uv isn't on PATH, try to bootstrap via system pip first; that
+        # tends to work because the system *does* have pip (just not the
+        # ensurepip module that `python -m venv` needs to copy pip INTO
+        # the new venv). Final fallback: plain `python3 -m venv`.
+        if ! command -v uv >/dev/null 2>&1; then
+            yellow "uv not found; bootstrapping via 'pip install --user uv'..."
+            python3 -m pip install --user --quiet uv 2>/dev/null || true
+            export PATH="$HOME/.local/bin:$PATH"
+        fi
+
+        if command -v uv >/dev/null 2>&1; then
+            uv venv "$VENV_DIR" --python "$PY_VER" || {
+                red "ERROR: 'uv venv' failed. Try: curl -LsSf https://astral.sh/uv/install.sh | sh"
+                exit 1
+            }
+            green "Created venv at $VENV_DIR via uv $(uv --version 2>/dev/null)"
+        else
+            yellow "uv unavailable; trying 'python3 -m venv' (needs ensurepip)..."
+            python3 -m venv "$VENV_DIR" || {
+                red "ERROR: 'python3 -m venv' failed (likely missing ensurepip)."
+                red "       Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
+                red "       OR apt install python3-venv (needs sudo)."
+                exit 1
+            }
+            # Verify the venv actually got pip — some hosts produce empty
+            # shells (no bin/pip) even when `python3 -m venv` exits 0.
+            if [ ! -x "$VENV_DIR/bin/pip" ]; then
+                rm -rf "$VENV_DIR"
+                red "ERROR: python3 -m venv produced an empty shell (no bin/pip)."
+                red "       Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
+                exit 1
+            fi
+            green "Created venv at $VENV_DIR via python3 -m venv"
+        fi
+    else
+        green "Re-using existing venv at $VENV_DIR (bin/pip OK)"
+    fi
+
     # shellcheck disable=SC1091
     source "$VENV_DIR/bin/activate"
     python -m pip install --upgrade pip setuptools wheel
