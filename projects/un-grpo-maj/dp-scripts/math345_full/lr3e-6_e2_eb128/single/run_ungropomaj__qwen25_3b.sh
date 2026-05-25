@@ -24,6 +24,11 @@ OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
 wandb online
+# Force public wandb.ai endpoint; on Arnold/MLX pods the ByteDance fork
+# silently routes to internal ml.tiktok-row.net even with WANDB_ENTITY set
+# (and prints a fake wandb.ai URL). Requires upstream wandb in the active
+# env to take effect.
+export WANDB_BASE_URL="https://api.wandb.ai"
 export WANDB_API_KEY="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"
 export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="Co-learning"

@@ -146,7 +146,14 @@ header "§5 Verifier deps (qwen-sympy / sympy / latex2sympy2)"
 if [ -f "$REPO_ROOT/projects/co-grpo-dp/requirements.txt" ]; then
     pip install --no-cache-dir -r "$REPO_ROOT/projects/co-grpo-dp/requirements.txt"
 else
-    pip install --no-cache-dir sympy regex "latex2sympy2==1.9.1" pylatexenc word2number
+    # Split into two installs:
+    #   1) pull-everything for the safe pkgs
+    #   2) --no-deps for latex2sympy2 — its hard-pin antlr4-python3-runtime==4.7.2
+    #      otherwise downgrades the venv's antlr4 (vllm 0.18 / omegaconf depend
+    #      on the 4.9.x line) and silently breaks vllm imports.
+    #      See memory pod_env_install_recipe_2026-05-24.
+    pip install --no-cache-dir sympy regex pylatexenc word2number
+    pip install --no-cache-dir --no-deps "latex2sympy2==1.9.1"
 fi
 
 # ⚠️ 绝对不要 pip install math-verify — 跟项目内 vendored qwen verifier 冲突
@@ -204,9 +211,16 @@ if huggingface-cli whoami >/dev/null 2>&1; then
     HF_USER=$(huggingface-cli whoami 2>/dev/null | head -1)
     green "已登录 HF as $HF_USER, 跳过."
 else
-    yellow "⚠️ 没登录 HF. Llama-3.2-3B-Instruct 是 gated, run2 / run5 / run7 / run9 / run10 都需要它."
-    yellow "  跑前手动执行: huggingface-cli login   (token 在 https://huggingface.co/settings/tokens)"
-    yellow "  或 export HF_TOKEN=<your_token>"
+    # Auto-login: $HF_TOKEN env wins, else fall back to project default token
+    # (yubian, read-only). Same precedent as the inline WANDB_API_KEY in run
+    # scripts. Override by `export HF_TOKEN=hf_…` before bash setup.sh.
+    HF_TOKEN_USE="${HF_TOKEN:-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}"
+    if huggingface-cli login --token "$HF_TOKEN_USE" --add-to-git-credential >/dev/null 2>&1; then
+        green "Auto-logged HF (token from \$HF_TOKEN or repo default)."
+    else
+        yellow "⚠️ HF auto-login 失败. Llama-3.2 / Gemma3 是 gated, run2/3/5/6/7/8/9/10 都需要."
+        yellow "  手动: huggingface-cli login --token <hf_…>"
+    fi
 fi
 
 # --- 9. Verify -----------------------------------------------------------
