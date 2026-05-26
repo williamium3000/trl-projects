@@ -127,27 +127,6 @@ _sbatch_env_tail_sync() {
     else
         echo ">>> tail-end wandb sync: no run-* in $WANDB_DIR, skip"
     fi
-    # Mirror wrapper log into the dp-script's work_dir so all artefacts for a run
-    # live under projects/work_dirs/<proj>/<RUN>/. The dp-script's --output_dir
-    # value tells us the path (heter runs append /group_A or /model_a; strip it).
-    sync 2>/dev/null; sleep 1   # let tee flush most of the buffer
-    local raw_outdir parent_wd
-    # `|| true` because grep returns 1 if no match (trap inherits wrapper's set -e)
-    raw_outdir=$(grep -oE -- '--output_dir [^[:space:]]+' "$WRAPPER_LOG" 2>/dev/null | head -1 | awk '{print $2}' || true)
-    if [ -n "$raw_outdir" ]; then
-        parent_wd="$raw_outdir"
-        case "$(basename "$parent_wd")" in
-            group_*|model_*) parent_wd=$(dirname "$parent_wd") ;;
-        esac
-        if [ -d "$REPO_ROOT/$parent_wd" ]; then
-            cp -f "$WRAPPER_LOG" "$REPO_ROOT/$parent_wd/wrapper.log"
-            echo "  wrapper log mirrored to: $parent_wd/wrapper.log"
-        else
-            echo "  (work_dir $parent_wd not found, mirror skipped)"
-        fi
-    else
-        echo "  (no --output_dir in log; mirror skipped)"
-    fi
     echo "  wrapper log persisted at: $WRAPPER_LOG"
     echo "============================================================"
 }
