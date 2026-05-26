@@ -74,7 +74,15 @@ if ! huggingface-cli login --token "$HF_TOKEN_USE" --add-to-git-credential >/dev
 fi
 echo ">>> HF authed as $(huggingface-cli whoami 2>/dev/null | head -1)"
 
-# ─── 5. wandb fork swap (byted 0.13.95 → public 0.18.7) ──────────────────────
+# ─── 5a. wandb account / endpoint (set early so tail-end sync can authenticate) ──
+# Hardcoded to public api.wandb.ai (overrides any byted-fork internal default).
+# Each dp-script still sets its own WANDB_PROJECT — we don't touch that here.
+export WANDB_API_KEY="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"
+export WANDB_BASE_URL="https://api.wandb.ai"
+export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
+echo ">>> wandb account: $WANDB_ENTITY  @  $WANDB_BASE_URL"
+
+# ─── 5b. wandb fork swap (byted 0.13.95 → public 0.18.7) ─────────────────────
 # byted fork ignores WANDB_BASE_URL, routes to ml.tiktok-row.net (unreachable
 # from many mlx pods). Public 0.18.7 = highest <0.26 that keeps protobuf<6
 # (vllm 0.18 compat). Skip if already on public >=0.18.
@@ -110,9 +118,14 @@ _sbatch_env_tail_sync() {
     local ec=$?
     echo "============================================================"
     echo "  EXIT ($(date -u +%FT%TZ))  exit_code=${ec}"
-    if [ -d "$WANDB_DIR" ]; then
+    if [ -d "$WANDB_DIR" ] && compgen -G "$WANDB_DIR/run-*" >/dev/null 2>&1; then
         echo ">>> tail-end wandb sync ($WANDB_DIR) ..."
-        python -m wandb sync --sync-all "$WANDB_DIR" 2>&1 | tail -10 || true
+        # Only sync runs that lived in OUR WANDB_DIR (NOT --sync-all, which scans
+        # ./wandb and would try to re-upload hundreds of historical offline-run-*
+        # dirs from the NAS, taking 30+ min).
+        python -m wandb sync "$WANDB_DIR"/run-* 2>&1 | tail -10 || true
+    else
+        echo ">>> tail-end wandb sync: no run-* in $WANDB_DIR, skip"
     fi
     echo "  wrapper log persisted at: $WRAPPER_LOG"
     echo "============================================================"
