@@ -18,9 +18,10 @@
 #   ❌ cards 6,7 idle (8 不能 3-equal split; multi-node 跨 2 pod 才能 4+4+4 symmetric)
 #
 # Hparam 沿 canonical (TODO §1.1):
-#   per_device_bs=1, G=12, target EB=128 per group
-#   → grad_accum = 128 × 12 / 2 = 768 (vs 384 in N=2 4-GPU/group setup)
-#   ⚠️ 慢一倍 (more accum steps per optimizer step), 是 8-GPU N=3 的硬约束
+#   per_device_bs=2, G=12, target EB=128 per group
+#   → grad_accum = 128 × 12 / (2 × 2) = 384 (per_device_bs=2 verified safe on this hardware
+#     by 2026-05-26 _TEST_bs2 smoke; bs=1/accum=768 path OOM'd on Gemma group at step 2)
+#   ⚠️ 慢约一倍 vs N=2 4-GPU/group setup,是 8-GPU N=3 的硬约束
 #
 # Gemma-3-4B-it sidebands (per docs/gemma3_4b_it_fix_2026-05-22.md):
 #   - attn_implementation=flash_attention_2 (head_dim=256 fits FA2)
@@ -48,12 +49,17 @@ MODEL_C="google/gemma-3-4b-it"
 DATASET="q1716523669/MATH-Level345"
 
 # vLLM colocate gpu_mem per group (2-GPU groups need slightly more headroom than 4-GPU)
+# Gemma C reduced 0.40→0.30: 0.40 OOM'd at step 2 in bs=1/accum=768 trial 2026-05-26.
+# bs=2 path verified end-to-end (3 step smoke, no OOM, 80 GB peak) at 2026-05-26 04:59.
 VLLM_MEM_A="0.45"
 VLLM_MEM_B="0.45"
-VLLM_MEM_C="0.40"
+VLLM_MEM_C="0.30"
 
-# Gradient accumulation per group: 128 × 12 / 2 = 768 (per_device_bs=1, 2 GPU/group).
-GRAD_ACCUM="768"
+# EB=128 fixed (128 prompts × G=12 = 1536 completions/optimizer step).
+# bs=2 path: grad_accum = 128 × 12 / (2 × 2) = 384. Same EB, ~4× fewer ZeRO-3
+# all-gather cycles than bs=1/accum=768 (which was gather-bound). Math identical
+# (advantages computed over full 1536-completion batch before micro-batching).
+GRAD_ACCUM="384"
 
 TS="$(date +%Y%m%d_%H%M%S)"
 RUN="cogrpo_n3__qwen25_3b__llama32_3b__gemma3_4b__math345_full_lr3e-6_e2_${TS}"
@@ -77,7 +83,7 @@ export MATH500_EVAL_PATH=data/math500/test.json
 COMMON_ARGS=(
     --train_dataset "$DATASET"
     --learning_rate 3e-6
-    --per_device_train_batch_size 1
+    --per_device_train_batch_size 2
     --gradient_accumulation_steps "$GRAD_ACCUM"
     --num_train_epochs 2
     --lr_scheduler_type cosine_with_min_lr

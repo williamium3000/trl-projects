@@ -33,7 +33,9 @@ MODEL="Qwen/Qwen2.5-3B"
 DATASET_A="coreward/math_original"
 DATASET_B="coreward/math_rephrased"
 VLLM_MEM="0.45"
-GRAD_ACCUM="256"
+GRAD_ACCUM="384"   # 2026-05-26 YJ: aligned with our lr3e-6_e2_eb128 standard
+                   # (paper had 256; 384 → per_device 1 × gas 384 × num_proc 4 = 1536 prompts/update,
+                   # × num_generations 12 = 18432 rollouts/update, matches binary_homo / heter runs).
 
 TS="$(date +%Y%m%d_%H%M%S)"
 RUN="corewardI_qwen25_3b__math12345_lr3e-6_e3_${TS}"
@@ -63,7 +65,7 @@ COMMON_ARGS=(
     --gradient_checkpointing
     --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 3072
-    --num_generations 8
+    --num_generations 12   # 2026-05-26 YJ: was 8 from paper; aligned with our standard (G=12)
     --temperature 1.0
     --temperature_eval 0.8
     --use_vllm
