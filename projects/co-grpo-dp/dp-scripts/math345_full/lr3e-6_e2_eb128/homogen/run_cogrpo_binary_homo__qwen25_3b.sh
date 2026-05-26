@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Same-family co-grpo-dp · binary cross-sup · Qwen2.5-3B-Instruct × Qwen2.5-3B-Instruct
+# Same-family co-grpo-dp · binary cross-sup · Qwen2.5-3B × Qwen2.5-3B
 # · math345 · lr=3e-6 · eb=128 · 2 epoch
 # Outline §4.4.2 Heter vs Homo ablation (Table 4, Q2). Two independent
 # Qwen instances cross-supervise via peer majority-vote pseudo-label;
@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B-Instruct"
+MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
 VLLM_MEM="0.45"
 GRAD_ACCUM="384"

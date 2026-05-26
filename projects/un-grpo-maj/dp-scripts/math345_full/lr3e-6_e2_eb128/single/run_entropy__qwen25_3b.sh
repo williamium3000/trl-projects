@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Un-GRPO Entropy (RENT, Prabhudesai et al. arXiv 2505.22660) single-model
-# · Qwen2.5-3B-Instruct · math345 · lr=3e-6 · eb=128 · 2 epoch
+# · Qwen2.5-3B · math345 · lr=3e-6 · eb=128 · 2 epoch
 # Outline §4.2 self-sup baseline (Q row, Entropy column).
 # Reward: r(y) = -mean_t H(p_t) — maximize negative token-entropy.
 # ⚠️ trainer integration P1 TODO per outline §8.
@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B-Instruct"
+MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
 VLLM_MEM="0.45"
 TS="$(date +%Y%m%d_%H%M%S)"

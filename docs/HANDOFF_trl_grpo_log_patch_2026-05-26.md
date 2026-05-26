@@ -70,7 +70,7 @@ best_model/         hardlinked to checkpoint-4 (same inode 32657954)
                     .generate() runs ✓
 ```
 
-Run details: Qwen2.5-3B-Instruct + MATH-Level345, 8 GPU zero3, 8 steps,
+Run details: Qwen2.5-3B + MATH-Level345, 8 GPU zero3, 8 steps,
 4 evals at steps 2/4/6/8 with rewards 0.053/0.059/0.053/0.059 →
 best_metric correctly latched to first peak (step 4).
 

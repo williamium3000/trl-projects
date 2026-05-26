@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run4 · T1.2.A · TODO 4.2.A · Un-GRPO-Maj (TTRL) · Qwen2.5-3B-Instruct · math345 · lr=3e-6 · e2 · eb=128
+# run4 · T1.2.A · TODO 4.2.A · Un-GRPO-Maj (TTRL) · Qwen2.5-3B · math345 · lr=3e-6 · e2 · eb=128
 #
 # Env setup (venv / HF login / wandb fork swap / WANDB_DIR / log-redirect /
 # tail-sync trap) is shared across all sbatch wrappers — see scripts/sbatch_env.sh.

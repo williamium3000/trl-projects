@@ -25,7 +25,7 @@ Label-free self-supervised RL 框架下,单 agent 或同 family 自训易陷入 
 
 | 档次 | 模型对 |
 | --- | --- |
-| LLM 3B | Qwen2.5-3B-Instruct × Llama-3.2-3B-Instruct × Gemma-3-4B |
+| LLM 3B | Qwen2.5-3B × Llama-3.2-3B-Instruct × Gemma-3-4B |
 | LLM 7B | Qwen2.5-7B-Instruct × Llama-3.1-8B-Instruct × Gemma-3-12B |
 | MLLM 3B | Qwen2.5-VL-3B-Instruct × InternVL3.5-4B × Gemma-3-4B |
 | MLLM 7B | Qwen2.5-VL-7B-Instruct × InternVL3.5-8B × Gemma-3-12B |

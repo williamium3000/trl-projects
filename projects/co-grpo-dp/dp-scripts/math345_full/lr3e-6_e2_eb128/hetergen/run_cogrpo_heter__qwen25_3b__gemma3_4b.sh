@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cross-family co-grpo-dp · Qwen2.5-3B-Instruct × Gemma-3-4B-it
+# Cross-family co-grpo-dp · Qwen2.5-3B × Gemma-3-4B-it
 # · math345 · lr=3e-6 · eb=128 (per group) · 2 epoch
 # TODO §5.1.AC — N=2 cross-family pair (paper main row + Gemma test).
 #
@@ -25,7 +25,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL_A="Qwen/Qwen2.5-3B-Instruct"
+MODEL_A="Qwen/Qwen2.5-3B"
 MODEL_B="google/gemma-3-4b-it"
 DATASET="q1716523669/MATH-Level345"
 VLLM_MEM_A="0.45"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Un-GRPO-Maj (TTRL: K=12 self-consistency majority-vote self-labeling, GRPO)
-# · Qwen2.5-3B-Instruct · math345 · lr=3e-6 · eb=128 · 2 epoch
+# · Qwen2.5-3B · math345 · lr=3e-6 · eb=128 · 2 epoch
 # TODO §4.2.A — single-model self-supervised baseline. Each prompt: 12 rollouts,
 # internal SC vote → pseudo-label, GRPO on pseudo-label.
 # 配 canonical hparam (TODO §1.1). Same skeleton as
@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B-Instruct"
+MODEL="Qwen/Qwen2.5-3B"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
 RUN="qwen25_3b_unmaj_math345_full_lr3e-6_e2_${TS}"

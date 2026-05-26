@@ -105,11 +105,11 @@ conda activate eval-rlif   # ⚠️ 切 eval env, 不是 marti
 
 # 4.7.1  Qwen + Llama (24-sample)
 bash projects/eval/run_test_time_ensemble.sh \
-    --models "Qwen/Qwen2.5-3B-Instruct,meta-llama/Llama-3.2-3B-Instruct" --gpu 0
+    --models "Qwen/Qwen2.5-3B,meta-llama/Llama-3.2-3B-Instruct" --gpu 0
 
 # 4.7.2  Qwen + Gemma (24-sample)
 bash projects/eval/run_test_time_ensemble.sh \
-    --models "Qwen/Qwen2.5-3B-Instruct,google/gemma-3-4b-it" --gpu 1
+    --models "Qwen/Qwen2.5-3B,google/gemma-3-4b-it" --gpu 1
 
 # 4.7.3  Llama + Gemma (24-sample)
 bash projects/eval/run_test_time_ensemble.sh \
@@ -117,7 +117,7 @@ bash projects/eval/run_test_time_ensemble.sh \
 
 # 4.7.4  N=3 (36-sample)
 bash projects/eval/run_test_time_ensemble.sh \
-    --models "Qwen/Qwen2.5-3B-Instruct,meta-llama/Llama-3.2-3B-Instruct,google/gemma-3-4b-it" --gpu 3
+    --models "Qwen/Qwen2.5-3B,meta-llama/Llama-3.2-3B-Instruct,google/gemma-3-4b-it" --gpu 3
 ```
 
 4 个并发 8-GPU ≈ 4h 总。

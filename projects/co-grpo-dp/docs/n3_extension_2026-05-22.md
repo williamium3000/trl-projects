@@ -142,7 +142,7 @@ problem majority-voted across all 3 models. See TODO §4.7.4.
 
 ```bash
 bash projects/eval/run_test_time_ensemble.sh \
-    --models "Qwen/Qwen2.5-3B-Instruct,meta-llama/Llama-3.2-3B-Instruct,google/gemma-3-4b-it" \
+    --models "Qwen/Qwen2.5-3B,meta-llama/Llama-3.2-3B-Instruct,google/gemma-3-4b-it" \
     --k 12 --gpu 0
 # → 36-sample MV ensemble row in baselines.csv
 ```

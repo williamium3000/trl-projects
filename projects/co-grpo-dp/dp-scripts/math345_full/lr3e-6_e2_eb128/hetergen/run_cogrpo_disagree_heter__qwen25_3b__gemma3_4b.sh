@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Cross-family co-grpo-dp · disagreement-weighted reward
-#   Qwen2.5-3B-Instruct × google/gemma-3-4b-it
+#   Qwen2.5-3B × google/gemma-3-4b-it
 #   · math345 · lr=3e-6 · eb=128 · 2 epoch
 # Outline §4.2 main table P2 row (winner=disagree per 2026-05-25 user pin).
 #
@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL_A="Qwen/Qwen2.5-3B-Instruct"
+MODEL_A="Qwen/Qwen2.5-3B"
 MODEL_B="google/gemma-3-4b-it"
 DATASET="q1716523669/MATH-Level345"
 VLLM_MEM_A="0.45"

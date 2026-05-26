@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# N=3 cross-family co-grpo-dp · Qwen2.5-3B-Instruct × Llama-3.2-3B-Instruct × Gemma-3-4B-it
+# N=3 cross-family co-grpo-dp · Qwen2.5-3B × Llama-3.2-3B-Instruct × Gemma-3-4B-it
 # · math345 · lr=3e-6 · eb=128 (per group) · 2 epoch
 # TODO §5.3.1 — full mutual N=3 co-learning (3 trainable models; each one supervised by
 #               majority-vote over the other 2's voted answers; ties → UNLABELED).
@@ -42,7 +42,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL_A="Qwen/Qwen2.5-3B-Instruct"
+MODEL_A="Qwen/Qwen2.5-3B"
 MODEL_B="meta-llama/Llama-3.2-3B-Instruct"
 MODEL_C="google/gemma-3-4b-it"
 DATASET="q1716523669/MATH-Level345"

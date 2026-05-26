@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Cross-family co-grpo-dp · disagreement-weighted reward
-#   Qwen2.5-3B-Instruct × Llama-3.2-3B-Instruct
+#   Qwen2.5-3B × Llama-3.2-3B-Instruct
 #   · math345 · lr=3e-6 · eb=128 · 2 epoch
 # Outline §4.4.1 ablation row + winner candidate for §4.2 main table (per
 # user 2026-05-25: disagree placed on top by default, reward design is the
@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL_A="Qwen/Qwen2.5-3B-Instruct"
+MODEL_A="Qwen/Qwen2.5-3B"
 MODEL_B="meta-llama/Llama-3.2-3B-Instruct"
 DATASET="q1716523669/MATH-Level345"
 VLLM_MEM_A="0.45"
