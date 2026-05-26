@@ -2783,7 +2783,10 @@ class GRPOTrainer(_BaseTrainer):
         if mode == "eval":
             metrics = {f"eval_{key}": val for key, val in metrics.items()}
 
-        logs = {**logs, **metrics}
+        # YJ 2026-05-26: in-place update so caller (HF Trainer._maybe_log_save_evaluate)
+        # sees reward/completion metrics in its `metrics` dict — needed for
+        # metric_for_best_model=eval_reward + load_best_model_at_end=true to work.
+        logs.update(metrics)
         super().log(logs, start_time)
         self._metrics[mode].clear()
 
