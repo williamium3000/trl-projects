@@ -44,14 +44,19 @@ echo "  utc:        $(date -u +%FT%TZ)"
 echo "  repo:       ${REPO_ROOT}"
 echo "============================================================"
 
-# ─── 2. .venv-marti optional; mlx pods default to system Python ──────────────
-if [ -f "$REPO_ROOT/.venv-marti/bin/activate" ]; then
-    # shellcheck disable=SC1091
-    source "$REPO_ROOT/.venv-marti/bin/activate"
-    echo ">>> activated .venv-marti  python=$(which python)"
-else
-    echo ">>> .venv-marti absent; using $(which python) (byted image system Python)"
-fi
+# ─── 2. Python: byted-image system Python (verified working) ─────────────────
+# All historical sbatch (mlx) runs used /usr/bin/python (Python 3.11.2) which
+# the byted base image ships preinstalled with torch 2.9.1+cu129, vllm 0.14.0,
+# transformers 4.57.1, accelerate 1.12.0, deepspeed 0.18.6, wandb 0.13.95
+# (swapped to public below). Trl comes via the editable install in step 3.
+#
+# .venv-marti is intentionally NOT touched — it's a leftover empty shell from
+# an old setup.sh run on the dev pod (created 2026-05-25 03:08); its
+# bin/python is a symlink to /home/tiger/.local/share/uv/python/... which
+# is dev-pod-local, broken on sbatch pods. Activating it from a wrapper
+# would break sbatch jobs. Evidence: every wandb-metadata.json from
+# n116-042-* / n111-046-* sbatch pods shows executable=/usr/bin/python.
+echo ">>> python: $(which python)  ($(python --version 2>&1))  [byted image system]"
 
 # ─── 3. trl editable install (fixes _save_checkpoint → version() crash) ──────
 python -c "from importlib.metadata import version; version('trl')" 2>/dev/null || {
