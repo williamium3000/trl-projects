@@ -6,7 +6,7 @@
 # ⚠️ trainer integration P1 TODO per outline §8 (intrinsic_rewards.py +
 # train_un_grpo_intrinsic.py exist as skeleton; reward formula direction
 # correct per [[intrinsic-rewards-paper-check-2026-05-19]]).
-# 8-GPU single-model. EB=128: per_dev_bs=1 × acc=96 × 8 / G=12 = 128.
+# 8-GPU single-model. EB=128: per_dev_bs=1 × acc=192 × 8 / G=12 = 128.
 
 set -euo pipefail
 
@@ -34,11 +34,11 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
     --main_process_port 19510 \
-    --gradient_accumulation_steps 96 \
+    --gradient_accumulation_steps 192 \
     projects/un-grpo-maj/train_un_grpo_intrinsic.py \
     --learning_rate 3e-6 \
     --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 96 \
+    --gradient_accumulation_steps 192 \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
