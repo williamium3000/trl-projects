@@ -9,9 +9,11 @@ directory (`--rendezvous_dir`) to exchange pseudo-labels every generation step.
 import os
 import json
 import shutil
+import datetime as _dt
 from dataclasses import dataclass, field
 
 import wandb
+import torch.distributed as _td
 import torch.nn as _nn
 from transformers import AutoTokenizer
 from transformers.modeling_utils import PreTrainedModel as _PreTrainedModel
@@ -31,6 +33,30 @@ def _safe_init_weights(self, module):
     return _orig_init_weights(self, module)
 
 _PreTrainedModel._init_weights = _safe_init_weights
+
+# Co-grpo-dp NCCL-watchdog fix: PyTorch default collective timeout is 30 min.
+# In co-grpo-dp, rank 0 (main process) blocks in `rendezvous.exchange_n_way()`
+# polling peer-group files between train steps; meanwhile rank 1 is parked on
+# the in-group `broadcast_object_list` (an NCCL collective) waiting for rank 0
+# to reach it. If peer groups stagger their eval (Gemma-3-4B eval ≈ 2× Qwen 3B
+# eval at G=1/250 prompts), rank 0's file wait can exceed 30 min, and rank 1's
+# NCCL broadcast watchdog kills the whole group (observed 2026-05-26 on group B
+# Llama at step 11 — see docs/gemma3_text_cogrpodp_fix_2026-05-23.md).
+# Set via monkey-patch because neither `accelerate launch` (1.12) nor the YAML
+# expose a default-timeout knob, and PyTorch 2.9 has no env-var override for
+# `default_pg_timeout`. Kept at the PyTorch default (30 min) so a genuinely hung
+# run fails fast rather than wasting hours; if the rdv-wait > 30 min crash
+# (2026-05-26 group B) reappears, raise this instead of masking it.
+_NCCL_PG_TIMEOUT = _dt.timedelta(minutes=30)
+_orig_init_pg = _td.init_process_group
+
+
+def _patched_init_pg(*args, **kwargs):
+    kwargs.setdefault("timeout", _NCCL_PG_TIMEOUT)
+    return _orig_init_pg(*args, **kwargs)
+
+
+_td.init_process_group = _patched_init_pg
 
 from trl import (
     GRPOConfig,
@@ -135,13 +161,30 @@ def reward_correctness(completions, solution, **kwargs):
     `1/2` vs `\\frac{1}{2}` vs `0.5` all count as correct. Slower than string
     equality (~10-100ms per check) but eliminates spurious negative rewards.
     """
+    # Per-example task routing (CoMAS coding data). `task`/`test_code` arrive as
+    # reward kwargs (dataset columns). For coding, `ground_truth` is the peer's
+    # pseudo-label = an output-tuple string, so we re-run THIS completion's code on
+    # the same inputs (parsed from the persistent `test_code` column) and compare
+    # output tuples by equality. Math/science keep the exact original sympy path.
+    tasks = kwargs.get("task")
+    test_codes = kwargs.get("test_code")
+    n = len(completions)
+    tasks = tasks if tasks is not None else ["math"] * n
+    test_codes = test_codes if test_codes is not None else [""] * n
+
     rewards = []
-    for completion, ground_truth in zip(completions, solution):
-        pred_answer = extract_boxed_answer(_get_text(completion))
-        if pred_answer is not None and grade_answer(pred_answer, ground_truth):
-            rewards.append(1.0)
+    for i, (completion, ground_truth) in enumerate(zip(completions, solution)):
+        if tasks[i] == "coding":
+            from comas.code_reward import extract_calls, voting_answer
+            fn, call_inputs = extract_calls(test_codes[i])
+            my_answer = voting_answer(_get_text(completion), fn, call_inputs)
+            rewards.append(1.0 if (my_answer is not None and my_answer == ground_truth) else 0.0)
         else:
-            rewards.append(0.0)
+            pred_answer = extract_boxed_answer(_get_text(completion))
+            if pred_answer is not None and grade_answer(pred_answer, ground_truth):
+                rewards.append(1.0)
+            else:
+                rewards.append(0.0)
     return rewards
 
 

@@ -15,6 +15,7 @@ backward, and DS->vLLM weight sync all happen independently inside each
 group, so the groups run in genuine parallel across disjoint GPUs.
 """
 
+import time
 from collections import Counter
 
 from accelerate.utils import broadcast_object_list, gather_object
@@ -23,9 +24,14 @@ from trl import GRPOTrainer
 from co_label_utils import (
     _UNLABELED_SENTINEL,
     _extract_and_normalize,
+    _get_text,
     _majority_vote,
     normalize_answer,
 )
+# CoMAS coding data: the votable "answer" of a code completion is its run-output
+# tuple (string). Imported only for the task=="coding" branch; math is untouched.
+from comas.code_reward import extract_calls as _comas_extract_calls
+from comas.code_reward import voting_answer as _comas_voting_answer
 
 
 def _peer_majority_vote(peer_labels: list[str]) -> str:
@@ -141,14 +147,27 @@ class CoGRPOdpTrainer(GRPOTrainer):
         mode = "train"
 
         # ---- 1. Gather my group's answers and the dataset's real solutions ----
-        local_answers = [_extract_and_normalize(c) for c in completions]
+        # Task-routed votable answer: math/science -> normalized boxed answer
+        # (unchanged); coding -> run the completion's code on the test inputs and
+        # use the output-tuple string (so the existing vote/exchange/reward chain
+        # works unchanged, just with a different "answer" representation).
+        def _votable_answer(completion, inp):
+            if inp.get("task") == "coding":
+                fn, call_inputs = _comas_extract_calls(inp.get("test_code", ""))
+                return _comas_voting_answer(_get_text(completion), fn, call_inputs)
+            return _extract_and_normalize(completion)
+
+        local_answers = [_votable_answer(c, inp) for c, inp in zip(completions, inputs)]
         local_real_solutions = [inp.get("solution") for inp in inputs]
+        local_tasks = [inp.get("task", "math") for inp in inputs]
         if world_size > 1:
             gathered_answers = gather_object(local_answers)
             gathered_real_solutions = gather_object(local_real_solutions)
+            gathered_tasks = gather_object(local_tasks)
         else:
             gathered_answers = local_answers
             gathered_real_solutions = local_real_solutions
+            gathered_tasks = local_tasks
         assert len(gathered_answers) == N_global, (
             f"gather_object returned {len(gathered_answers)} items, expected {N_global}"
         )
@@ -165,7 +184,9 @@ class CoGRPOdpTrainer(GRPOTrainer):
             else:
                 my_pseudo.append(label)
                 num_labeled_me += 1
-                if self.log_oracle_accuracy:
+                # Oracle accuracy is a math-only diagnostic; for coding the real
+                # "solution" is test asserts, not a sympy-comparable answer, so skip.
+                if self.log_oracle_accuracy and gathered_tasks[lo] != "coding":
                     gt = normalize_answer(gathered_real_solutions[lo])
                     if gt is not None and gt == label:
                         num_oracle_me += 1
@@ -179,6 +200,14 @@ class CoGRPOdpTrainer(GRPOTrainer):
         self._gen_counter_train += 1
 
         if self.accelerator.is_main_process:
+            # Diagnostic: log wall time spent waiting on peers' files. This is the
+            # interval where rank 0 is in file-poll while rank 1 is blocked on the
+            # next NCCL collective (broadcast_object_list below). If this number
+            # gets close to the NCCL collective timeout (default 30 min, patched to
+            # 2 h in train_co_grpo_dp.py), rank 1's watchdog will fire and kill
+            # this group — root cause of the 2026-05-26 group B crash. Print on
+            # every step so we can see the per-step distribution in train.log.
+            _rdv_start = time.perf_counter()
             if self.n_way == 2:
                 # Legacy 2-way path — keep byte-identical with pre-N-way runs.
                 peer_pseudo = self.rendezvous.exchange(mode=mode, counter=gc, payload=my_pseudo)
@@ -199,6 +228,14 @@ class CoGRPOdpTrainer(GRPOTrainer):
                             f"peer {peer_name!r} sent {len(peer_pseudo)} pseudo-labels "
                             f"for {mode} gc={gc}, expected {num_groups} — groups out of sync"
                         )
+            _rdv_elapsed = time.perf_counter() - _rdv_start
+            print(
+                f"[rdv-timing] group {self.my_group_name} {mode} gc={gc}: "
+                f"rendezvous wait = {_rdv_elapsed:.2f}s",
+                flush=True,
+            )
+            # Also surface as a wandb-tracked metric (logged below via _metrics).
+            self._metrics[mode]["co_labeling/rendezvous_wait_seconds"].append(_rdv_elapsed)
             object_list = [peer_pseudos_by_name]
         else:
             object_list = [None]
