@@ -24,6 +24,7 @@ math case with "answer string" replaced by "output tuple".
 import ast
 import io
 import signal
+import sys
 import contextlib
 from collections import Counter
 
@@ -117,21 +118,27 @@ def run_outputs(code: str, func_name: str, inputs: list, timeout: float = 2.0):
         return tuple()
     outs = []
     for args in inputs:
+        _saved_argv = sys.argv
+        sys.argv = [func_name]  # neutralize: model code may call argparse/pytest.main()
         try:
             g = {}
-            with _time_limit(timeout):
+            with _time_limit(timeout), contextlib.redirect_stdout(io.StringIO()):
                 exec("from typing import *\n" + code, g)
                 fn = g.get(func_name)
                 if fn is None:
                     outs.append(ERR_NOFUNC)
                     continue
-                with contextlib.redirect_stdout(io.StringIO()):
-                    result = fn(*args)
-                outs.append(repr(result))
+                result = fn(*args)
+            outs.append(repr(result))
         except _TimeLimit:
             outs.append("<TIMEOUT>")
+        except SystemExit as e:
+            # argparse/pytest.main() raise SystemExit; must catch (BaseException, not Exception)
+            outs.append(f"<ERR:SystemExit:{e.code}>")
         except Exception as e:
             outs.append(f"<ERR:{type(e).__name__}>")
+        finally:
+            sys.argv = _saved_argv
     return tuple(outs)
 
 
