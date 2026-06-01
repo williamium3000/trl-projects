@@ -15,7 +15,7 @@ MODEL="Qwen/Qwen2.5-VL-3B-Instruct"
 DATASET="leonardPKU/GEOQA_R1V_Train_8K"
 VLLM_MEM="0.45"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="phase3_single_qwen25vl3b_geoqa_${TS}"
+RUN="phase3_single_qwen25vl3b_geoqa_unmaj_${TS}"
 BASE_OUT="projects/work_dirs/mllm-co-grpo-dp/$RUN"
 mkdir -p "$BASE_OUT"
 
@@ -39,6 +39,7 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --train_dataset "$DATASET" \
     --output_dir "$BASE_OUT" \
     --run_config "$RUN" \
+    --self_labeling --self_consistency_threshold 0.0 \
     --learning_rate 1e-6 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 8 \

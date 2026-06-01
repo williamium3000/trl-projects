@@ -169,3 +169,6 @@ projects/work_dirs
 # r1v GeoQA eval images (44M, re-downloadable from Geo170K) — keep jsonl only
 data/r1v/images/
 data/r1v/__MACOSX/
+
+# MathVista eval images (re-buildable via tools/convert_mathvista.py) — keep jsonl only
+data/mathvista/images/

@@ -42,8 +42,8 @@ export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="mllm-co-grpo-dp"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export HF_HUB_ENABLE_HF_TRANSFER=0
-export MLLM_EVAL_PATH=data/r1v/geoqa_test_754.jsonl
-export MLLM_EVAL_IMAGE_DIR=data/r1v/images
+export MLLM_EVAL_PATH=data/mathvista/testmini_150.jsonl
+export MLLM_EVAL_IMAGE_DIR=data/mathvista
 
 CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --config_file projects/mllm-co-grpo-dp/accelerate_zero3.yaml \
@@ -70,7 +70,7 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --temperature_eval 0.6 \
     --use_vllm \
     --vllm_mode colocate \
-    --vllm_max_model_length 2048 \
+    --vllm_max_model_length 4096 \
     --vllm_gpu_memory_utilization "$VLLM_MEM" \
     --logging_steps 1 \
     --save_strategy steps \

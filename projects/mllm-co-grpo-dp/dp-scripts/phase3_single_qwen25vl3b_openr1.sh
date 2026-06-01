@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Phase 3 — Single-model VLM GRPO baseline on GEOQA.
 # Same template as phase3_single_qwen25vl3b_counting.sh, differences:
-#   - DATASET: leonardPKU/GEOQA_R1V_Train_8K (~8k train, much smaller)
+#   - DATASET: lmms-lab/multimodal-open-r1-8k-verified (~8k train, much smaller)
 #   - epochs: 1 (R1-V Qwen2.5VL reaches 47.5% at 1 ep; 2 ep optional)
 #   - eval set: GeoQA-Test-Direct-Answer-735 via MLLM_EVAL_PATH
 
@@ -12,10 +12,10 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL="Qwen/Qwen2.5-VL-3B-Instruct"
-DATASET="leonardPKU/GEOQA_R1V_Train_8K"
+DATASET="lmms-lab/multimodal-open-r1-8k-verified"
 VLLM_MEM="0.45"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="phase3_single_qwen25vl3b_geoqa_${TS}"
+RUN="phase3_single_qwen25vl3b_openr1_${TS}"
 BASE_OUT="projects/work_dirs/mllm-co-grpo-dp/$RUN"
 mkdir -p "$BASE_OUT"
 

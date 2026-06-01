@@ -47,6 +47,34 @@ from verifiers.math_verify_wrapper import extract_answer_tag
 CLEVR_COUNTING_DATASET = "leonardPKU/clevr_cogen_a_train"
 GEOQA_DATASET = "leonardPKU/GEOQA_R1V_Train_8K"
 
+# Additional MLLM training datasets. Each spec maps the source schema → our
+# {prompt, image, solution}. Field names verified from the HF dataset viewer
+# (2026-06-01). Sentinels: question="@chat" reads the chat-list `prompt` column
+# (OpenMMReasoner); answer="@reward" reads reward_model["ground_truth"].
+# MMFineReason is one repo with two splits (rl / sft) — the `#sft` key selects
+# the sft split via spec["hf_id"]. "<image>" placeholders in question text are
+# stripped (the prompt builder injects the image part separately).
+ZWZ_37K = "williamium/zwz-37k"
+MMFINEREASON = "OpenDataArena/MMFineReason-1.8M-Qwen3-VL-235B-Thinking"
+MMFINEREASON_SFT = MMFINEREASON + "#sft"
+OPENMMREASONER = "OpenMMReasoner/OpenMMReasoner-RL-74K"
+OPEN_R1_8K = "lmms-lab/multimodal-open-r1-8k-verified"
+GEOMETRY3K = "hiyouga/geometry3k"
+MMR1_MATH = "MMR1/MMR1-Math-RL-Data-v0"
+
+_OPENMMR_SUBSETS = ["virl39k", "thinklite_vl_hard", "tqa_train",
+                    "wemath_standard", "mmk12", "wemath_pro", "algopuzzle"]
+
+_SPECS = {
+    ZWZ_37K:          dict(subset="37k", split="train", image="images", question="problem", answer="answer"),
+    MMFINEREASON:     dict(split="rl",   image="image",  question="question", answer="answer", mmfr_filter=True),
+    MMFINEREASON_SFT: dict(hf_id=MMFINEREASON, split="sft", image="image", question="question", answer="answer"),
+    OPENMMREASONER:   dict(concat=_OPENMMR_SUBSETS, split="train", image="images", question="@chat", answer="@reward"),
+    OPEN_R1_8K:       dict(split="train", image="image",  question="problem", answer="original_answer"),
+    GEOMETRY3K:       dict(split="train", image="images", question="problem", answer="answer"),
+    MMR1_MATH:        dict(split="train", image="images", question="problem", answer="answer"),
+}
+
 _VALIDATION_SIZE = 150
 _VALIDATION_SEED = 42
 
@@ -75,11 +103,29 @@ def _make_prompt(question_text):
     }]
 
 
-def _convert_to_rgb(example):
-    """Ensure image is RGB. CLEVR/GEOQA are RGB but be defensive at the boundary."""
-    img = example["image"]
+# Cap the longest image side so Qwen2.5-VL's native dynamic-resolution tiling
+# can't blow past vllm_max_model_length. A 1514x720 MathVista figure yields
+# ~11k image tokens uncapped (crashes vLLM at max_model_len); capping the long
+# side to 1024 bounds it to ~1.4k tokens. No-op for InternVL (forced to 1 tile)
+# and for already-small GeoQA diagrams.
+_MAX_LONG_SIDE = 1024
+
+
+def _cap_image(img):
+    """RGB + downscale so max(w, h) <= _MAX_LONG_SIDE (preserves aspect ratio)."""
     if img.mode != "RGB":
-        example["image"] = img.convert("RGB")
+        img = img.convert("RGB")
+    w, h = img.size
+    long_side = max(w, h)
+    if long_side > _MAX_LONG_SIDE:
+        scale = _MAX_LONG_SIDE / long_side
+        img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))))
+    return img
+
+
+def _convert_to_rgb(example):
+    """Ensure image is RGB and capped to `_MAX_LONG_SIDE` on the long edge."""
+    example["image"] = _cap_image(example["image"])
     return example
 
 
@@ -103,14 +149,71 @@ def _load_local_eval_jsonl(jsonl_path, image_dir):
             if image_dir is not None and not os.path.isabs(img_path):
                 img_path = image_dir / img_path
             with Image.open(img_path) as im:
-                im = im.convert("RGB")
                 im.load()
+                im = _cap_image(im)
             records.append({
                 "prompt": _make_prompt(row["problem"]),
                 "image": im,
                 "solution": row["solution"],
             })
     return Dataset.from_list(records)
+
+
+def _extract_chat_text(prompt):
+    """Pull the user-turn text out of a chat-list `prompt` (OpenMMReasoner).
+
+    `content` may be a plain string or a list of `{type, text}` parts. Returns
+    the concatenated user text with any `<image>` placeholder stripped.
+    """
+    parts = []
+    for msg in prompt:
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content")
+        if isinstance(content, str):
+            parts.append(content)
+        elif isinstance(content, list):
+            for p in content:
+                if isinstance(p, dict) and p.get("text"):
+                    parts.append(p["text"])
+    return " ".join(parts).replace("<image>", "").strip()
+
+
+def _load_spec_dataset(dataset_name):
+    """Load + normalize one of the `_SPECS` datasets → {prompt, image, solution}."""
+    spec = _SPECS[dataset_name]
+    hf_id = spec.get("hf_id", dataset_name)
+    split = spec.get("split", "train")
+
+    if "concat" in spec:
+        from datasets import concatenate_datasets
+        ds = concatenate_datasets(
+            [hf_load_dataset(hf_id, name=s, split=split) for s in spec["concat"]]
+        )
+    elif "subset" in spec:
+        ds = hf_load_dataset(hf_id, name=spec["subset"], split=split)
+    else:
+        ds = hf_load_dataset(hf_id, split=split)
+
+    if spec.get("mmfr_filter"):
+        # RL split: keep self-consistent, verifiable, non-degenerate items
+        # (both judges agree, and 0 < pass_rate < 1 so reward has variance).
+        ds = ds.filter(lambda r: r["is_consistent"] and 0.0 < r["pass_rate"] < 1.0)
+
+    img_f, q_f, a_f = spec["image"], spec["question"], spec["answer"]
+
+    def _fmt(ex):
+        img = ex[img_f]
+        if isinstance(img, list):
+            img = img[0]
+        if q_f == "@chat":
+            question = _extract_chat_text(ex["prompt"])
+        else:
+            question = str(ex[q_f]).replace("<image>", "").strip()
+        ans = ex["reward_model"]["ground_truth"] if a_f == "@reward" else ex[a_f]
+        return {"prompt": _make_prompt(question), "image": img, "solution": str(ans).strip()}
+
+    return ds.map(_fmt, remove_columns=ds.column_names)
 
 
 def load_dataset(dataset_name):
@@ -134,46 +237,40 @@ def load_dataset(dataset_name):
         MAX_SAMPLES:
             Truncate train set to first N examples (debug / sanity only).
     """
-    if dataset_name not in (CLEVR_COUNTING_DATASET, GEOQA_DATASET):
+    if dataset_name in _SPECS:
+        full_train = _load_spec_dataset(dataset_name)
+    elif dataset_name in (CLEVR_COUNTING_DATASET, GEOQA_DATASET):
+        raw = hf_load_dataset(dataset_name)
+        train_split = raw["train"]
+        columns = set(train_split.column_names)
+        # R1-V datasets standardize on `problem` + `solution` + `image`.
+        if not {"image", "problem", "solution"} <= columns:
+            raise ValueError(
+                f"Dataset '{dataset_name}' must have 'problem'/'solution'/'image'. "
+                f"Found columns: {columns}"
+            )
+
+        def _format(example):
+            # CLEVR/GEOQA store solution as '<answer> X </answer>'. Strip the
+            # wrapper so `solution` is the bare gold (e.g. '3', '145°') — matches
+            # what reward_correctness extracts from completions.
+            raw_sol = str(example["solution"])
+            stripped = extract_answer_tag(raw_sol)
+            return {
+                "prompt": _make_prompt(example["problem"]),
+                "image": example["image"],
+                "solution": stripped if stripped is not None else raw_sol.strip(),
+            }
+
+        full_train = train_split.map(_format, remove_columns=train_split.column_names)
+    else:
         raise ValueError(
             f"Unsupported dataset '{dataset_name}'. Supported: "
-            f"'{CLEVR_COUNTING_DATASET}', '{GEOQA_DATASET}'."
+            f"GEOQA/CLEVR + {sorted(_SPECS)}"
         )
 
-    raw = hf_load_dataset(dataset_name)
-    train_split = raw["train"]
-
-    columns = set(train_split.column_names)
-    # R1-V datasets standardize on `problem` (question text) + `solution`
-    # (answer string) + `image` (PIL via HFImage feature). Fail fast if
-    # schema doesn't match — see dataset card on HF.
-    if "image" not in columns:
-        raise ValueError(
-            f"Dataset '{dataset_name}' has no `image` column. Columns: {columns}"
-        )
-    question_col = "problem" if "problem" in columns else None
-    answer_col = "solution" if "solution" in columns else None
-    if question_col is None or answer_col is None:
-        raise ValueError(
-            f"Dataset '{dataset_name}' must have 'problem' and 'solution' "
-            f"columns. Found columns: {columns}"
-        )
-
-    def _format(example):
-        # CLEVR/GEOQA store solution as '<answer> X </answer>'. Strip the wrapper
-        # so `solution` is the bare gold (e.g. '3', '145°') — matches what
-        # reward_correctness extracts from completions, and avoids relying on
-        # math_verify's tolerance of embedded answer tags.
-        raw_sol = str(example[answer_col])
-        stripped = extract_answer_tag(raw_sol)
-        return {
-            "prompt": _make_prompt(example[question_col]),
-            "image": example["image"],
-            "solution": stripped if stripped is not None else raw_sol.strip(),
-        }
-
-    full_train = train_split.map(_format, remove_columns=train_split.column_names)
-    # Ensure `image` column is decoded to PIL (no-op if already PIL).
+    # Decode `image` → PIL (no-op if already) and cap long side. Shared by all
+    # sources so Qwen's dynamic-resolution tiling can't exceed max_model_len.
     if not isinstance(full_train.features["image"], HFImage):
         full_train = full_train.cast_column("image", HFImage())
     full_train = full_train.map(_convert_to_rgb)
