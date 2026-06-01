@@ -3,7 +3,7 @@
 #
 # 4 件事:
 #   1) lm_eval / vllm / math_verify import OK
-#   2) 自定义 task (aime_2025, amc23) lm-eval 能找到
+#   2) 自定义 task (aime_2024, amc23) lm-eval 能找到
 #   3) 外挂 repo 目录都在,Python 能找到入口模块
 #   4) vLLM + lm-eval 在 GSM8K 上跑 5 道题 (smoke,不打分)
 #
@@ -42,7 +42,7 @@ python - <<PY
 from lm_eval.tasks import TaskManager
 tm = TaskManager(include_path="$CUSTOM_TASKS_DIR")
 all_tasks = set(tm.all_tasks)
-for t in ("aime_2025", "amc23"):
+for t in ("aime_2024", "amc23"):
     if t not in all_tasks:
         raise SystemExit(f"task {t!r} not discovered under $CUSTOM_TASKS_DIR")
     print(f"  {t} OK")

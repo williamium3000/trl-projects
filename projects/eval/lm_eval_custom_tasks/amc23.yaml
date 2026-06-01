@@ -1,6 +1,12 @@
 # AMC 2023 — 83 problems from the AMC 10/12 2023 sets curated by AI-MO.
 # Source: AI-MO/aimo-validation-amc (train split)
 # Answers are numeric / simple symbolic; we compare with math_verify.
+#
+# Reported as avg@8: each problem is decoded 8× with sampling (T=0.6, top_p=0.95),
+# graded independently, then averaged. This matches the Co-rewarding (ICLR 2026) AMC
+# protocol (ttrl library, avg@8) so numbers line up with their main table.
+# `repeats: 8` runs each doc 8×; the mean aggregation averages over all 83×8 samples.
+# Lower `repeats` to trade accuracy for speed.
 task: amc23
 dataset_path: AI-MO/aimo-validation-amc
 dataset_name: null
@@ -8,13 +14,15 @@ test_split: train
 training_split: null
 fewshot_split: null
 output_type: generate_until
+repeats: 8
 doc_to_text: "Problem: {{problem}}\nPlease reason step by step, and put your final answer within \\boxed{}."
 doc_to_target: "{{answer}}"
 process_results: !function utils.process_results_amc
 generation_kwargs:
   max_gen_toks: 4096
-  do_sample: false
-  temperature: 0.0
+  do_sample: true
+  temperature: 0.6
+  top_p: 0.95
   until: []
 metric_list:
   - metric: exact_match

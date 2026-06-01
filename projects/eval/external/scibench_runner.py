@@ -1,15 +1,21 @@
 #!/usr/bin/env python
-"""SciBench wrapper for run_eval_all.sh.
+"""SciBench wrapper for run_eval_all.sh — aligned to CoMAS.
 
-SciBench has 7 subjects (chemmc, atkins, calculus, class, diff, fund, matter,
-quan, stat, thermo, calculus_concept). We grade with numeric tolerance matching
-the SciBench paper (rel_tol=0.05).
+Data and grading both mirror CoMAS (xxyQwQ/CoMAS) so the score is directly
+comparable to the CoMAS paper:
 
-Strategy: load problems from the cloned repo's `dataset/original/*.json`,
-generate with vLLM, parse the last \boxed{...} number, compare with tolerance.
+  - Dataset: CoMAS's curated `SciBench.json` (499 items, `query`/`gt` schema),
+    fetched by setup.sh into external_repos/scibench_comas/SciBench.json. This is
+    a different problem set from the raw mandyyyii/scibench dump (which the
+    test-time-ensemble path still uses).
+  - Grading: copied verbatim from CoMAS `maslab/evaluation.py` SciBench branch —
+    strip a leading "+" from the ground truth, `math_verify.parse` both the
+    ground truth and the full model response, take `float(parsed[0])` of each,
+    and accept within `math.isclose(rel_tol=0.05)`. Any parse/cast failure → wrong.
 
-If the dataset files are gated / missing for any subject, that subject is
-recorded as N/A and excluded from the average (footnote-worthy).
+If the dataset file is missing, the whole bench is recorded as N/A (score=None)
+and excluded from the average (the __main__ wrapper exits 0 either way so one
+dead bench doesn't kill the sequential 13-bench pipeline).
 """
 
 from __future__ import annotations
@@ -17,45 +23,34 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import re
 import sys
 from pathlib import Path
 
-REPO_DIR = Path(__file__).resolve().parents[1] / "external_repos" / "scibench"
-DATA_DIR = REPO_DIR / "dataset" / "original"
+from math_verify import parse
 
-# 7 subjects per SciBench paper; ground-truth answers are scalars.
-_SUBJECTS = ["chemmc", "atkins", "calculus", "class", "diff", "fund", "matter",
-             "quan", "stat", "thermo"]
+DATA_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "external_repos" / "scibench_comas" / "SciBench.json"
+)
 
 _PROMPT_TMPL = (
     "Solve the following problem step by step. Put your final answer in "
     "\\boxed{{...}}.\n\nProblem: {q}\n"  # {{...}} = literal {...} for str.format
 )
 
-_BOXED_RE = re.compile(r"\\boxed\{([^}]+)\}")
 
-
-def _last_number(text: str) -> float | None:
-    m = list(_BOXED_RE.finditer(text))
-    if not m:
-        return None
-    raw = m[-1].group(1).strip()
-    # strip latex wrappers / commas / units
-    raw = re.sub(r"[$,\\]", "", raw)
-    raw = re.sub(r"[^\d.eE+-]", "", raw)
-    if not raw:
-        return None
+def _grade(answer: str, ground_truth: str) -> bool:
+    # Verbatim from CoMAS maslab/evaluation.py, SciBench branch.
+    if ground_truth.startswith("+"):
+        ground_truth = ground_truth[1:]
+    parsed_ground_truth = parse(ground_truth)
+    parsed_answer = parse(answer)
     try:
-        return float(raw)
-    except ValueError:
-        return None
-
-
-def _close(a: float, b: float, rel_tol: float = 0.05) -> bool:
-    if a == 0 or b == 0:
-        return abs(a - b) < rel_tol
-    return abs(a - b) / max(abs(a), abs(b)) < rel_tol
+        parsed_ground_truth = float(parsed_ground_truth[0])
+        parsed_answer = float(parsed_answer[0])
+        return math.isclose(parsed_answer, parsed_ground_truth, rel_tol=0.05)
+    except Exception:
+        return False
 
 
 def main() -> int:
@@ -70,39 +65,17 @@ def main() -> int:
                     help="Wrap prompts as chat messages for instruct/chat models.")
     args = ap.parse_args()
 
-    if not DATA_DIR.exists():
-        print(f"ERROR: SciBench data not found at {DATA_DIR}", file=sys.stderr)
+    if not DATA_PATH.exists():
+        print(f"ERROR: CoMAS SciBench.json not found at {DATA_PATH}. "
+              f"Re-run projects/eval/setup.sh.", file=sys.stderr)
         return 2
 
     from vllm import LLM, SamplingParams
 
-    problems: list[tuple[str, str, float]] = []  # (subject, prompt, gold)
-    missing_subjects = []
-    for subj in _SUBJECTS:
-        path = DATA_DIR / f"{subj}.json"
-        if not path.exists():
-            missing_subjects.append(subj)
-            continue
-        for ex in json.loads(path.read_text()):
-            try:
-                gold = float(ex.get("answer_number", ex.get("answer", "nan")))
-                if math.isnan(gold):
-                    continue
-            except (ValueError, TypeError):
-                continue
-            problems.append((subj, _PROMPT_TMPL.format(q=ex["problem_text"]), gold))
-
+    data = json.loads(DATA_PATH.read_text())
+    problems = [(ex["query"], ex["gt"]) for ex in data]
     if args.limit:
         problems = problems[: args.limit]
-
-    if not problems:
-        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.output).write_text(json.dumps(
-            {"benchmark": "scibench", "score": None, "n": 0,
-             "missing_subjects": missing_subjects, "note": "no problems loaded"},
-            indent=2,
-        ))
-        return 0
 
     llm_kwargs = dict(
         model=args.model,
@@ -116,25 +89,21 @@ def main() -> int:
     llm = LLM(**llm_kwargs)
 
     sp = SamplingParams(temperature=0.0, max_tokens=1024)
-    prompts = [p for _, p, _ in problems]
+    prompts = [_PROMPT_TMPL.format(q=q) for q, _ in problems]
     if args.chat_template:
         messages_list = [[{"role": "user", "content": p}] for p in prompts]
         outs = llm.chat(messages_list, sp)
     else:
         outs = llm.generate(prompts, sp)
 
-    per_subj_correct: dict[str, list[int]] = {}
     total = 0
     correct = 0
-    for (subj, _, gold), out in zip(problems, outs):
-        pred = _last_number(out.outputs[0].text)
-        ok = pred is not None and _close(pred, gold)
-        per_subj_correct.setdefault(subj, []).append(int(ok))
+    for (_, gold), out in zip(problems, outs):
+        ok = _grade(out.outputs[0].text, str(gold))
         total += 1
         correct += int(ok)
 
     score = correct / total if total else 0.0
-    per_subj = {s: sum(v) / len(v) for s, v in per_subj_correct.items() if v}
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(
@@ -143,13 +112,12 @@ def main() -> int:
                 "benchmark": "scibench",
                 "score": score,
                 "n": total,
-                "missing_subjects": missing_subjects,
-                "per_subject": per_subj,
+                "source": "CoMAS/SciBench.json",
             },
             indent=2,
         )
     )
-    print(f"[scibench] score={score:.4f} (n={total}, missing={missing_subjects}) → {args.output}")
+    print(f"[scibench] score={score:.4f} (n={total}) → {args.output}")
     return 0
 
 
@@ -158,7 +126,7 @@ if __name__ == "__main__":
         sys.exit(main())
     except Exception as e:
         # Non-fatal: write NA result and exit 0 so downstream aggregate.py still runs.
-        import argparse, traceback
+        import traceback
         traceback.print_exc()
         ap = argparse.ArgumentParser(add_help=False)
         ap.add_argument("--output", required=True)

@@ -1,16 +1,21 @@
 #!/usr/bin/env python
-"""CRUXEval wrapper for run_eval_all.sh.
+"""CRUXEval wrapper for run_eval_all.sh — aligned to ZeroEval.
 
-CRUXEval has two subtasks: `input` (predict what input yields a given output)
-and `output` (predict the output of a given input). The protocol picks
-**output** (CRUXEval-O) as the main metric, matching Co-rewarding paper §5.
+Co-rewarding (ICLR 2026) evaluates CRUX via the ZeroEval library (WildEval/ZeroEval)
+and reports pass@1. To make our number comparable to their main table, this runner
+mirrors ZeroEval's CRUX protocol exactly:
 
-Strategy: load CRUX's dataset via HF (`cruxeval-org/cruxeval`), generate with
-vLLM directly, then run the official sandbox grader from the cloned repo to
-score pass@1. This bypasses CRUX's own driver (which is 2 years stale and
-hardcoded to HF generate).
+  - Subtask: CRUXEval-O (output prediction), `cruxeval-org/cruxeval` test (800 items).
+  - Prompt: ZeroEval's `make_direct_output_prompt` (data_prep/crux.py) wrapped in the
+    OEQA chat template (src/templates/OEQA.py), which asks the model to emit a JSON
+    object {"reasoning": ..., "answer": ...}.
+  - Grading: ZeroEval `crux_eval.py` — parse the first complete JSON object from the
+    response, read its `answer`, strip surrounding quotes, and accept on EXACT STRING
+    EQUALITY with the gold output. No code execution / sandbox. pass@1.
 
-Output JSON: {"benchmark": "cruxeval_output", "score": float, "n": int}
+This intentionally replaces the previous sandbox-execution grader: consistency with
+the reference harness matters more than a "smarter" comparison, because the goal is a
+number directly comparable to Co-rewarding's table.
 """
 
 from __future__ import annotations
@@ -21,18 +26,95 @@ import re
 import sys
 from pathlib import Path
 
-REPO_DIR = Path(__file__).resolve().parents[1] / "external_repos" / "cruxeval"
+# ZeroEval CRUX direct-output prompt — verbatim from WildEval/ZeroEval data_prep/crux.py.
+def _make_direct_output_prompt(code: str, inp: str) -> str:
+    return f"""You are given a Python function and an assertion containing an input to the function. Complete the assertion with a literal (no unsimplified expressions, no function calls) containing the output when executing the provided code on the given input, even if the function is incorrect or incomplete.
 
-_PROMPT_TMPL = (
-    "You are given the following Python function and an input. Predict the output of the "
-    "function when called with the input. Put your final answer in <answer>...</answer>.\n\n"
-    "{code}\n\nassert f({input}) == ??\n"
-)
+[PYTHON]
+{code}
+assert f({inp}) == ??
+[/PYTHON]
+"""
 
 
-def _extract(text: str) -> str | None:
-    m = list(re.finditer(r"<answer>(.*?)</answer>", text, re.DOTALL))
-    return m[-1].group(1).strip() if m else None
+# ZeroEval OEQA template (cot) — verbatim from WildEval/ZeroEval src/templates/OEQA.py.
+_OEQA = """
+## Question:
+
+{question}
+
+
+## Instruction
+
+Please answer this question by first reasoning and then providing your answer.
+Present your reasoning and solution in the following json format.
+Please show your final answer in the `answer` field, e.g.,`"answer": "42"`.
+
+```json
+{
+    "reasoning": "___",
+    "answer": "___"
+}
+```
+"""
+
+
+# --- ZeroEval JSON extractors — verbatim from src/evaluation/eval_utils.py ----------
+def _extract_first_complete_json(s: str):
+    stack = []
+    first_json_start = None
+    for i, char in enumerate(s):
+        if char == "{":
+            stack.append(i)
+            if first_json_start is None:
+                first_json_start = i
+        elif char == "}":
+            if stack:
+                start = stack.pop()
+                if not stack:
+                    first_json_str = s[first_json_start:i + 1]
+                    try:
+                        return json.loads(first_json_str.replace("\n", ""))
+                    except json.JSONDecodeError:
+                        return None
+                    finally:
+                        first_json_start = None
+    return None
+
+
+def _extract_values_from_json(json_string, keys=("reasoning", "answer"), allow_no_quotes=False):
+    extracted_values = {}
+    for key in keys:
+        pattern = f'"{key}"\\s*:\\s*"([^"]*?)"'
+        match = re.search(pattern, json_string)
+        if match:
+            extracted_values[key] = match.group(1)
+        else:
+            pattern = f'"{key}"\\s*:\\s*"(.*?)"'
+            match = re.search(pattern, json_string, re.DOTALL)
+            if match:
+                extracted_values[key] = match.group(1)
+        if not match and allow_no_quotes:
+            pattern = f'"{key}"\\s*:\\s*([^,\\s]*)'
+            match = re.search(pattern, json_string)
+            if match:
+                extracted_values[key] = match.group(1)
+            else:
+                pattern = f'{key}\\s*:\\s*([^,\\s]*)'
+                match = re.search(pattern, json_string)
+                if match:
+                    extracted_values[key] = match.group(1)
+    return extracted_values
+
+
+def _parse_answer(prediction_str: str) -> str | None:
+    # ZeroEval crux_eval.eval_model: first complete JSON, else regex fallback.
+    pj = _extract_first_complete_json(prediction_str)
+    if pj is None or "answer" not in pj:
+        pj = _extract_values_from_json(prediction_str, allow_no_quotes=True)
+    if pj is None or "answer" not in pj:
+        return None
+    return str(pj["answer"]).strip("'\"").replace("\n", "\\n")
 
 
 def main() -> int:
@@ -43,18 +125,11 @@ def main() -> int:
     ap.add_argument("--max_model_len", default="4096")
     ap.add_argument("--gpu_mem", default="0.9")
     ap.add_argument("--limit", type=int, default=None)
-    ap.add_argument("--subtask", choices=("output", "input"), default="output")
     ap.add_argument("--chat_template", action="store_true",
-                    help="Wrap prompts as chat messages for instruct/chat models. "
-                         "Without this, instruct models will produce verbose explanations "
-                         "instead of the <answer>...</answer> format we expect.")
+                    help="Apply the model's chat template (ZeroEval always does; needed "
+                         "for the JSON-output instruction to be followed).")
     args = ap.parse_args()
 
-    if not REPO_DIR.exists():
-        print(f"ERROR: cruxeval repo not found at {REPO_DIR}", file=sys.stderr)
-        return 2
-
-    # Lazy imports so this script is greppable even without the env.
     from datasets import load_dataset
     from vllm import LLM, SamplingParams
 
@@ -62,8 +137,10 @@ def main() -> int:
     if args.limit:
         ds = ds.select(range(min(args.limit, len(ds))))
 
-    # Build prompts.
-    prompts = [_PROMPT_TMPL.format(code=ex["code"], input=ex["input"]) for ex in ds]
+    prompts = [
+        _OEQA.replace("{question}", _make_direct_output_prompt(ex["code"], ex["input"]).strip())
+        for ex in ds
+    ]
 
     llm_kwargs = dict(
         model=args.model,
@@ -76,29 +153,26 @@ def main() -> int:
         llm_kwargs["revision"] = args.revision
     llm = LLM(**llm_kwargs)
 
-    sp = SamplingParams(temperature=0.0, max_tokens=512, stop=["</answer>"])
+    sp = SamplingParams(temperature=0.0, max_tokens=2048)
     if args.chat_template:
-        messages_list = [[{"role": "user", "content": p}] for p in prompts]
-        outs = llm.chat(messages_list, sp)
+        outs = llm.chat([[{"role": "user", "content": p}] for p in prompts], sp)
     else:
         outs = llm.generate(prompts, sp)
 
     correct = 0
+    no_answer = 0
     n = len(ds)
     details = []
     for ex, out in zip(ds, outs):
-        text = out.outputs[0].text + "</answer>"
-        pred = _extract(text)
-        gold = str(ex["output"]).strip()
-        # Compare as Python literals when possible — CRUX answers are repr()s.
-        ok = False
-        if pred is not None:
-            try:
-                ok = (eval(pred) == eval(gold))  # noqa: S307 - sandbox is HF dataset
-            except Exception:
-                ok = (pred.strip() == gold)
+        model_answer = _parse_answer(out.outputs[0].text)
+        gold = str(ex["output"]).strip("'\"")
+        if model_answer is None:
+            no_answer += 1
+            ok = False
+        else:
+            ok = (model_answer == gold)
         correct += int(ok)
-        details.append({"id": ex.get("id", ex.get("problem_id", "")), "ok": ok, "pred": pred})
+        details.append({"id": ex.get("id", ""), "ok": ok, "pred": model_answer})
 
     score = correct / n if n else 0.0
 
@@ -106,15 +180,17 @@ def main() -> int:
     Path(args.output).write_text(
         json.dumps(
             {
-                "benchmark": f"cruxeval_{args.subtask}",
+                "benchmark": "cruxeval_output",
                 "score": score,
                 "n": n,
+                "no_answer": no_answer,
+                "harness": "ZeroEval (string-match pass@1)",
                 "details_truncated": details[:20],
             },
             indent=2,
         )
     )
-    print(f"[crux] score={score:.4f} (n={n}) → {args.output}")
+    print(f"[crux] score={score:.4f} (n={n}, no_answer={no_answer}) → {args.output}")
     return 0
 
 

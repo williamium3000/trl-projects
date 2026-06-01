@@ -39,19 +39,19 @@ bash projects/eval/run_eval_all.sh \
 |---|--------------|----------------------------|--------------|-----------------------------|
 | 1 | `gsm8k`      | GSM8K                      | lm-eval      | strict exact-match          |
 | 2 | `math_500`   | MATH-500 (Minerva subset)  | lm-eval      | lm-eval default             |
-| 3 | `amc`        | AMC 23                     | custom yaml  | `math_verify`               |
-| 4 | `aime_25`    | AIME 2025 (30 problems)    | custom yaml  | integer compare             |
+| 3 | `amc`        | AMC 23                     | custom yaml  | `math_verify`, avg@8        |
+| 4 | `aime_24`    | AIME 2024 (30 problems)    | custom yaml  | integer compare, avg@8      |
 | 5 | `humaneval`  | HumanEval                  | lm-eval      | pass@1 (sandbox)            |
 | 6 | `gpqa_d`     | GPQA-Diamond CoT zero-shot | lm-eval      | strict exact-match          |
 | 7 | `mbpp`       | MBPP                       | lm-eval      | pass@1 (sandbox)            |
 | 8 | `lcb_v6`     | LiveCodeBench v6           | external     | LCB official `pass@1`       |
-| 9 | `crux`       | CRUXEval-Output            | external     | python literal eq           |
+| 9 | `crux`       | CRUXEval-Output            | external     | ZeroEval string-match pass@1|
 | 10| `scibench`   | SciBench (7 subjects avg)  | external     | numeric rel_tol=0.05        |
 | 11| `mmlu`       | MMLU (5-shot acc)          | lm-eval      | acc                         |
 | 12| `mmlu_pro`   | MMLU-Pro                   | lm-eval      | custom-extract exact-match  |
 | 13| `ifeval`     | IFEval (prompt-strict)     | lm-eval      | rule-based                  |
 
-主表正文 6 列: GSM8K / MATH-500 / AMC / AIME-25 / HumanEval / GPQA-D
+主表正文 6 列: GSM8K / MATH-500 / AMC / AIME-24 / HumanEval / GPQA-D
 Appendix 7 列: 其余。
 
 ## 文件总览
@@ -70,7 +70,7 @@ projects/eval/
 ├── aggregate.py                   # 4 个输出 → 1 行 CSV
 ├── README.md                      # 本文件
 ├── lm_eval_custom_tasks/
-│   ├── aime_2025.yaml
+│   ├── aime_2024.yaml
 │   ├── amc23.yaml
 │   ├── utils.py                   # process_results_aime / amc
 │   └── README.md
@@ -200,7 +200,7 @@ wait
 | 症状 | 原因 | 解决 |
 |---|---|---|
 | `setup.sh` flash-attn 不装 | 默认跳过 (lm-eval+vllm 不需要) | 想装走 `SETUP.md §2.4` |
-| `lm_eval: task aime_2025 not found` | 没传 `--include_path` | run_eval_all.sh 已经传了;手动跑要补 |
+| `lm_eval: task aime_2024 not found` | 没传 `--include_path` | run_eval_all.sh 已经传了;手动跑要补 |
 | HumanEval/MBPP 报 "unsafe code execution disabled" | 缺 flag | 已传 `--confirm_run_unsafe_code` + `HF_ALLOW_CODE_EVAL=1` |
 | LCB 找不到 `lcb_runner` | repo 没 clone / pip install 失败 | 看 `setup.sh §6a` 输出,重跑 setup |
 | CRUX `eval()` 报 NameError | dataset gold 是 Python literal,极少数有自定义类 | 这些 case 走 string-eq 兜底,影响 <1% |

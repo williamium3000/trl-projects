@@ -1,0 +1,34 @@
+# AIME 2024 — 30 problems, integer answers 000..999.
+# Source: HuggingFaceH4/aime_2024 (train split = the 30 problems; fields problem/answer).
+# This is the AIME24 split used by BOTH Co-rewarding (ICLR 2026) and CoMAS — switched
+# off the earlier AIME 2025 set so the column is comparable to those papers' tables.
+#
+# Reported as avg@8: each problem is decoded 8× with sampling (T=0.6, top_p=0.95),
+# graded independently, then averaged. Matches the Co-rewarding small-N convention
+# (AMC avg@8 via ttrl); the paper does not state AIME24's metric explicitly, so we
+# follow its AMC sibling. CoMAS instead uses pass@1 on the same 30 problems.
+# `repeats: 8` runs each doc 8×; the mean aggregation averages over all 30×8 samples.
+# Lower `repeats` to trade accuracy for speed.
+task: aime_2024
+dataset_path: HuggingFaceH4/aime_2024
+dataset_name: null
+test_split: train
+training_split: null
+fewshot_split: null
+output_type: generate_until
+repeats: 8
+doc_to_text: "Problem: {{problem}}\nPlease reason step by step, and put your final answer within \\boxed{}."
+doc_to_target: "{{answer}}"
+process_results: !function utils.process_results_aime
+generation_kwargs:
+  max_gen_toks: 4096
+  do_sample: true
+  temperature: 0.6
+  top_p: 0.95
+  until: []
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: 1.0

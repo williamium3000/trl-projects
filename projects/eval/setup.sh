@@ -7,7 +7,7 @@
 # 13 个 benchmark (eval_benchmark_protocol_2026-05-21):
 #   lm-eval native (10): gsm8k / minerva_math_500 / humaneval / mbpp /
 #                        gpqa_diamond_cot_zeroshot / mmlu / mmlu_pro / ifeval
-#                        + aime_2025 / amc23 (custom yamls in
+#                        + aime_2024 / amc23 (custom yamls in
 #                          projects/eval/lm_eval_custom_tasks/)
 #   外挂      (3): LiveCodeBench v6 / CRUXEval / SciBench
 #
@@ -37,17 +37,46 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 EXT_REPOS_DIR="$SCRIPT_DIR/external_repos"
 
 # Pinned upstream commits — bump only after re-verify.
+# lm-eval and LCB are pinned to exact SHAs because we carry local patches
+# (projects/eval/patches/) on top of them; a moving `main` would make the patch
+# fail to apply. crux/scibench need no in-repo patch (their fixes live in our own
+# runners under projects/eval/external/), so they track main.
 LM_EVAL_REPO="https://github.com/EleutherAI/lm-evaluation-harness.git"
-LM_EVAL_REF="main"
+LM_EVAL_REF="95d580638385578c1c07fa554cf16ad7f5b5f460"
 
 LCB_REPO="https://github.com/LiveCodeBench/LiveCodeBench.git"
-LCB_REF="main"
+LCB_REF="28fef95ea8c9f7a547c8329f2cd3d32b92c1fa24"
 
 CRUX_REPO="https://github.com/facebookresearch/cruxeval.git"
 CRUX_REF="main"
 
 SCIBENCH_REPO="https://github.com/mandyyyyii/scibench.git"
 SCIBENCH_REF="main"
+
+# CoMAS curated SciBench split (499 items, query/gt schema) — the main 13-bench
+# scibench_runner grades against THIS so numbers are directly comparable to the
+# CoMAS paper. Pinned to a SHA because it's a frozen eval set. The mandyyyii repo
+# above is still cloned: the test-time-ensemble path (ensemble_eval.py) reads its
+# per-subject dataset/original/*.json.
+COMAS_SCIBENCH_RAW="https://raw.githubusercontent.com/xxyQwQ/CoMAS/0d98c9755a9f3875888b42101e3db5278d0f9805/maslab/datasets/SciBench.json"
+
+PATCHES_DIR="$SCRIPT_DIR/patches"
+
+# Apply a tracked patch to a cloned external repo, idempotently:
+#   - if already applied (reverse-applies cleanly), skip
+#   - if it applies cleanly, apply it
+#   - otherwise warn loudly (upstream drifted past the pinned SHA)
+apply_patch () {
+    local repo="$1" patch="$2"
+    if [ ! -f "$patch" ]; then red "WARN: patch missing: $patch"; return; fi
+    if git -C "$repo" apply --reverse --check "$patch" 2>/dev/null; then
+        green "patch already applied: $(basename "$patch")"
+    elif git -C "$repo" apply --check "$patch" 2>/dev/null; then
+        git -C "$repo" apply "$patch" && green "applied patch: $(basename "$patch")"
+    else
+        red "WARN: $(basename "$patch") does not apply cleanly — upstream drift past pinned SHA; re-generate the patch."
+    fi
+}
 
 bold()  { printf "\033[1m%s\033[0m\n" "$*"; }
 green() { printf "\033[32m%s\033[0m\n" "$*"; }
@@ -111,8 +140,11 @@ header "§4 lm-evaluation-harness"
 mkdir -p "$EXT_REPOS_DIR"
 LM_EVAL_DIR="$EXT_REPOS_DIR/lm-evaluation-harness"
 if [ ! -d "$LM_EVAL_DIR/.git" ]; then
-    git clone --depth 1 --branch "$LM_EVAL_REF" "$LM_EVAL_REPO" "$LM_EVAL_DIR"
+    git clone "$LM_EVAL_REPO" "$LM_EVAL_DIR"
+    git -C "$LM_EVAL_DIR" checkout "$LM_EVAL_REF"
 fi
+# Fix #11 — Gemma3/SentencePiece U+2581 in humaneval/mbpp extractors.
+apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_gemma_u2581.patch"
 
 # `lm_eval[vllm,ifeval,math,sentencepiece]`:
 #   vllm        - --model vllm backend
@@ -149,14 +181,19 @@ clone_or_pull () {
     if [ -d "$dst/.git" ]; then
         green "$(basename "$dst") 已 clone,跳过。"
     else
-        git clone --depth 1 --branch "$ref" "$url" "$dst" || \
-            git clone "$url" "$dst"
+        # `ref` may be a branch or an exact SHA, so clone then checkout (a SHA
+        # can't be passed to `--branch`).
+        git clone "$url" "$dst"
+        git -C "$dst" checkout "$ref"
     fi
 }
 
 # 6a. LiveCodeBench v6
 LCB_DIR="$EXT_REPOS_DIR/LiveCodeBench"
 clone_or_pull "$LCB_REPO" "$LCB_REF" "$LCB_DIR"
+# Fix #12/#13 — register our 4 baselines + Gemma3 LMStyle; swap gated Meta-Llama-3-8B
+# tokenizer for the open Llama-3.2-3B-Instruct (same chat template).
+apply_patch "$LCB_DIR" "$PATCHES_DIR/livecodebench_register_baselines.patch"
 # LCB ships a pyproject.toml; --no-deps so it doesn't downgrade torch/vllm.
 pip install --no-cache-dir --no-deps -e "$LCB_DIR" || \
     red "WARN: LCB editable install failed; runner will fall back to PYTHONPATH."
@@ -169,7 +206,19 @@ clone_or_pull "$CRUX_REPO" "$CRUX_REF" "$CRUX_DIR"
 # 6c. SciBench
 SCIBENCH_DIR="$EXT_REPOS_DIR/scibench"
 clone_or_pull "$SCIBENCH_REPO" "$SCIBENCH_REF" "$SCIBENCH_DIR"
-# Same: PYTHONPATH-based.
+# Same: PYTHONPATH-based. (Consumed by ensemble_eval.py.)
+
+# CoMAS curated SciBench.json — the main scibench_runner grades against this.
+COMAS_SCIBENCH_DIR="$EXT_REPOS_DIR/scibench_comas"
+COMAS_SCIBENCH_JSON="$COMAS_SCIBENCH_DIR/SciBench.json"
+if [ -f "$COMAS_SCIBENCH_JSON" ]; then
+    green "CoMAS SciBench.json 已存在,跳过。"
+else
+    mkdir -p "$COMAS_SCIBENCH_DIR"
+    curl -fsSL "$COMAS_SCIBENCH_RAW" -o "$COMAS_SCIBENCH_JSON" \
+        && green "fetched CoMAS SciBench.json ($(python3 -c "import json;print(len(json.load(open('$COMAS_SCIBENCH_JSON'))))" 2>/dev/null || echo '?') items)" \
+        || red "WARN: failed to fetch CoMAS SciBench.json; scibench eval will write NA."
+fi
 
 # --- 7. flash-attn (optional) --------------------------------------------------
 header "§7 flash-attn (optional)"

@@ -1,9 +1,9 @@
-"""Custom-task helpers for AIME-2025 / AMC23 lm-eval-harness yamls.
+"""Custom-task helpers for AIME-2024 / AMC23 lm-eval-harness yamls.
 
 We extract the **last** \\boxed{...} from the model completion and compare to
 the gold answer. Comparison strategy:
 
-  - AIME 2025: integer-only answers in 0..999. Try int parse on both sides.
+  - AIME 2024: integer-only answers in 0..999. Try int parse on both sides.
   - AMC 23: numeric / symbolic (e.g. "1/2", "\\sqrt{3}"). Use `math_verify`
             (sympy-based, latex-aware) for equivalence.
 
@@ -55,7 +55,7 @@ def _last_boxed(text: str) -> str | None:
 
 
 def process_results_aime(doc: dict[str, Any], results: list[str]) -> dict[str, float]:
-    """AIME-2025: integer answer 000..999."""
+    """AIME-2024: integer answer 000..999."""
     completion = results[0] if results else ""
     pred = _last_boxed(completion)
     target = str(doc.get("answer", "")).strip()
@@ -92,3 +92,57 @@ def process_results_amc(doc: dict[str, Any], results: list[str]) -> dict[str, fl
             return {"exact_match": float(float(pred) == float(target))}
         except (ValueError, TypeError):
             return {"exact_match": float(pred.strip() == target.strip())}
+
+
+# ---------------------------------------------------------------------------
+# GPQA (choice-based) — aligned with CoMAS (arXiv 2510.08529) maslab/evaluation.py
+# so our GPQA numbers are directly comparable to CoMAS/Co-rewarding.
+#
+# CoMAS extracts the LAST `\boxed{A-D}` (case-insensitive) and exact-matches the
+# gold letter. lm-eval's native gpqa filters look for "(A)" / "The answer is A"
+# and MISS `\boxed{A}` — which is exactly what \boxed-trained RL ckpts emit
+# (measured: 37% of heter-Qwen GPQA answers were \boxed{A} → scored 0). This
+# replicates CoMAS's extraction verbatim.
+# ---------------------------------------------------------------------------
+
+_BOXED_LETTER_RE = re.compile(r"\\boxed\{\(?([A-D])\)?\}", re.IGNORECASE)
+
+
+def process_docs_gpqa(dataset):
+    """Shuffle the 4 choices and set gold letter — same as lm-eval's gpqa
+    process_docs, but with a fixed seed per doc for reproducibility, and a
+    `\\boxed{}` answer instruction so models emit the CoMAS-style format."""
+    import random
+
+    def _preprocess(t):
+        if t is None:
+            return " "
+        return t.strip().replace(" [title]", ". ").replace("  ", " ")
+
+    def _process(doc, idx):
+        choices = [
+            _preprocess(doc["Incorrect Answer 1"]),
+            _preprocess(doc["Incorrect Answer 2"]),
+            _preprocess(doc["Incorrect Answer 3"]),
+            _preprocess(doc["Correct Answer"]),
+        ]
+        random.Random(idx).shuffle(choices)
+        correct_idx = choices.index(_preprocess(doc["Correct Answer"]))
+        return {
+            "choice1": choices[0],
+            "choice2": choices[1],
+            "choice3": choices[2],
+            "choice4": choices[3],
+            "answer": chr(65 + correct_idx),  # bare letter "A".."D" (CoMAS gold format)
+        }
+
+    return dataset.map(_process, with_indices=True)
+
+
+def process_results_gpqa(doc: dict[str, Any], results: list[str]) -> dict[str, float]:
+    """GPQA: extract last \\boxed{A-D} (CoMAS), exact-match the gold letter."""
+    completion = results[0] if results else ""
+    target = str(doc.get("answer", "")).strip().upper()
+    m = _BOXED_LETTER_RE.findall(completion)
+    pred = m[-1].strip().upper() if m else ""
+    return {"exact_match": float(pred == target and pred != "")}

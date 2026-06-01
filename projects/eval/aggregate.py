@@ -12,7 +12,7 @@ Reads from a RUN_DIR laid out by run_eval_all.sh:
 
 Writes CSV with columns matching paper §4.2 main table + appendix:
 
-    ckpt, revision, gsm8k, math_500, amc, aime_25, humaneval, gpqa_d,        ← main (6)
+    ckpt, revision, gsm8k, math_500, amc, aime_24, humaneval, gpqa_d,        ← main (6)
     mbpp, lcb_v6, crux, scibench, mmlu, mmlu_pro, ifeval                     ← appendix (7)
 
 Missing benchmarks (skipped runs / failed) emit "NA" in their cell so the
@@ -35,18 +35,24 @@ from pathlib import Path
 #     present — see _PREFER below.
 #   - math_500: math_verify (sympy-based equivalence). "exact_match,none" is
 #     too strict (e.g. "1/2" vs "0.5" miscount as wrong).
-#   - gpqa_d: flexible-extract, not strict-match. Strict yields 0 for most chat models.
+#   - gpqa_d: custom task gpqa_diamond_boxed (utils.process_results_gpqa) — extracts
+#     \boxed{A-D} exactly like CoMAS (maslab/evaluation.py), so numbers are comparable.
+#     Native gpqa flexible-extract misses \boxed{A} (37% of RL-ckpt answers → wrong 0).
+#   - gsm8k: flexible-extract, NOT strict-match. strict-match only matches the native
+#     "#### N" format; RL ckpts trained to emit \boxed{N} score ~0 under strict (e.g.
+#     heter-Qwen: strict 0.34 vs flexible 0.81). flexible-extract = last number in the
+#     completion, which catches the digits inside \boxed{N}. Same lesson as gpqa above.
 #   - mbpp metric key is `pass_at_1` (underscore), not `pass@1`.
 #   - humaneval/mbpp _instruct variants override the default when present
 #     (chat-aware extractor handles markdown code fences).
 _LM_EVAL_TASKS = [
-    ("gsm8k",      "gsm8k",                       "exact_match,strict-match"),
+    ("gsm8k",      "gsm8k",                       "exact_match,flexible-extract"),
     ("math_500",   "minerva_math500",             "math_verify,none"),
-    ("aime_25",    "aime_2025",                   "exact_match,none"),
+    ("aime_24",    "aime_2024",                   "exact_match,none"),
     ("amc",        "amc23",                       "exact_match,none"),
     ("humaneval",  "humaneval",                   "pass@1,create_test"),
     ("mbpp",       "mbpp",                        "pass_at_1,none"),
-    ("gpqa_d",     "gpqa_diamond_cot_zeroshot",   "exact_match,flexible-extract"),
+    ("gpqa_d",     "gpqa_diamond_boxed",          "exact_match,none"),
     ("mmlu",       "mmlu",                        "acc,none"),
     ("mmlu_pro",   "mmlu_pro",                    "exact_match,custom-extract"),
     ("ifeval",     "ifeval",                      "prompt_level_strict_acc,none"),
@@ -134,7 +140,7 @@ def main() -> int:
         "gsm8k":     lm_eval["gsm8k"],
         "math_500":  lm_eval["math_500"],
         "amc":       lm_eval["amc"],
-        "aime_25":   lm_eval["aime_25"],
+        "aime_24":   lm_eval["aime_24"],
         "humaneval": lm_eval["humaneval"],
         "gpqa_d":    lm_eval["gpqa_d"],
         # appendix 7
@@ -167,7 +173,7 @@ def main() -> int:
     print(
         f"ckpt={args.model} rev={args.revision or '-'}  "
         f"gsm8k={formatted['gsm8k']} math500={formatted['math_500']} "
-        f"amc={formatted['amc']} aime25={formatted['aime_25']} "
+        f"amc={formatted['amc']} aime24={formatted['aime_24']} "
         f"humaneval={formatted['humaneval']} gpqa_d={formatted['gpqa_d']}"
     )
     print(f"row appended → {out_csv}")

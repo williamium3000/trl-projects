@@ -5,7 +5,7 @@
 # extraction failures and unfairly low scores.
 #
 # This variant uses 0-shot with explicit "put final answer in \boxed{}"
-# instruction (same template as our aime_2025 / amc23 custom tasks).
+# instruction (same template as our aime_2024 / amc23 custom tasks).
 # Reuses utils.process_results_amc (boxed extraction + math_verify grading).
 task: math_500_chat
 dataset_path: HuggingFaceH4/MATH-500

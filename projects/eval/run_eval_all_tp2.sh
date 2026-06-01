@@ -106,7 +106,7 @@ echo "  OUT_DIR        $RUN_DIR"
 nvidia-smi --query-gpu=index,name,memory.free --format=csv,noheader || true
 
 # Build a common vLLM model_args string for lm-eval and the external runners.
-VLLM_ARGS="pretrained=$MODEL,dtype=bfloat16,gpu_memory_utilization=$GPU_MEM,max_model_len=$MAX_MODEL_LEN,trust_remote_code=True"
+VLLM_ARGS="pretrained=$MODEL,dtype=bfloat16,gpu_memory_utilization=$GPU_MEM,max_model_len=$MAX_MODEL_LEN,trust_remote_code=True,tensor_parallel_size=2"
 [ -n "$REVISION" ] && VLLM_ARGS="$VLLM_ARGS,revision=$REVISION"
 
 # =============================================================================
@@ -126,9 +126,9 @@ if [ "$SKIP_LM_EVAL" = "0" ]; then
     # - GPQA default `max_gen_toks` is too short (256), instruct models get truncated before
     #   emitting an answer letter → [invalid]. Override via --gen_kwargs below.
     if [ "$CHAT_TEMPLATE" = "1" ]; then
-        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval_instruct,mbpp_instruct,gpqa_diamond_boxed,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
+        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval_instruct,mbpp_instruct,gpqa_diamond_cot_zeroshot,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
     else
-        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval,mbpp,gpqa_diamond_boxed,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
+        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval,mbpp,gpqa_diamond_cot_zeroshot,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
     fi
 
     EXTRA=()
