@@ -67,8 +67,10 @@ class MllmCoGRPOdpScriptArguments(ScriptArguments):
     train_dataset: str = field(
         default=CLEVR_COUNTING_DATASET,
         metadata={
-            "help": "Dataset to use for training.",
-            "choices": [CLEVR_COUNTING_DATASET, GEOQA_DATASET],
+            # No `choices` whitelist: `dataset.load_dataset` is the single source
+            # of truth for supported sources (GeoQA/CLEVR + the `_SPECS` datasets)
+            # and raises a clear ValueError for anything unknown.
+            "help": "Dataset to use for training (see dataset._SPECS for sources).",
         },
     )
     self_consistency_threshold: float = field(
