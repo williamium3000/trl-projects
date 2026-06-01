@@ -3,7 +3,7 @@
 # Ground-truth-label baseline (TRL native GRPOTrainer, no co-train / no majority vote).
 # Sweep variant of dp-scripts/math345_full/lr1e-6_e2_eb128/homogen/run_grpo__qwen25_3b.sh
 # ONLY difference vs lr=1e-6 baseline: learning_rate 1e-6 → 3e-6 (3× baseline; upper edge of 3B GRPO range)
-# Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
+# Effective batch: 8×bs3×acc64 / gen12 = 128 prompts/step (1 opt_step/gen)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,15 +35,15 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
     --main_process_port 19346 \
-    --gradient_accumulation_steps 192 \
+    --gradient_accumulation_steps 64 \
     projects/grpo/train_grpo.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
     --learning_rate 3e-6 \
-    --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 192 \
+    --per_device_train_batch_size 3 \
+    --gradient_accumulation_steps 64 \
     --num_train_epochs 2 \
     --lr_scheduler_type cosine_with_min_lr \
     --lr_scheduler_kwargs '{"min_lr_rate": 0.1}' \

@@ -38,6 +38,29 @@ python3 -W ignore::SyntaxWarning -m pytest projects/co-grpo-dp/tests/ -v
 
 co-grpo-dp 严格遵守:`co_label_utils.py`、`dataset.py` 都是 self-contained(早期 importlib bridge un-grpo-maj 的实现已删除)。如果要给 un-grpo-maj 也升级 verifier,**复制**(不要 import bridge)。
 
+## 实验铁律:bs / EB / vllm util(math345 lr3e-6,适用 un-grpo-maj single + co-grpo-dp homogen 全部 8 卡单模型脚本)
+
+**铁律 1 — per_device_train_batch_size = 3(不是 1/2)。** 这是提速的直接工具。实测瓶颈是
+**梯度累积的微步数**(不是 vLLM 生成):bs1/accum192 = 每 optimizer step 跑 192 趟 forward+backward
+微步,bs3/accum64 = 64 趟,直接砍到三分之一。全量 gemma 1108s→545s(bs2)还能再降,LoRA 同理。
+**改 bs 必须同步把 accum 等比缩放保 EB 不变(bs×accum 恒 = 192)。**
+
+**铁律 2 — EB 恒等于 128。** `EB = bs × num_processes × grad_accum / num_generations`。
+- 8 卡单模型:bs3 × 8 × accum64 / 12 = **128**。
+- heter(4 卡/组):bs × 4 × accum / 12 = 128(bs3 时 accum=128)。
+- ⚠️ 历史 bug(已修 2026-06-01):`run_entropy/self_certainty __gemma/__llama` 曾是 bs1/accum96 = **EB64**,
+  与 qwen 的 EB128 不一致(论文不公平对比)。现已统一 bs3/accum64 = EB128。
+
+**铁律 3 — gemma 全量必须 `vllm_gpu_memory_utilization = 0.35`(其它模型 0.45)。**
+gemma3-4b(4.3B + 多模态 vision tower + 生成长 ~1100 tok)全量 bs2 在 vllm0.40 下 **rank0 顶死 OOM**
+(实测 GPU0 仅余 570MB)。降到 0.35 给 rank0 留余量。**vllm util 只影响显存、不影响结果/速度**
+(KV cache ~0.13MB/token,util0.35≈28GB cache 已够喂饱 rollout),纯安全旋钮。
+- qwen/llama(3B、生成短)bs2 在 0.45 下安全(余 ~12GB),不用动;bs3 激活峰值更高,首跑盯 GPU0。
+- **⚠️ gemma 全量 bs3 未验证:bs2 在 vllm0.40 已 OOM,bs3 激活更大,首跑务必盯 rank0 显存,必要时降 util 或回退 bs2。**
+- **heter + gemma(4 卡/组,显存减半)bs3 风险最高,未验证 —— 单独测,勿照搬。**
+
+显存预算公式:`vLLM(util×80) + 训练峰值 ≤ 80GB`。全量训练峰值 ≈ 8.6(权重)+ ~12/bs(激活+logits)。
+
 ## 上下文链接
 
 - 现有兄弟项目:`../grpo/`(baseline)、`../un-grpo-maj/`(自标 vote)、`../co-grpo/`(colocate 双模型)

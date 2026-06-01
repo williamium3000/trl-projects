@@ -28,11 +28,11 @@ CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
     --main_process_port 19514 \
-    --gradient_accumulation_steps 96 \
+    --gradient_accumulation_steps 64 \
     projects/un-grpo-maj/train_un_grpo_intrinsic.py \
     --learning_rate 3e-6 \
-    --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 96 \
+    --per_device_train_batch_size 3 \
+    --gradient_accumulation_steps 64 \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
