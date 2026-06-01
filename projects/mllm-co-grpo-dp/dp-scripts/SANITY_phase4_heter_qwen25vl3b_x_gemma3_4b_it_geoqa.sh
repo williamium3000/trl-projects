@@ -30,6 +30,8 @@ export WANDB_API_KEY="wandb_v1_43YSvHJvqJHb49u3z17dIC9VUph_dfpWZs2Izx89qWb8WjZvq
 export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="mllm-co-grpo-dp"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
+export MLLM_EVAL_PATH=data/r1v/geoqa_test_754.jsonl
+export MLLM_EVAL_IMAGE_DIR=data/r1v/images
 
 COMMON=(
     --learning_rate 1e-6

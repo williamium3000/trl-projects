@@ -77,6 +77,21 @@ class MllmSingleScriptArguments(ScriptArguments):
             "choices": [CLEVR_COUNTING_DATASET, GEOQA_DATASET],
         },
     )
+    self_labeling: bool = field(
+        default=False,
+        metadata={
+            "help": "Un-GRPO-Maj mode: train against the per-prompt majority-vote "
+            "pseudo-label over the N rollouts (no ground truth), via "
+            "SelfLabelingGRPOTrainer. Eval still uses the dataset's GT solution."
+        },
+    )
+    self_consistency_threshold: float = field(
+        default=0.0,
+        metadata={
+            "help": "Min top-answer frequency for a prompt's pseudo-label to be "
+            "accepted (else the group gets reward 0). Only used with --self_labeling."
+        },
+    )
 
 
 def _get_text(completion):
@@ -291,7 +306,7 @@ if __name__ == "__main__":
 
     train_dataset, eval_dataset = load_dataset(script_args.train_dataset)
 
-    trainer = GRPOTrainer(
+    trainer_kwargs = dict(
         model=model_args.model_name_or_path,
         reward_funcs=reward_correctness,
         args=training_args,
@@ -300,6 +315,16 @@ if __name__ == "__main__":
         processing_class=processor,
         peft_config=get_peft_config(model_args),
     )
+    if script_args.self_labeling:
+        # Un-GRPO-Maj: reward = match the N-rollout majority vote (no GT in train).
+        from self_label_mllm_trainer import SelfLabelingGRPOTrainer
+        print(f"[unmaj] self-labeling ON (threshold={script_args.self_consistency_threshold})")
+        trainer = SelfLabelingGRPOTrainer(
+            self_consistency_threshold=script_args.self_consistency_threshold,
+            **trainer_kwargs,
+        )
+    else:
+        trainer = GRPOTrainer(**trainer_kwargs)
 
     trainer.add_callback(BestKeeperCallback())
 

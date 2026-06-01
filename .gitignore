@@ -166,3 +166,6 @@ projects/work_dirs
 /plugins/
 /projects/-mnt-*/
 /.venv-marti/
+# r1v GeoQA eval images (44M, re-downloadable from Geo170K) — keep jsonl only
+data/r1v/images/
+data/r1v/__MACOSX/
