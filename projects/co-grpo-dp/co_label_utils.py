@@ -23,7 +23,39 @@ from collections import Counter
 
 from verifiers.qwen.qwen_math_parser import extract_answer
 from verifiers.qwen.math_normalize import normalize_answer as _qwen_normalize
-from verifiers.qwen.math_grade import grade_answer
+from verifiers.qwen.math_grade import grade_answer as _qwen_grade_answer
+
+import re as _re
+
+# `3.74 \times 10^{24}` / `3.74\cdot10^{-9}` / `3.74 * 10^24` → `3.74e24` / `3.74e-9`.
+# Lets the qwen grader match sci-notation gold (e.g. CoMAS science `3.74e+24`)
+# against natural-LaTeX model output without it the qwen normalizer expands one
+# side to full-int and leaves the other as `3.74*10^24`, missing the match.
+_LATEX_SCI_PAT = _re.compile(
+    r"(-?\s*\d+(?:\.\d+)?)\s*(?:\\times|\\cdot|\*)\s*10\s*\^\s*\{?\s*(-?\d+)\s*\}?"
+)
+def _normalize_sci_notation(s):
+    if s is None or not isinstance(s, str):
+        return s
+    return _LATEX_SCI_PAT.sub(lambda m: f"{m.group(1).replace(' ', '')}e{int(m.group(2))}", s)
+
+
+def grade_answer(predicted, gold):
+    """Qwen grader + LaTeX-sci-notation rescue path (CoMAS science compat).
+
+    Tries the qwen grader as-is first; if False, retries with sci-notation
+    normalized on each side (model may write `\\times 10^{N}`, gold may be
+    `Ae±B`). All other forms unchanged — math/coding paths are unaffected.
+    """
+    if _qwen_grade_answer(predicted, gold):
+        return True
+    p2 = _normalize_sci_notation(predicted)
+    g2 = _normalize_sci_notation(gold)
+    if p2 != predicted and _qwen_grade_answer(p2, gold):
+        return True
+    if g2 != gold and _qwen_grade_answer(predicted, g2):
+        return True
+    return False
 
 
 # Sentinel written into `solution` for prompt groups that fail the self-
