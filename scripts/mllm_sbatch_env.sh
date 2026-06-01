@@ -5,15 +5,15 @@
 #
 # MLLM-specific counterpart to scripts/sbatch_env.sh (which targets the TEXT
 # project on the byted system Python). MLLM needs its OWN env + wandb:
-#   - env:   mllm-v2 (uv venv, Python 3.12, transformers 5.x + vllm 0.19).
-#            The text env (vllm 0.14) cannot load InternVL3.5-HF / Gemma-3.
+#   - env:   byted-image system Python (/usr/bin/python). PORTABLE across pods.
+#            Verified to load + train Qwen2.5-VL / InternVL3.5 (vllm 0.14).
 #   - wandb: public 0.18.7 (byted fork 0.13.95 routes to ml.tiktok-row.net).
 #
 # Usage (from a wrapper):
 #     source scripts/mllm_sbatch_env.sh
 #     bash projects/mllm-co-grpo-dp/dp-scripts/your_script.sh
 #
-# Order: log-redirect → mllm-v2 activate (+uv self-heal) → trl check →
+# Order: log-redirect → system python → trl check →
 #        HF login → wandb fork swap → WANDB_DIR / service-wait → sync trap.
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -32,18 +32,14 @@ echo "  log:  ${WRAPPER_LOG}"
 echo "  host: $(hostname)   utc: $(date -u +%FT%TZ)"
 echo "============================================================"
 
-# ─── 2. mllm-v2 venv (uv, Python 3.12) + pod-refresh self-heal ───────────────
-# Pod restarts wipe the uv-managed interpreter at ~/.local/share/uv/python/;
-# site-packages on NAS persist, so only the Python binary needs restoring.
-UV_BIN="${UV_BIN:-/home/tiger/yijiangli/bin/uv}"
-MLLM_VENV="${MLLM_VENV:-/home/tiger/yijiangli/envs/mllm-v2}"
-if [ ! -e "$(readlink -f "$MLLM_VENV/bin/python")" ]; then
-    echo ">>> mllm-v2 Python missing (pod refresh); reinstalling 3.12 via uv..."
-    "$UV_BIN" python install 3.12
-fi
-# shellcheck disable=SC1091
-source "$MLLM_VENV/bin/activate"
-echo ">>> python: $(which python)  ($(python --version 2>&1))"
+# ─── 2. Python: byted-image system Python (portable across all pods) ─────────
+# Use the byted-image system Python (/usr/bin/python: torch 2.9 + vllm 0.14 +
+# transformers 4.57 + trl editable). PORTABLE across all pods — verified to run
+# the full mllm stack (Qwen2.5-VL / InternVL3.5 load + train + reward). The old
+# pod-local mllm-v2 uv venv is NOT used: it lived on this pod's /home/tiger and
+# the senior's pods lacked uv → mllm_sbatch_env crashed at the uv line → 0 wandb
+# runs (2026-06-01). System Python is already in PATH, no activation needed.
+echo ">>> python: $(which python)  ($(python --version 2>&1))  [byted system, portable]"
 
 # ─── 3. trl editable-install check (fixes _save_checkpoint version() crash) ──
 python -c "from importlib.metadata import version; version('trl')" 2>/dev/null || {

@@ -70,7 +70,7 @@ _SPECS = {
     MMFINEREASON:     dict(split="rl",   image="image",  question="question", answer="answer", mmfr_filter=True),
     MMFINEREASON_SFT: dict(hf_id=MMFINEREASON, split="sft", image="image", question="question", answer="answer"),
     OPENMMREASONER:   dict(concat=_OPENMMR_SUBSETS, split="train", image="images", question="@chat", answer="@reward"),
-    OPEN_R1_8K:       dict(split="train", image="image",  question="problem", answer="original_answer"),
+    OPEN_R1_8K:       dict(split="train", image="image",  question="problem", answer="@sol_answer"),
     GEOMETRY3K:       dict(split="train", image="images", question="problem", answer="answer"),
     MMR1_MATH:        dict(split="train", image="images", question="problem", answer="answer"),
 }
@@ -210,9 +210,22 @@ def _load_spec_dataset(dataset_name):
             question = _extract_chat_text(ex["prompt"])
         else:
             question = str(ex[q_f]).replace("<image>", "").strip()
-        ans = ex["reward_model"]["ground_truth"] if a_f == "@reward" else ex[a_f]
+        if a_f == "@reward":
+            ans = ex["reward_model"]["ground_truth"]
+        elif a_f == "@sol_answer":
+            # open-r1: `original_answer` is prose; the clean gold lives in the
+            # `solution` field's <answer>...</answer> tag. Fall back to the raw
+            # original_answer only if no tag is present.
+            ans = extract_answer_tag(ex["solution"]) or ex.get("original_answer", "")
+        else:
+            ans = ex[a_f]
         return {"prompt": _make_prompt(question), "image": img, "solution": str(ans).strip()}
 
+    # MAX_SAMPLES truncates BEFORE the (image-heavy) map so debug/sanity runs on
+    # huge sources (e.g. MMFineReason-sft 1.77M) don't map the whole split.
+    _max = os.environ.get("MAX_SAMPLES")
+    if _max is not None:
+        ds = ds.select(range(min(int(_max), len(ds))))
     return ds.map(_fmt, remove_columns=ds.column_names)
 
 
@@ -275,19 +288,21 @@ def load_dataset(dataset_name):
         full_train = full_train.cast_column("image", HFImage())
     full_train = full_train.map(_convert_to_rgb)
 
-    # Train / eval split: carve 150 holdout (seed 42) by default.
-    split = full_train.train_test_split(test_size=_VALIDATION_SIZE, seed=_VALIDATION_SEED)
-    train_dataset, eval_dataset = split["train"], split["test"]
+    eval_path = os.environ.get("MLLM_EVAL_PATH")
+    if eval_path is not None:
+        # A real fixed eval set is provided → train on ALL of full_train (no
+        # 150-holdout carve, which also avoids train_test_split crashing when
+        # MAX_SAMPLES truncates full_train below _VALIDATION_SIZE).
+        train_dataset = full_train
+        eval_dataset = _load_local_eval_jsonl(eval_path, os.environ.get("MLLM_EVAL_IMAGE_DIR"))
+    else:
+        # No eval set: carve a 150 holdout from train (seed 42).
+        split = full_train.train_test_split(test_size=_VALIDATION_SIZE, seed=_VALIDATION_SEED)
+        train_dataset, eval_dataset = split["train"], split["test"]
 
     max_samples = os.environ.get("MAX_SAMPLES")
     if max_samples is not None:
-        n = min(int(max_samples), len(train_dataset))
-        train_dataset = train_dataset.select(range(n))
-
-    eval_path = os.environ.get("MLLM_EVAL_PATH")
-    if eval_path is not None:
-        eval_image_dir = os.environ.get("MLLM_EVAL_IMAGE_DIR")
-        eval_dataset = _load_local_eval_jsonl(eval_path, eval_image_dir)
+        train_dataset = train_dataset.select(range(min(int(max_samples), len(train_dataset))))
 
     return train_dataset, eval_dataset
 
