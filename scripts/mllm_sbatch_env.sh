@@ -47,7 +47,15 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
-# ─── 4. HF login (Gemma-3 / gated repos) ─────────────────────────────────────
+# ─── 4. HF login + shared NAS cache (Gemma-3 / gated repos) ──────────────────
+# Big datasets (zwz 555G, MMFineReason-sft 83G, …) can't fit the pod-local
+# /home/tiger overlay (~69G free, wiped on pod refresh). Point HF_HOME at the
+# shared NAS mount: 9.8P free, persistent, and visible from every pod (so the
+# senior's runs hit the same cache instead of re-downloading). Override by
+# exporting HF_HOME before sourcing if you really want the local cache.
+export HF_HOME="${HF_HOME:-/mnt/bn/tns-algo-video-public-my2/yijiangli/.cache/huggingface}"
+mkdir -p "$HF_HOME"
+echo ">>> HF_HOME=$HF_HOME (shared NAS cache)"
 HF_TOKEN_USE="${HF_TOKEN:-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}"
 export HF_TOKEN="$HF_TOKEN_USE"
 export HUGGING_FACE_HUB_TOKEN="$HF_TOKEN_USE"
