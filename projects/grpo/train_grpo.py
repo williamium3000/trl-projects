@@ -5,13 +5,17 @@ import sys
 import wandb
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# CoMAS coding reward lives in the co-grpo-dp project's `comas` package; add it
+# to the path so `from comas.code_reward import passes_tests` resolves (shared
+# code-exec utility, not duplicated).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "co-grpo-dp"))
 from verifiers.qwen.qwen_math_parser import extract_answer
 from verifiers.qwen.math_grade import grade_answer
 
 import torch.nn as _nn
 from transformers import AutoTokenizer
 from transformers.modeling_utils import PreTrainedModel as _PreTrainedModel
-from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, load_dataset
+from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED, load_dataset
 
 # Gemma-3 + ZeRO-3 fix: _init_weights 对 nn.Embedding 做 weight[padding_idx].zero_(),
 # ZeRO-3 下非 rank-0 是 size-0 shard → IndexError。Gemma-3 有 padding_idx 会触发。
@@ -62,7 +66,7 @@ class CustomScriptArguments(ScriptArguments):
         default=OPSD_DATASET,
         metadata={
             "help": "Dataset to use for GRPO training.",
-            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET],
+            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED],
         },
     )
 
@@ -98,14 +102,28 @@ def reward_correctness(completions, solution, **kwargs):
     Uses qwen's `grade_answer` (sympy + latex2sympy2) so equivalent forms like
     `1/2` vs `\\frac{1}{2}` vs `0.5` all count as correct. Slower than string
     equality (~10-100ms per check) but eliminates spurious negative rewards.
+
+    CoMAS task routing (gt baseline): `task`=="coding" → run the asserts in the
+    persistent `test_code` column (completion must pass them — supervised, uses
+    the asserts' expected outputs); math/science → the boxed+sympy path above.
     """
+    tasks = kwargs.get("task")
+    test_codes = kwargs.get("test_code")
+    n = len(completions)
+    tasks = tasks if tasks is not None else ["math"] * n
+    test_codes = test_codes if test_codes is not None else [""] * n
+
     rewards = []
-    for completion, ground_truth in zip(completions, solution):
-        pred_answer = extract_boxed_answer(_get_text(completion))
-        if pred_answer is not None and grade_answer(pred_answer, ground_truth):
-            rewards.append(1.0)
+    for i, (completion, ground_truth) in enumerate(zip(completions, solution)):
+        if tasks[i] == "coding":
+            from comas.code_reward import passes_tests
+            rewards.append(1.0 if passes_tests(_get_text(completion), test_codes[i]) else 0.0)
         else:
-            rewards.append(0.0)
+            pred_answer = extract_boxed_answer(_get_text(completion))
+            if pred_answer is not None and grade_answer(pred_answer, ground_truth):
+                rewards.append(1.0)
+            else:
+                rewards.append(0.0)
     return rewards
 
 

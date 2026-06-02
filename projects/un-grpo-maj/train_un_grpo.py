@@ -5,6 +5,9 @@ import sys
 import wandb
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# CoMAS coding reward (run-output vs self-majority output tuple) lives in the
+# co-grpo-dp project's `comas` package; add to path (shared, not duplicated).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "co-grpo-dp"))
 from self_label_utils import extract_boxed_answer, grade_answer
 
 import torch.nn as _nn
@@ -102,14 +105,31 @@ def reward_correctness(completions, solution, **kwargs):
     Uses qwen's `grade_answer` (sympy + latex2sympy2) so equivalent forms like
     `1/2` vs `\\frac{1}{2}` vs `0.5` all count as correct. Slower than string
     equality (~10-100ms per check) but eliminates spurious negative rewards.
+
+    CoMAS task routing (unsupervised, mirrors co-grpo-dp): `task`=="coding" →
+    `ground_truth` is the self-majority OUTPUT-TUPLE pseudo-label, so re-run THIS
+    completion's code on the `test_code` inputs and compare output tuples by
+    equality; math/science keep the boxed+sympy path.
     """
+    tasks = kwargs.get("task")
+    test_codes = kwargs.get("test_code")
+    n = len(completions)
+    tasks = tasks if tasks is not None else ["math"] * n
+    test_codes = test_codes if test_codes is not None else [""] * n
+
     rewards = []
-    for completion, ground_truth in zip(completions, solution):
-        pred_answer = extract_boxed_answer(_get_text(completion))
-        if pred_answer is not None and grade_answer(pred_answer, ground_truth):
-            rewards.append(1.0)
+    for i, (completion, ground_truth) in enumerate(zip(completions, solution)):
+        if tasks[i] == "coding":
+            from comas.code_reward import extract_calls, voting_answer
+            fn, call_inputs = extract_calls(test_codes[i])
+            my_answer = voting_answer(_get_text(completion), fn, call_inputs)
+            rewards.append(1.0 if (my_answer is not None and my_answer == ground_truth) else 0.0)
         else:
-            rewards.append(0.0)
+            pred_answer = extract_boxed_answer(_get_text(completion))
+            if pred_answer is not None and grade_answer(pred_answer, ground_truth):
+                rewards.append(1.0)
+            else:
+                rewards.append(0.0)
     return rewards
 
 

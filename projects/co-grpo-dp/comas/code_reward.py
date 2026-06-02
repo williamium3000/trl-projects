@@ -142,6 +142,38 @@ def run_outputs(code: str, func_name: str, inputs: list, timeout: float = 2.0):
     return tuple(outs)
 
 
+# ------------------------------------------------- supervised (gt) code reward
+def passes_tests(completion_text: str, test_code: str, timeout: float = 4.0) -> bool:
+    """GT (supervised) code reward: does the completion's code pass the asserts?
+
+    Exec the extracted completion code together with `test_code` (which defines
+    `test_*` functions containing `assert func(...) == expected`), then call every
+    test function. True iff all run without raising. This USES the asserts'
+    expected outputs — the supervised signal that the unsupervised CoMAS reward
+    (run_outputs + output_majority) deliberately drops. Any failure (missing func,
+    AssertionError, timeout, SystemExit, exception) → False (→ reward 0).
+    """
+    code = extract_code(completion_text)
+    if not code or not test_code:
+        return False
+    _saved_argv = sys.argv
+    sys.argv = ["pytest"]  # neutralize argparse/pytest.main() in model code
+    try:
+        g = {}
+        with _time_limit(timeout), contextlib.redirect_stdout(io.StringIO()):
+            exec("from typing import *\n" + code + "\n" + test_code, g)
+            test_fns = [v for k, v in g.items() if k.startswith("test") and callable(v)]
+            if not test_fns:
+                return False
+            for fn in test_fns:
+                fn()
+        return True
+    except (_TimeLimit, SystemExit, Exception):
+        return False
+    finally:
+        sys.argv = _saved_argv
+
+
 # ------------------------------------------------------------- majority voting
 def _all_err(t):
     return len(t) > 0 and all(o.startswith("<") for o in t)

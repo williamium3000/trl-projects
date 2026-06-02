@@ -36,12 +36,21 @@ MATH_LEVEL12345_DATASET = "q1716523669/MATH-Level12345"
 COREWARDING_MATH_ORIGINAL = "coreward/math_original"
 COREWARDING_MATH_REPHRASED = "coreward/math_rephrased"
 
+# CoMAS replication: local json (data/comas/), not HF Hub. `blended` = 5000
+# (2000 science + 1500 coding + 1500 math); `math` = the 1500 math subset.
+# Reward is task-routed (see reward_correctness): math/science → boxed+sympy
+# grade; coding → run-tests against the asserts in the persistent `test_code`
+# column (gt baseline: completion must pass the asserts).
+COMAS_BLENDED = "comas/blended"
+COMAS_MATH = "comas/math"
+
 _VALIDATION_SIZE = 150
 _VALIDATION_SEED = 42
 
 _INSTRUCTION = "Please reason step by step, and put your final answer within \\boxed{}."
 
 _COREWARDING_DEFAULT_DIR = "~/research/Co-rewarding/Co-rewarding-I/data/math"
+_COMAS_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "comas")
 
 
 def _make_prompt(text):
@@ -53,6 +62,39 @@ def _load_math500_eval(path):
         data = json.load(f)
     return Dataset.from_list([
         {"prompt": _make_prompt(e["prompt"]), "solution": e["answer"]}
+        for e in data
+    ])
+
+
+def _load_comas_json(which: str) -> Dataset:
+    """Load CoMAS data (json list of {prompt, answer, task, ...}) -> columns
+    {prompt, solution, task, test_code}.
+
+    `which` ∈ {'blended' (5000: math+science+coding), 'math' (1500 math subset)}.
+    Path from COMAS_DATA_DIR env var, else repo-local data/comas/.
+
+    `task` routes the reward (math/science -> sympy grade; coding -> run-tests
+    against the asserts). `test_code` is a SEPARATE persistent column: for coding
+    it holds the test asserts (the reward fn extracts call-inputs / runs them).
+    Empty string for non-coding rows (keeps the column uniform).
+    """
+    base = os.environ.get("COMAS_DATA_DIR", _COMAS_DATA_DIR)
+    fname = {"blended": "blended_train.json", "math": "math_train.json"}[which]
+    path = os.path.join(os.path.expanduser(base), fname)
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"CoMAS data not found at {path}. Expected blended_train.json / "
+            f"math_train.json under data/comas/ (or set COMAS_DATA_DIR)."
+        )
+    with open(path) as f:
+        data = json.load(f)
+    return Dataset.from_list([
+        {
+            "prompt": _make_prompt(e["prompt"]),
+            "solution": str(e["answer"]),
+            "task": e.get("task", "math"),
+            "test_code": e["answer"] if e.get("task") == "coding" else "",
+        }
         for e in data
     ])
 
@@ -111,6 +153,22 @@ def _load_coreward_parquet(which: str) -> Dataset:
 
 
 def load_dataset(dataset_name):
+    # CoMAS data branch — local json, not HF Hub. Same downstream handling
+    # (150-prompt val split + optional MATH500_EVAL_PATH override) as the others.
+    if dataset_name in (COMAS_BLENDED, COMAS_MATH):
+        which = "blended" if dataset_name == COMAS_BLENDED else "math"
+        full_train = _load_comas_json(which)
+        split = full_train.train_test_split(test_size=_VALIDATION_SIZE, seed=_VALIDATION_SEED)
+        train_dataset, eval_dataset = split["train"], split["test"]
+        max_samples = os.environ.get("MAX_SAMPLES")
+        if max_samples is not None:
+            n = min(int(max_samples), len(train_dataset))
+            train_dataset = train_dataset.select(range(n))
+        math500_path = os.environ.get("MATH500_EVAL_PATH")
+        if math500_path is not None:
+            eval_dataset = _load_math500_eval(math500_path)
+        return train_dataset, eval_dataset
+
     # Co-rewarding-I parquet branch — local file, not HF Hub.
     if dataset_name in (COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED):
         which = "original" if dataset_name == COREWARDING_MATH_ORIGINAL else "rephrased"

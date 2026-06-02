@@ -6,15 +6,26 @@ Groups below `self_consistency_threshold` get a sentinel that no parsed answer
 can match, so every rollout in the group receives reward 0.
 """
 
+import os
+import sys
+
 from accelerate.utils import gather_object
 from trl import GRPOTrainer
 
 from self_label_utils import (
     _UNLABELED_SENTINEL,
     _extract_and_normalize,
+    _get_text,
     _majority_vote,
     grade_answer,
 )
+
+# CoMAS coding: the votable "answer" of a code completion is its run-output
+# tuple (string). The `comas` package lives in the co-grpo-dp project; add it to
+# the path so the import resolves (shared code-exec utility, not duplicated).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "co-grpo-dp"))
+from comas.code_reward import extract_calls as _comas_extract_calls
+from comas.code_reward import voting_answer as _comas_voting_answer
 
 
 class SelfLabelingGRPOTrainer(GRPOTrainer):
@@ -78,15 +89,28 @@ class SelfLabelingGRPOTrainer(GRPOTrainer):
         num_groups = N_global // G
         mode = "train"
 
-        local_answers = [_extract_and_normalize(c) for c in completions]
+        # Task-routed votable answer: math/science -> normalized boxed answer;
+        # coding -> run the completion's code on the test inputs and use the
+        # output-tuple string (so the vote/label/reward chain works unchanged,
+        # just with a different "answer" representation). Mirrors co-grpo-dp.
+        def _votable_answer(completion, inp):
+            if inp.get("task") == "coding":
+                fn, call_inputs = _comas_extract_calls(inp.get("test_code", ""))
+                return _comas_voting_answer(_get_text(completion), fn, call_inputs)
+            return _extract_and_normalize(completion)
+
+        local_answers = [_votable_answer(c, inp) for c, inp in zip(completions, inputs)]
         local_real_solutions = [inp.get("solution") for inp in inputs]
+        local_tasks = [inp.get("task", "math") for inp in inputs]
 
         if world_size > 1:
             gathered_answers = gather_object(local_answers)
             gathered_real_solutions = gather_object(local_real_solutions)
+            gathered_tasks = gather_object(local_tasks)
         else:
             gathered_answers = local_answers
             gathered_real_solutions = local_real_solutions
+            gathered_tasks = local_tasks
         assert len(gathered_answers) == N_global, (
             f"gather_object returned {len(gathered_answers)} items, expected {N_global}"
         )
@@ -109,7 +133,9 @@ class SelfLabelingGRPOTrainer(GRPOTrainer):
             else:
                 pseudo = label
                 num_labeled += 1
-                if self.log_oracle_accuracy:
+                # Oracle accuracy is a math-only diagnostic; coding's real
+                # "solution" is test asserts, not sympy-comparable, so skip it.
+                if self.log_oracle_accuracy and gathered_tasks[lo] != "coding":
                     gt_real = gathered_real_solutions[lo]
                     if gt_real is not None and grade_answer(label, gt_real):
                         num_oracle_matches += 1
