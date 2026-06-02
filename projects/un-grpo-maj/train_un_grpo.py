@@ -13,7 +13,7 @@ from self_label_utils import extract_boxed_answer, grade_answer
 import torch.nn as _nn
 from transformers import AutoTokenizer
 from transformers.modeling_utils import PreTrainedModel as _PreTrainedModel
-from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, load_dataset
+from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COMAS_BLENDED, COMAS_MATH, load_dataset
 from self_label_trainer import SelfLabelingGRPOTrainer
 
 # Gemma-3 + ZeRO-3 fix: _init_weights 对 nn.Embedding 做 weight[padding_idx].zero_(),
@@ -64,7 +64,7 @@ class CustomScriptArguments(ScriptArguments):
         default=OPSD_DATASET,
         metadata={
             "help": "Dataset to use for GRPO training.",
-            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET],
+            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COMAS_BLENDED, COMAS_MATH],
         },
     )
     self_consistency_threshold: float = field(

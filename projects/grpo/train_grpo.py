@@ -15,7 +15,7 @@ from verifiers.qwen.math_grade import grade_answer
 import torch.nn as _nn
 from transformers import AutoTokenizer
 from transformers.modeling_utils import PreTrainedModel as _PreTrainedModel
-from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED, load_dataset
+from dataset import DAPO_DATASET, OPSD_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED, COMAS_BLENDED, COMAS_MATH, load_dataset
 
 # Gemma-3 + ZeRO-3 fix: _init_weights 对 nn.Embedding 做 weight[padding_idx].zero_(),
 # ZeRO-3 下非 rank-0 是 size-0 shard → IndexError。Gemma-3 有 padding_idx 会触发。
@@ -66,7 +66,7 @@ class CustomScriptArguments(ScriptArguments):
         default=OPSD_DATASET,
         metadata={
             "help": "Dataset to use for GRPO training.",
-            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED],
+            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED, COMAS_BLENDED, COMAS_MATH],
         },
     )
 
