@@ -3,7 +3,6 @@
 # IDENTICAL to the math345 heter setting (model/method/EB/save all unchanged);
 # ONLY the training data is swapped to CoMAS BLENDED (5000: math+science+coding).
 # math/science -> sympy grade; coding -> run-output majority (comas/code_reward).
-# is byte-identical to the canonical sister script.
 #
 # Layout (8-GPU, 4+4 split):
 #   group A (Qwen)  → CUDA 0,1,2,3   port 19370
