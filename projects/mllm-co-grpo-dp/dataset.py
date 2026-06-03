@@ -206,6 +206,13 @@ def _load_spec_dataset(dataset_name):
         img = ex[img_f]
         if isinstance(img, list):
             img = img[0]
+        # Cap BEFORE the map writes to Arrow. Full-res zwz images (~2MB each) blow
+        # past pyarrow's 2GB int32 offset limit once writer_batch_size=1000 rows of
+        # image bytes are combined into a single shard (ArrowInvalid: offset overflow,
+        # crashes at Map 999). Capping here keeps each image ~200-500KB; also speeds
+        # the map and shrinks the on-disk cache. (Distinct from the column prune above,
+        # which fixes CPU-RAM OOM — this fixes the Arrow write-size limit.)
+        img = _cap_image(img)
         if q_f == "@chat":
             question = _extract_chat_text(ex["prompt"])
         else:
@@ -240,7 +247,10 @@ def _load_spec_dataset(dataset_name):
     _max = os.environ.get("MAX_SAMPLES")
     if _max is not None:
         ds = ds.select(range(min(int(_max), len(ds))))
-    return ds.map(_fmt, remove_columns=ds.column_names)
+    # writer_batch_size kept small as a second guard against the 2GB Arrow offset
+    # overflow (primary guard is the _cap_image call in _fmt): 100 capped images
+    # per shard is comfortably under the int32 offset limit even for large images.
+    return ds.map(_fmt, remove_columns=ds.column_names, writer_batch_size=100)
 
 
 def load_dataset(dataset_name):
@@ -300,7 +310,7 @@ def load_dataset(dataset_name):
     # sources so Qwen's dynamic-resolution tiling can't exceed max_model_len.
     if not isinstance(full_train.features["image"], HFImage):
         full_train = full_train.cast_column("image", HFImage())
-    full_train = full_train.map(_convert_to_rgb)
+    full_train = full_train.map(_convert_to_rgb, writer_batch_size=100)
 
     eval_path = os.environ.get("MLLM_EVAL_PATH")
     if eval_path is not None:
