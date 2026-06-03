@@ -221,6 +221,20 @@ def _load_spec_dataset(dataset_name):
             ans = ex[a_f]
         return {"prompt": _make_prompt(question), "image": img, "solution": str(ans).strip()}
 
+    # Prune columns the formatter never reads BEFORE the map. zwz carries a SECOND
+    # full-res image column (`original_images`, 2250x1500) + bbox/extra_info; left
+    # in, every row decodes ~2x the images, and 8 DDP ranks mapping 37k pairs on
+    # one node exhaust CPU RAM → OOM-killed mid-map with no traceback (2026-06-03).
+    # Keep only what `_fmt` reads.
+    _keep = {img_f, "prompt" if q_f == "@chat" else q_f}
+    if a_f == "@reward":
+        _keep.add("reward_model")
+    elif a_f == "@sol_answer":
+        _keep.update(("solution", "original_answer"))
+    else:
+        _keep.add(a_f)
+    ds = ds.remove_columns([c for c in ds.column_names if c not in _keep])
+
     # MAX_SAMPLES truncates BEFORE the (image-heavy) map so debug/sanity runs on
     # huge sources (e.g. MMFineReason-sft 1.77M) don't map the whole split.
     _max = os.environ.get("MAX_SAMPLES")

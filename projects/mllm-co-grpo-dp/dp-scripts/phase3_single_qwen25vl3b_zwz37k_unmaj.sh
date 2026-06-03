@@ -28,6 +28,9 @@ export DISABLE_MLFLOW_INTEGRATION=TRUE
 # Full 1000 (data/mathvista/testmini.jsonl) reserved for final judge-based eval.
 export MLLM_EVAL_PATH=data/mathvista/testmini_150.jsonl
 export MLLM_EVAL_IMAGE_DIR=data/mathvista
+# zwz-37k full = 1 epoch ≈ 4600 steps ≈ 3-5 days on 8 GPU. Subsample to 8k
+# (≈1000 steps ≈ ~1 day) to keep the matrix tractable; override to run full.
+export MAX_SAMPLES="${MAX_SAMPLES:-8000}"
 
 CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7" accelerate launch \
     --config_file projects/mllm-co-grpo-dp/accelerate_zero3.yaml \
