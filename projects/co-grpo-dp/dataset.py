@@ -6,21 +6,18 @@ Set MATH500_EVAL_PATH=data/math500/test.json (relative to repo root) to use
 the MATH-500 validation set (industry standard, used by MARTI / SimpleRL-Zoo).
 Without this env var, a 150-prompt holdout is carved from the train split.
 
-Co-rewarding-I replication uses two row-aligned parquet files published in the
-Co-rewarding GitHub repo (Zhang et al. ICLR 2026, tmlr-group/Co-rewarding):
-  - train_original.parquet      (7500 problems, MATH-Train, verl format)
-  - train_rewrite_Qwen3-32B.parquet (same 7500 rows positionally, rephrased
-                                     via Qwen3-32B; semantically equivalent
-                                     question + identical answer)
-Both files share schema and are aligned by row index. Override the source dir
-via the COREWARDING_DATA_DIR env var (default: ~/research/Co-rewarding/
-Co-rewarding-I/data/math). When porting to a pod, set the env var to the NAS
-mirror path; nothing else changes.
+Co-rewarding-I replication uses a private HF dataset with two row-aligned configs
+(q1716523669/MATH-Level345-Rephrased-DeepSeek):
+  - config 'original'  (MATH-Level345 questions, verl format)
+  - config 'rephrased' (same rows positionally, DeepSeek-rephrased; semantically
+                        equivalent question + identical answer)
+Both configs share schema and are aligned by row index (extra_info.index). Override
+the repo via the COREWARDING_HF_REPO env var. The dataset is private, so HF_TOKEN
+must be set in the environment at load time.
 """
 
 import json
 import os
-from pathlib import Path
 
 from datasets import Dataset
 from datasets import load_dataset as hf_load_dataset
@@ -30,17 +27,19 @@ DAPO_DATASET = "open-r1/DAPO-Math-17k-Processed"
 MATH_LEVEL345_DATASET = "q1716523669/MATH-Level345"
 MATH_LEVEL12345_DATASET = "q1716523669/MATH-Level12345"
 
-# Co-rewarding-I replication: paired parquets from tmlr-group/Co-rewarding.
-# Selected via these sentinel "dataset names"; actual on-disk path resolved
-# via COREWARDING_DATA_DIR (or default) at load time.
+# Co-rewarding-I replication: paired HF-dataset configs (original ↔ rephrased).
+# Selected via these sentinel "dataset names"; the actual HF repo/config is
+# resolved in _load_coreward at load time (see _COREWARDING_HF_REPO).
 COREWARDING_MATH_ORIGINAL = "coreward/math_original"
 COREWARDING_MATH_REPHRASED = "coreward/math_rephrased"
 
 # CoMAS (arXiv 2510.08529) training data — we use ONLY their data; our model /
-# method / setting are unchanged. NOTE: our reward uses the qwen math verifier
-# (grade_answer), which only grades math. `comas/blended` (5000: 2000 science +
-# 1500 coding + 1500 math) therefore yields valid reward only on its math part;
-# `comas/math` (the 1500 math subset) is the verifier-compatible choice.
+# method / setting are unchanged. Reward is task-routed (see reward_correctness):
+# math/science -> qwen math verifier (grade_answer); coding -> run-output majority
+# (comas/code_reward). `comas/blended` (5000: 2000 science + 1500 coding + 1500
+# math): math + coding both get valid reward; science also routes through the math
+# verifier, so its reward is only valid where the science answer is sympy-gradable
+# (boxed/numeric). `comas/math` (the 1500 math subset) is fully verifier-native.
 COMAS_BLENDED = "comas/blended"
 COMAS_MATH = "comas/math"
 _COMAS_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "comas")
@@ -50,7 +49,7 @@ _VALIDATION_SEED = 42
 
 _INSTRUCTION = "Please reason step by step, and put your final answer within \\boxed{}."
 
-_COREWARDING_DEFAULT_DIR = "~/research/Co-rewarding/Co-rewarding-I/data/math"
+_COREWARDING_HF_REPO = os.environ.get("COREWARDING_HF_REPO", "q1716523669/MATH-Level345-Rephrased-DeepSeek")
 
 
 def _make_prompt(text):
@@ -99,42 +98,22 @@ def _load_comas_json(which: str) -> Dataset:
     ])
 
 
-def _coreward_parquet_path(which: str) -> Path:
-    """Resolve Co-rewarding parquet path. `which` ∈ {'original', 'rephrased'}."""
-    base = os.environ.get("COREWARDING_DATA_DIR", _COREWARDING_DEFAULT_DIR)
-    base = Path(os.path.expanduser(base))
-    if which == "original":
-        return base / "train_original.parquet"
-    elif which == "rephrased":
-        return base / "train_rewrite_Qwen3-32B.parquet"
-    raise ValueError(f"unknown coreward parquet variant: {which}")
+def _load_coreward(which: str) -> Dataset:
+    """Load the Co-rewarding verl-format pair from HF and convert to {prompt, solution}.
 
-
-def _load_coreward_parquet(which: str) -> Dataset:
-    """Load Co-rewarding verl-format parquet and convert to {prompt, solution}.
-
-    The verl format stores `prompt` as a list of {role, content} dicts (system
-    + user); we extract the user content, drop the verl system message (its
-    'reason step by step + boxed' instruction is duplicated by our own
-    _INSTRUCTION), and wrap via _make_prompt. `solution` is taken from
-    `reward_model.ground_truth` (string).
-
-    Row order is preserved exactly so positional index alignment with the
-    sibling parquet (e.g. original ↔ rephrased) holds end-to-end.
+    `which` ∈ {'original', 'rephrased'} selects the HF config of _COREWARDING_HF_REPO.
+    Both configs hold the same rows positionally (extra_info.index), so the original ↔
+    rephrased alignment holds end-to-end. The verl `prompt` is a list of {role, content}
+    dicts (system + user); we extract the user content, drop the verl system message (its
+    'reason step by step + boxed' instruction is duplicated by our own _INSTRUCTION), and
+    wrap via _make_prompt. `solution` is taken from `reward_model.ground_truth` (string).
+    The dataset is private, so HF_TOKEN must be set in the environment.
     """
-    import pandas as pd
-    parquet_path = _coreward_parquet_path(which)
-    if not parquet_path.exists():
-        raise FileNotFoundError(
-            f"Co-rewarding parquet not found at {parquet_path}. "
-            f"Set COREWARDING_DATA_DIR env var to the directory containing "
-            f"train_original.parquet + train_rewrite_Qwen3-32B.parquet. "
-            f"(default: {_COREWARDING_DEFAULT_DIR})"
-        )
-    df = pd.read_parquet(parquet_path)
+    hf = hf_load_dataset(_COREWARDING_HF_REPO, which, split="train",
+                         token=os.environ.get("HF_TOKEN"))
     records = []
-    for _, row in df.iterrows():
-        # `prompt` is an ndarray of dicts; pull the user message.
+    for row in hf:
+        # `prompt` is a list of dicts; pull the user message.
         msgs = row["prompt"]
         user_content = None
         for m in msgs:
@@ -169,10 +148,10 @@ def load_dataset(dataset_name):
             eval_dataset = _load_math500_eval(math500_path)
         return train_dataset, eval_dataset
 
-    # Co-rewarding-I parquet branch — local file, not HF Hub.
+    # Co-rewarding-I branch — paired HF-dataset configs (original ↔ rephrased).
     if dataset_name in (COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED):
         which = "original" if dataset_name == COREWARDING_MATH_ORIGINAL else "rephrased"
-        full_train = _load_coreward_parquet(which)
+        full_train = _load_coreward(which)
         split = full_train.train_test_split(test_size=_VALIDATION_SIZE, seed=_VALIDATION_SEED)
         train_dataset, eval_dataset = split["train"], split["test"]
         max_samples = os.environ.get("MAX_SAMPLES")
