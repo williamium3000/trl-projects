@@ -37,6 +37,8 @@ export WANDB_PROJECT="mllm-co-grpo-dp"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MLLM_EVAL_PATH=data/mathvista/testmini_150.jsonl
 export MLLM_EVAL_IMAGE_DIR=data/mathvista
+# MMFineReason SFT split = 1.77M rows — mapping it whole OOMs and trains for months. Subsample to 8k (overridable) to keep the matrix tractable.
+export MAX_SAMPLES="${MAX_SAMPLES:-8000}"
 
 COMMON=(
     --learning_rate 1e-6

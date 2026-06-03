@@ -37,6 +37,8 @@ export WANDB_PROJECT="mllm-co-grpo-dp"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MLLM_EVAL_PATH=data/mathvista/testmini_150.jsonl
 export MLLM_EVAL_IMAGE_DIR=data/mathvista
+# OpenMMReasoner = ~73k rows (6-subset concat, ~7 days at full). Subsample to 8k (overridable) to keep the matrix tractable.
+export MAX_SAMPLES="${MAX_SAMPLES:-8000}"
 
 COMMON=(
     --learning_rate 1e-6
