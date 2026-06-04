@@ -4,10 +4,12 @@
 # WHY a separate script: the shared run_co_opsd_eval.sh hardcodes --no_thinking
 # and a Qwen2.5/Llama baseline, and passes the LoRA adapter dir as --base_model
 # (wrong for a pure-adapter checkpoint). This driver uses the CORRECT evaluate_math
-# contract (--base_model = base, --checkpoint_dir = adapter) and the P1-validated
-# thinking-ON settings (val_n 12, temp 1.0, top_p 0.95, top_k 20, max_new 38912)
-# so co-OPSD numbers are directly comparable to the single-model OPSD P1 result
-# (Qwen3-1.7B base aime24 ~52, peak ~57).
+# contract (--base_model = base, --checkpoint_dir = adapter) and the ORIGINAL OPSD
+# PAPER eval settings (val_n 12, temp 1.0, top-p=none, top-k=disabled, min-p=0,
+# presence=0, max_new 38912, thinking ON; OPSD README "Evaluation settings") so the
+# in-sweep base reproduces the paper (AIME24 51.5 / AIME25 36.7 / HMMT25 23.1) and
+# co-OPSD numbers sit on the same axis. Override TOP_P/TOP_K if you need the generic
+# Qwen3 thinking best-practice (top_p 0.95 / top_k 20) instead of the paper setting.
 #
 # Usage: bash run_co_opsd_eval_qwen3_thinking.sh <run_dir> [--datasets a,b] [--ckpts 50,100]
 set -euo pipefail
@@ -18,6 +20,8 @@ CKPTS_OVERRIDE="50,100"        # which checkpoint-* steps to eval (plus base + f
 VAL_N="${VAL_N:-12}"
 TEMP="${TEMP:-1.0}"
 MAX_NEW="${MAX_NEW:-38912}"
+TOP_P="${TOP_P:-none}"          # paper: top-p disabled. "none" => omit --top_p (vLLM default off)
+TOP_K="${TOP_K:--1}"           # paper: top-k disabled (-1)
 BASE_MODEL="${BASE_MODEL:-Qwen/Qwen3-1.7B}"
 GPUS_CSV="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
 
@@ -79,10 +83,12 @@ run_one() {
   [[ -f "$out_file" ]] && { echo "[skip ] gpu$gpu $tag x $ds (exists)"; return 0; }
   echo "[start] gpu$gpu $tag x $ds"; local t0=$SECONDS
   local ck_flag=(); [[ -n "$ckpt" ]] && ck_flag=(--checkpoint_dir "$ckpt")
+  # Paper setting: top-p disabled => omit --top_p entirely (TOP_P=none); top-k=-1.
+  local tp_flag=(); [[ "$TOP_P" != "none" ]] && tp_flag=(--top_p "$TOP_P")
   if CUDA_VISIBLE_DEVICES="$gpu" python "$EVAL_PY" \
       --base_model "$BASE_MODEL" "${ck_flag[@]}" \
       --dataset "$ds" --val_n "$VAL_N" \
-      --temperature "$TEMP" --top_p 0.95 --top_k 20 \
+      --temperature "$TEMP" "${tp_flag[@]}" --top_k "$TOP_K" \
       --max_new_tokens "$MAX_NEW" \
       --tensor_parallel_size 1 --gpu_memory_utilization 0.9 \
       --output_file "$out_file" > "$log_file" 2>&1; then

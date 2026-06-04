@@ -1,47 +1,59 @@
 #!/usr/bin/env bash
 # Cross-family co-grpo-dp · Qwen2.5-3B × Llama-3.2-3B-Instruct
-# · math_rephrased (Co-rew-I rewrite_Qwen3-32B) · lr=3e-6 · eb=128 (per group) · 2 epoch
-# Mirrors dp-scripts/math345_full/lr3e-6_e2_eb128/hetergen/run_cogrpo_heter__qwen25_3b__llama32_3b.sh
-# ONLY difference: DATASET swapped to coreward/math_rephrased (paper §4.4 data-source robustness key row).
+# · math345 · lr=3e-6 · eb=128 (per group) · 2 epoch
+# Variant: bs=2 / accum=192 (math identical to canonical bs=1/accum=384, only throughput).
+# Everything else (save_strategy=steps, save_steps=10, save_total_limit=3, naming, dirs)
+# is byte-identical to the canonical sister script.
 #
 # Layout (8-GPU, 4+4 split):
 #   group A (Qwen)  → CUDA 0,1,2,3   port 19370
 #   group B (Llama) → CUDA 4,5,6,7   port 19371
 #   rendezvous: file-based at $RUN_DIR/rdv
+#
+# Hparam:
+#   per_device_bs=2, num_processes=4, G=12, target EB=128 (prompts/optimizer step)
+#   → grad_accum = 128 × 12 / (4 × 2) = 192
+#   generation_batch_size = 2 × 4 × 192 = 1536 completions/optimizer step (unchanged).
+#
+# Neither Qwen nor Llama has the Gemma3 vLLM-HF drift bug; we use TRL's
+# default `sequence_mask` IS mode. Both run flash_attention_2.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL_A="Qwen/Qwen2.5-3B"
 MODEL_B="meta-llama/Llama-3.2-3B-Instruct"
-DATASET="coreward/math_rephrased"
+DATASET="q1716523669/MATH-Level345"
 VLLM_MEM_A="0.45"
 VLLM_MEM_B="0.45"
-GRAD_ACCUM="384"
+GRAD_ACCUM="192"
 
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="cogrpo_heter__qwen25_3b__llama32_3b__math_rephrased_lr3e-6_e2_${TS}"
+RUN="cogrpo_heter__qwen25_3b__llama32_3b__math345_full_lr3e-6_e2_${TS}"
 BASE_OUT="projects/work_dirs/co-grpo-dp/$RUN"
 RDV_DIR="$BASE_OUT/rdv"
 rm -rf "$RDV_DIR"
 mkdir -p "$BASE_OUT/group_A" "$BASE_OUT/group_B" "$RDV_DIR"
 
 wandb online
+# Force public wandb.ai endpoint; on Arnold/MLX pods the ByteDance fork
+# silently routes to internal ml.tiktok-row.net even with WANDB_ENTITY set
+# (and prints a fake wandb.ai URL). Requires upstream wandb in the active
+# env to take effect.
 export WANDB_BASE_URL="https://api.wandb.ai"
 export WANDB_API_KEY="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"
 export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="Co-learning"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
-export COREWARDING_DATA_DIR=/mnt/bn/tns-algo-video-public-my2/yijiangli/data/coreward-i
 
 COMMON_ARGS=(
     --train_dataset "$DATASET"
     --learning_rate 3e-6
-    --per_device_train_batch_size 1
+    --per_device_train_batch_size 2
     --gradient_accumulation_steps "$GRAD_ACCUM"
     --num_train_epochs 2
     --lr_scheduler_type cosine_with_min_lr

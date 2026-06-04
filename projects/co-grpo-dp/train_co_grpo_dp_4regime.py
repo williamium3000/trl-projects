@@ -45,7 +45,7 @@ from disagree_naive_utils import (
     make_reward_naive,
 )
 from log_distill_utils import make_reward_log_distill
-from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, load_dataset
+from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED, load_dataset
 from rendezvous import Rendezvous
 
 # Gemma-3 + ZeRO-3 fix: _init_weights 对 nn.Embedding 做 weight[padding_idx].zero_(),
@@ -96,7 +96,7 @@ class CoGRPOdp4RegimeScriptArguments(ScriptArguments):
         default=OPSD_DATASET,
         metadata={
             "help": "Dataset to use for training.",
-            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET],
+            "choices": [OPSD_DATASET, DAPO_DATASET, MATH_LEVEL345_DATASET, MATH_LEVEL12345_DATASET, COREWARDING_MATH_ORIGINAL, COREWARDING_MATH_REPHRASED],
         },
     )
     self_consistency_threshold: float = field(

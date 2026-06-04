@@ -172,3 +172,9 @@ data/r1v/__MACOSX/
 
 # MathVista eval images (re-buildable via tools/convert_mathvista.py) — keep jsonl only
 data/mathvista/images/
+logs/
+sessions/
+shell-snapshots/
+settings.json
+work_dirs/
+.last_eval_ts

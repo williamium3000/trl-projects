@@ -785,6 +785,15 @@ class GRPOConfig(_BaseConfig):
             "non-truncated completions are considered."
         },
     )
+    entropy_coeff: float = field(
+        default=0.0,
+        metadata={
+            "help": "Coefficient λ for an entropy bonus added to the policy loss: the per-token loss is shifted by "
+            "`-entropy_coeff * entropy`, so a positive value rewards higher-entropy (more exploratory) token "
+            "distributions and counteracts mode collapse. `0.0` (default) disables the bonus and leaves the loss "
+            "unchanged."
+        },
+    )
     max_tool_calling_iterations: int | None = field(
         default=None,
         metadata={

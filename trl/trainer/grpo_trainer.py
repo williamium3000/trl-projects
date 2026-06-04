@@ -576,6 +576,7 @@ class GRPOTrainer(_BaseTrainer):
             raise ValueError("Liger kernel does not support off-policy sequence masking yet.")
         self.mask_truncated_completions = args.mask_truncated_completions
         self.top_entropy_quantile = args.top_entropy_quantile
+        self.entropy_coeff = args.entropy_coeff
         if self.use_liger_kernel and self.top_entropy_quantile < 1.0:
             raise NotImplementedError(
                 "Liger Kernels don't currently support masking token positions based on entropy."
@@ -2686,6 +2687,13 @@ class GRPOTrainer(_BaseTrainer):
 
         if self.beta != 0.0:
             per_token_loss = per_token_loss + self.beta * per_token_kl
+
+        # Entropy bonus: subtract λ·H from the loss so minimizing the loss maximizes the
+        # per-token entropy, rewarding more exploratory distributions and counteracting mode
+        # collapse. Applied to every completion token (gated by `mask` at reduction below),
+        # independent of the policy-gradient maskings above.
+        if self.entropy_coeff != 0.0:
+            per_token_loss = per_token_loss - self.entropy_coeff * entropies
 
         mode = "train" if self.model.training else "eval"
         if self.loss_type in ["grpo", "sapo"]:

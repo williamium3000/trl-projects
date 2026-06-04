@@ -36,6 +36,7 @@ export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="Co-learning"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
+export COREWARDING_DATA_DIR=/mnt/bn/tns-algo-video-public-my2/yijiangli/data/coreward-i
 
 COMMON_ARGS=(
     --train_dataset "$DATASET"

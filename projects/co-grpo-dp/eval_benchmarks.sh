@@ -83,9 +83,21 @@ TENSOR_PARALLEL="${TENSOR_PARALLEL:-1}"
 
 mkdir -p "$OUTPUT_DIR"
 
+# Auto-detect LoRA adapter vs full (merged) model.
+#   - LoRA  : CKPT_DIR has adapter_config.json -> load base + adapter
+#   - FULL  : CKPT_DIR is a full model (model*.safetensors, no adapter_config),
+#             OR is an HF repo id (not a local dir) -> load it directly as `pretrained`.
+# co-grpo-dp / un-grpo-maj train FULL fine-tuning (no --use_peft), so their saved
+# best_model / checkpoint-* and the uploaded HF repos are FULL models, not adapters.
+if [ -f "$CKPT_DIR/adapter_config.json" ]; then
+    CKPT_KIND="lora"
+else
+    CKPT_KIND="full"
+fi
+
 echo "===== eval_benchmarks =====" >&2
 echo "Base model:    $BASE_MODEL" >&2
-echo "Ckpt (PEFT):   $CKPT_DIR" >&2
+echo "Ckpt:          $CKPT_DIR  (kind: $CKPT_KIND)" >&2
 echo "Tasks:         $TASKS" >&2
 echo "Output dir:    $OUTPUT_DIR" >&2
 echo "Backend:       $BACKEND" >&2
@@ -99,7 +111,12 @@ if [ "$BACKEND" = "vllm" ]; then
     # vllm class loads LoRA via lora_local_path + enable_lora=True.
     # NOTE: passing `peft=` to the vllm class is silently ignored — checkpoint
     # would not be applied, and you'd accidentally eval the base model.
-    MODEL_ARGS="pretrained=$BASE_MODEL,enable_lora=True,lora_local_path=$CKPT_DIR,tensor_parallel_size=$TENSOR_PARALLEL,gpu_memory_utilization=$GPU_MEM_UTIL,dtype=bfloat16"
+    if [ "$CKPT_KIND" = "lora" ]; then
+        MODEL_ARGS="pretrained=$BASE_MODEL,enable_lora=True,lora_local_path=$CKPT_DIR,tensor_parallel_size=$TENSOR_PARALLEL,gpu_memory_utilization=$GPU_MEM_UTIL,dtype=bfloat16"
+    else
+        # FULL model: load the checkpoint/HF-repo directly; BASE_MODEL is ignored.
+        MODEL_ARGS="pretrained=$CKPT_DIR,tensor_parallel_size=$TENSOR_PARALLEL,gpu_memory_utilization=$GPU_MEM_UTIL,dtype=bfloat16"
+    fi
     lm_eval \
         --model vllm \
         --model_args "$MODEL_ARGS" \
@@ -109,7 +126,11 @@ if [ "$BACKEND" = "vllm" ]; then
         --log_samples 2>&1 | tee -a "$OUTPUT_DIR/eval.log"
 elif [ "$BACKEND" = "hf" ]; then
     # hf class loads LoRA via peft=. Slower but more battle-tested for adapters.
-    MODEL_ARGS="pretrained=$BASE_MODEL,peft=$CKPT_DIR,dtype=bfloat16"
+    if [ "$CKPT_KIND" = "lora" ]; then
+        MODEL_ARGS="pretrained=$BASE_MODEL,peft=$CKPT_DIR,dtype=bfloat16"
+    else
+        MODEL_ARGS="pretrained=$CKPT_DIR,dtype=bfloat16"
+    fi
     lm_eval \
         --model hf \
         --model_args "$MODEL_ARGS" \

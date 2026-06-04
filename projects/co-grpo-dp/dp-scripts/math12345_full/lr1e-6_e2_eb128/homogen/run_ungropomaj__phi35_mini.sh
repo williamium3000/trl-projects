@@ -1,50 +1,40 @@
 #!/usr/bin/env bash
-# Vanilla GRPO · qwen25_3b (full-param, ZeRO-3) · math_rephrased (Co-rew-I rewrite_Qwen3-32B) · lr=3e-6 · eb=128 · 2 epoch
-# Ground-truth-label baseline (TRL native GRPOTrainer, no co-train / no majority vote).
-# Mirrors dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__qwen25_3b.sh
-# ONLY difference vs math345 version: DATASET swapped to coreward/math_rephrased
-# for data-source robustness sub-table (paper §4.4). Requires COREWARDING_DATA_DIR
-# env to point at the parquet directory; default ~/research/Co-rewarding/Co-rewarding-I/data/math.
-# Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
+# Un-GRPO-Maj · Phi-3.5-mini (full-param, ZeRO-3) · math12345 · lr=1e-6 · eb=128 · 2 epoch
+# Self-supervised majority-vote baseline (TTRL). Effective batch: 8×bs1×acc192 / gen12 = 128 prompts/step (1 opt_step/gen)
+# Mirrors run_ungropomaj__qwen25_3b.sh, only MODEL + RUN + port changed.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../../.." && pwd)"
 cd "$REPO_ROOT"
 
-MODEL="Qwen/Qwen2.5-3B"
-DATASET="coreward/math_rephrased"
+MODEL="microsoft/Phi-3.5-mini-instruct"
+DATASET="q1716523669/MATH-Level12345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_3b_grpo_math_rephrased_lr3e-6_e2_${TS}"
-OUT="projects/work_dirs/grpo/$RUN"
+RUN="phi35_mini_ungropomaj_math12345_full_lr1e-6_e2_${TS}"
+OUT="projects/work_dirs/un-grpo-maj/$RUN"
 mkdir -p "$OUT"
 
 # wandb offline 2>/dev/null || true
 wandb online
-# Force public wandb.ai endpoint; on pods with the ByteDance MLX wandb fork,
-# the run otherwise gets silently routed to the internal ml.tiktok-row.net
-# (it still prints a wandb.ai-looking URL — misleading). Requires a real
-# upstream wandb (e.g. 0.18.7) in the active env to take effect.
-export WANDB_BASE_URL="https://api.wandb.ai"
 export WANDB_API_KEY="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"
 export WANDB_ENTITY="logan-yang2002-johns-hopkins-university"
 export WANDB_PROJECT="Co-learning"
 
 export DISABLE_MLFLOW_INTEGRATION=TRUE
 export MATH500_EVAL_PATH=data/math500/test.json
-export COREWARDING_DATA_DIR=/mnt/bn/tns-algo-video-public-my2/yijiangli/data/coreward-i
 
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --config_file projects/co-grpo-dp/accelerate_zero3.yaml \
     --num_processes 8 \
-    --main_process_port 19346 \
+    --main_process_port 19348 \
     --gradient_accumulation_steps 192 \
-    projects/grpo/train_grpo.py \
+    projects/un-grpo-maj/train_un_grpo.py \
     --model_name_or_path "$MODEL" \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
-    --learning_rate 3e-6 \
+    --learning_rate 1e-6 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 192 \
     --num_train_epochs 2 \
@@ -64,8 +54,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --logging_steps 1 \
     --save_strategy steps \
     --save_steps 10 \
-    --save_total_limit 3 \
-    --save_only_model true \
     --eval_strategy steps \
     --eval_steps 10 \
     --num_generations_eval 1 \
@@ -74,6 +62,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --beta 0 \
     --loss_type bnpo \
     --scale_rewards group \
+    --self_consistency_threshold 0.0 \
     --seed 42 \
     --data_seed 42 \
     --report_to wandb \
