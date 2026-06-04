@@ -39,7 +39,8 @@
     - **GeoQA-only**:强制 `max_patches=1` 对 <300px 几何图无损;CLEVR/MathVista/document 需另外 `split_pixel_values_by_grid` 反查 `<IMG_CONTEXT>` placeholder count 的 monkey-patch(prototyped, reverted, 等重启)
     - doc: [`projects/mllm-co-grpo-dp/docs/internvl35_hf_geoqa_only_fix_2026-05-23.md`](mllm-co-grpo-dp/docs/internvl35_hf_geoqa_only_fix_2026-05-23.md)
     - InternVL3.5-4B-HF production run 启动 2026-05-23 02:44 UTC,ckpt 协议 `save_total_limit=5` 训完手选
-- [x] **Phi-3.5-mini 已退出主线** — text LLM 三模型现锁定为 **Qwen × Llama × Gemma**(原 Phi 因 longRoPE/bf16 lm_head/IS mode 多层 mismatch 不收敛,fix 成本高于换模型;Gemma3 在 3 处都已 verified 训得动)
+- [x] **Phi-3.5-mini 已退出主线**(longRoPE/bf16 lm_head/IS mode 多层 mismatch 不收敛)
+- [x] **Gemma-3-4B 已退出 LLM 主线** — text RL collapse(见 `projects/co-grpo-dp/docs/gemma3_rl_collapse_investigation_2026-05-29.md`),由 **Qwen3-1.7B-Base** 替代。text LLM 三模型现锁定为 **Qwen2.5-3B (base) × Llama-3.2-3B-Instruct × Qwen3-1.7B-Base**。⚠️ Gemma **仅保留在 MLLM 线**(MLLM 阵容暂不动)
 
 ---
 
@@ -64,10 +65,21 @@
 - [ ] Test-time cross-model SC ensemble
 - [ ] Co-learn:Qwen2.5-3B × Llama-3.2-3B(2 agent)
 
+### Qwen3-1.7B-Base 补全(MATH345,lr3e-6_e2_eb128)— 新阵容第 3 模型,替代 Gemma
+
+> ⚠️ 一律 **Qwen3-1.7B-Base**(base 预训练,非 instruct,非 4B)。脚本已写好。
+> Qwen2.5 / Llama 的单+双 agent 实验均已完成,只差 Qwen3-1.7B-Base 这一列。
+
+- [ ] GT-GRPO — `co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__qwen3_1.7b.sh`
+- [ ] unmaj (TTRL) — `un-grpo-maj/dp-scripts/math345_full/lr3e-6_e2_eb128/single/run_ungropomaj__qwen3_1.7b.sh`
+- [ ] self_certainty (Intuitor) — `un-grpo-maj/.../single/run_self_certainty__qwen3_1.7b.sh`
+- [ ] entropy (RENT) — `un-grpo-maj/.../single/run_entropy__qwen3_1.7b.sh`
+- [ ] co-learn heter Qwen3-1.7B-Base × Llama-3.2-3B — `co-grpo-dp/.../hetergen/run_cogrpo_heter__qwen3_1.7b__llama32_3b.sh`
+
 ### LLM Ablation 补全(只在 MATH345 上做即可)
 
-- [x] 跨 family 补:Qwen × Gemma、Llama × Gemma
-- [x] N=3:Qwen × Llama × Gemma-3-4B(ensemble 同步扩 36-sample)
+- [ ] 跨 family 补:Qwen3-1.7B-Base × Llama-3.2-3B(原 Qwen×Gemma / Llama×Gemma 随 Gemma 剔除作废;新阵容只剩 2 family,跨 family 对都是 ×Llama)
+- [ ] N=3:Qwen2.5-3B × Llama-3.2-3B × Qwen3-1.7B-Base(原 ×Gemma 版作废;ensemble 同步扩 36-sample)
 
 ### LLM Eval 扩展
 
@@ -76,7 +88,7 @@
 
 ### LLM 7B
 
-- [ ] Qwen2.5-7B × Llama-3.1-8B × **Gemma-3-12B** 复跑核心实验 + same-family/cross-family 关键 ablation(只跑 MATH345 一套即可)
+- [ ] Qwen2.5-7B × Llama-3.1-8B 复跑核心实验 + cross-family 关键 ablation(只跑 MATH345 一套即可)。**Gemma-3-12B 随 Gemma 剔除移除**;run4 即此对(heter,已在跑)。7B 是否补 Qwen3 同档(如 Qwen3-8B-Base)待定
 
 ### MLLM 3B 主线
 

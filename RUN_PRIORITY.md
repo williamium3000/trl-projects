@@ -8,6 +8,19 @@
 但 ckpt 没保存 → 全部需要重跑(现在 save_steps=10 全开,best-by-val 协议)。
 故"Tier 0 done"队列从 3 项缩到 1 项(MLLM Qwen-VL),其余全进 Tier 1。
 
+**🔴 2026-06-04 ERRATA — text-LLM 阵容大改(Gemma 出,Qwen3-1.7B-Base 进)**:
+- **Gemma 已从所有 LLM 线剔除**(text RL collapse,见 `projects/co-grpo-dp/docs/gemma3_rl_collapse_investigation_2026-05-29.md`)。
+  text-LLM 3B 第 3 模型改为 **Qwen3-1.7B-Base**(base 预训练,**非** instruct、**非** 4B);7B 去掉 Gemma-3-12B(run4 即 Qwen2.5-7B×Llama-3.1-8B,已在跑)。Gemma **仅保留在 MLLM 线**(9.1.C 等)。
+- ⚠️ 下方所有 **`*_gemma3_4b` / `Gemma … (LLM)` 行 + 逐日排期里的 Gemma LLM 格 = 作废**,被以下 5 个 **Qwen3-1.7B-Base** run 替代(脚本已写好,canonical 见 `EMNLP_2026_TODO.md` 的 "Qwen3-1.7B-Base 补全" 段):
+  | # | 方法 | 脚本 |
+  |---|---|---|
+  | 4.1.D | GT-GRPO | `projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/homogen/run_grpo__qwen3_1.7b.sh` |
+  | 4.2.D | unmaj/TTRL | `projects/un-grpo-maj/dp-scripts/math345_full/lr3e-6_e2_eb128/single/run_ungropomaj__qwen3_1.7b.sh` |
+  | 4.3.D | self_certainty | `projects/un-grpo-maj/dp-scripts/math345_full/lr3e-6_e2_eb128/single/run_self_certainty__qwen3_1.7b.sh` |
+  | 4.4.D | entropy | `projects/un-grpo-maj/dp-scripts/math345_full/lr3e-6_e2_eb128/single/run_entropy__qwen3_1.7b.sh` |
+  | 5.1.AD | heter ×Llama | `projects/co-grpo-dp/dp-scripts/math345_full/lr3e-6_e2_eb128/hetergen/run_cogrpo_heter__qwen3_1.7b__llama32_3b.sh` |
+- ⚠️ 新阵容只剩 **2 个 family**(Qwen、Llama);Qwen3-1.7B-Base 与 Qwen2.5-3B 同 family。故跨 family 对只有 ×Llama 两组,逐日排期的「3 heter pair」结构需重排(待 7B 第 3 模型 / N=3 / same-family 决策定后再更新)。
+
 ## 前置:env
 
 ```bash
@@ -246,7 +259,7 @@ bash projects/eval/run_best_eval.sh \
 
 ## 注意事项
 
-1. **Gemma3 全部脚本带 `token_truncate`**(LLM + MLLM,跨 vllm 版本必加)— 不能去掉,Gemma3 vLLM-HF 0.13/token drift 是架构级 per `gemma3-vllm-drift-ab-test-2026-05-22`
+1. **Gemma3 脚本带 `token_truncate`**(现仅 **MLLM** 线还有 Gemma;LLM 线 Gemma 已剔除)— 不能去掉,Gemma3 vLLM-HF 0.13/token drift 是架构级 per `gemma3-vllm-drift-ab-test-2026-05-22`。Qwen3-1.7B-Base / Qwen2.5 / Llama 无此 drift,用 TRL 默认 IS mode
 2. **N=3(T2.1)grad_accum=768 比 N=2(T1.3)的 384 慢一倍**,8-GPU 2+2+2 split 硬约束
 3. **save_steps=10 全开**(best-by-val 协议),~12 ckpt/run × 6GB = 72GB,`/mnt/bn` 10PB 完全够,手动删旧 ckpt
 4. **Llama 是 gated**,装 env 后一次 `huggingface-cli login`

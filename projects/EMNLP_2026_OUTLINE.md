@@ -25,8 +25,8 @@ Label-free self-supervised RL 框架下,单 agent 或同 family 自训易陷入 
 
 | 档次 | 模型对 |
 | --- | --- |
-| LLM 3B | Qwen2.5-3B × Llama-3.2-3B-Instruct × Gemma-3-4B |
-| LLM 7B | Qwen2.5-7B-Instruct × Llama-3.1-8B-Instruct × Gemma-3-12B |
+| LLM 3B | Qwen2.5-3B (base) × Llama-3.2-3B-Instruct × Qwen3-1.7B-Base |
+| LLM 7B | Qwen2.5-7B-Instruct × Llama-3.1-8B-Instruct |
 | MLLM 3B | Qwen2.5-VL-3B-Instruct × InternVL3.5-4B × Gemma-3-4B |
 | MLLM 7B | Qwen2.5-VL-7B-Instruct × InternVL3.5-8B × Gemma-3-12B |
 
@@ -107,12 +107,14 @@ motivation 核心验证,在 2-4 完成后立刻执行。
 
 - 同 family 跨代:Qwen2.5-3B × Qwen2-3B
 - 完全同模型不同 seed:Qwen2.5-3B × Qwen2.5-3B(seed 微扰)
-- 跨 family:Qwen × Llama、Qwen × Gemma、Llama × Gemma
+- 跨 family:Qwen2.5-3B × Llama-3.2-3B、Qwen3-1.7B-Base × Llama-3.2-3B
+  - ⚠️ 新阵容只剩 2 个 family(Qwen、Llama):第 3 个模型 Qwen3-1.7B-Base 与 Qwen2.5-3B 同 family,
+    故跨 family 对只有「× Llama」两组;Qwen2.5 × Qwen3-1.7B-Base 属同 family(见下)。
 - 报告每组初始 disagreement rate、训练后 gain、disagreement 与 gain 的相关性
 
 **6. N=3 扩展**
 
-- Qwen2.5-3B × Llama-3.2-3B × Gemma-3-4B co-learn
+- Qwen2.5-3B × Llama-3.2-3B × Qwen3-1.7B-Base co-learn
 - Ensemble baseline 同步扩展到 36-sample 三模型投票
 - 报告 N=2 → N=3 gain trend,验证 method scalability
 
