@@ -64,6 +64,17 @@ python -c "from importlib.metadata import version; version('trl')" 2>/dev/null |
     pip install -e "$REPO_ROOT" --no-deps -q
 }
 
+# ─── 3b. verifier (verifiers/qwen) deps ──────────────────────────────────────
+# train_grpo / train_un_grpo / train_co_grpo_dp import the qwen verifier which
+# needs latex2sympy2 / word2number / pylatexenc / regex. byted system python
+# lacks them → "ModuleNotFoundError: latex2sympy2" at trainer import (学长 pod).
+# Pin latex2sympy2==1.9.1 (known-good, antlr4-runtime 4.7.x; newer pulls bad antlr4).
+# Idempotent: skip if already importable (本机已有则跳过).
+python -c "import latex2sympy2, word2number, pylatexenc, regex" 2>/dev/null \
+    && echo ">>> verifier deps OK (latex2sympy2/word2number/pylatexenc/regex)" \
+    || { echo ">>> installing verifier deps (latex2sympy2==1.9.1 etc.)"; \
+         pip install -q "latex2sympy2==1.9.1" word2number pylatexenc regex sympy; }
+
 # ─── 4. HF login (Llama-3.2 / Gemma-3 gated) ─────────────────────────────────
 HF_TOKEN_USE="${HF_TOKEN:-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}"
 export HF_TOKEN="$HF_TOKEN_USE"
