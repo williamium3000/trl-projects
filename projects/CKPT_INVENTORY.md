@@ -3,6 +3,8 @@
 
 HF 账号:`q1716523669`(private token 上传)。本地:`*/work_dirs/.../best_model`(BestKeeper 产物)。
 
+> **2026-06-07 勘误**:本地 6 月 run 里有一批**没传 HF 的 best_model**,之前漏看(命名是 `DECOUPLED` / 直接 7B heter,不带 "rephrase" 字样)。已补正:**数据解耦(rephrased MATH345)和 7B heter 其实本地都有 best_model**,见下。**⚠️ 7B heter 是 lr3e-6,而 7B 单基线是 lr1e-6 —— 对比有 confound,务必注意。**
+
 ## 核验方法 & 结论(lr / best-ckpt)
 - **lr**:从每个 HF 仓的 `trainer_state.json` 读 `log_history` 的 max learning_rate 得到。
   - **3B 全部 = 3.0e-6 ✅**;**7B 全部 = 1.0e-6**(⚠️ 7B 是 lr1e-6,**不是** 3e-6,这是当初的设计,不是错误,但对比时要知道)。
@@ -30,7 +32,7 @@ HF 账号:`q1716523669`(private token 上传)。本地:`*/work_dirs/.../best_mod
 | Co-rewarding-II (EMA) | HF `Qwen2.5-3B-CoRewarding-II` | 3e-6 | (无 trainer_state) | ✅ 权重在 |
 | homo (Qwen×Qwen) | HF `cogrpo-homo-qwen25-3b` A/B | 3e-6 | 110 | ✅ |
 | **heter (ours)** | HF `cogrpo-heter-qwen25-3b-x-llama32-3b` A(+bs2/disagree 变体) | 3e-6 | 110 | ✅ |
-| **数据解耦 (rephrased MATH345)** | — | — | — | ❌ **run 跑过但没存权重(只有 train.log),要重跑+save** |
+| **数据解耦 (rephrased MATH345)** | **local** `cogrpo_heter_DECOUPLED_SWAP__qwen25_3b_rephr__llama32_3b_orig`(0604)group_A(Qwen=rephr) | 3e-6 | 100 | ✅ **local,未传 HF** |
 | SC-ensemble | (test-time,无 ckpt) | — | — | N/A |
 
 ### Llama-3.2-3B 侧
@@ -43,7 +45,7 @@ HF 账号:`q1716523669`(private token 上传)。本地:`*/work_dirs/.../best_mod
 | Co-rewarding-II | HF `Llama-3.2-3B-Instruct-CoRewarding-II` | ✅ |
 | homo (Llama×Llama) | HF `cogrpo-homo-llama32-3b` A/B | ✅ |
 | **heter (ours)** | HF `cogrpo-heter-...-groupB-llama` | ✅ |
-| **数据解耦 (rephrased MATH345)** | — | ❌ **没存权重(同上),要重跑+save** |
+| **数据解耦 (rephrased MATH345)** | **local** `cogrpo_heter_DECOUPLED__qwen25_3b_orig__llama32_3b_rephr`(0602)group_B(Llama=rephr, step130) | ✅ **local,未传 HF** |
 
 > ⚠️ 404(HF 无 trainer_state,lr 以本地 `_lr3e-6_` 为准):grpo-llama32-3b、ungrpomaj-majvote-llama、ungrpomaj-entropy-llama、CoRewarding-II(两个)、homo-llama。
 
@@ -57,7 +59,7 @@ HF 账号:`q1716523669`(private token 上传)。本地:`*/work_dirs/.../best_mod
 | Llama-3.1-8B GT | HF `llama31-8b-gtgrpo-math345-eb128` | 1e-6 | ✅ |
 | Llama-3.1-8B Intuitor | HF `llama31-8b-selfcertainty-math345-eb128` | 1e-6 | ✅ |
 | Llama-3.1-8B TTRL / RENT | — | — | ❌ |
-| **7B heter (co-learn,核心)** | — | — | 🔴 **训练中,没有** |
+| **7B heter (co-learn,核心)** | **local** `cogrpo_heter__qwen25_7b__llama31_8b__math345_full_lr3e-6`(0604_144654)A/B | **3e-6 ⚠️** | 100/130 | ✅ **local,未传 HF**;⚠️ **lr3e-6 ≠ 7B 单基线 lr1e-6,confound** |
 | 7B homo / CR-II / 数据解耦 | — | — | ❌ |
 
 ## 第二部分 CoMAS(Qwen2.5-3B-**it** × Llama-3.2-3B-it,blended)— heter 已训完 ✅
@@ -90,9 +92,10 @@ HF 账号:`q1716523669`(private token 上传)。本地:`*/work_dirs/.../best_mod
 ---
 
 ## 🔴 缺口清单(接下来要跑的,按优先级)
-1. **LLM 7B heter(co-learn)** — 主表核心,训练中,最优先。
-2. **数据解耦(rephrased MATH345,DeepSeek 改写)Qwen + Llama** — run 跑过但**没存权重**,必须**重跑 + 保存 best ckpt**(注意是 rephrased-MATH345,不是 math12345)。
-3. **7B 补全**:Llama-3.1-8B 的 TTRL / RENT;7B homo(CR-II 可选)。
+0. **上传本地没传的 best_model 到 HF**:数据解耦 DECOUPLED(Qwen-rephr / Llama-rephr)、7B heter —— 都已有 best_model,只是没传,先备份。
+1. ⚠️ **7B lr 一致性(最该先定)**:7B heter = **lr3e-6**,7B 单基线(GT/TTRL/RENT/Intuitor)= **lr1e-6** → 主表不公平。**要么 7B heter 重跑 lr1e-6,要么单基线重跑 lr3e-6**,二选一统一。
+2. **7B 补全**:Llama-3.1-8B 的 TTRL / RENT;7B homo(CR-II 可选)。
+3. **数据解耦补全**:DECOUPLED 现有 Qwen-rephr(SWAP)+ Llama-rephr(非 SWAP)各一侧;若要 Qwen/Llama 两侧都齐,确认两个 run 的另一侧也可用,或补跑。
 4. **MLLM 定稿**:8k/步数定下来 → open-r1/mmr1/openmmr 跑到 full(现在 150 步草稿)+ 这三个的 GT best ckpt;GeoQA 是否并入统一设置。
 5. **eval(ckpt 大多已在,主要工作量)**:
    - LLM 3B/7B 两表:统一 lm-eval(AMC/AIME avg@8,math_500 重测)。
@@ -102,4 +105,5 @@ HF 账号:`q1716523669`(private token 上传)。本地:`*/work_dirs/.../best_mod
 ## 孤儿(已弃,不进表,别误用)
 - **Qwen3-1.7B-Base** 全家(HF `qwen3-1.7b-base-gtgrpo` + local unmaj/entropy/self_certainty/grpo)——已弃。
 - **gemma3 文本**(HF `unmaj-entropy-gemma3-4b-math345`)——文本线已弃(gemma 仅留 MLLM)。
-- **corewardI-math12345**、**grpo_math_rephrased(无权重)**——非数据解耦主线 ckpt,别拿来顶 rephrased-MATH345。
+- **corewardI-math12345**(math12345,数据集不对)——别拿来顶 rephrased-MATH345。
+- 5 月的 `*_math_rephrased`(无权重)已被 6 月 `DECOUPLED` 系列(有 best_model)取代;数据解耦认 **DECOUPLED**。
