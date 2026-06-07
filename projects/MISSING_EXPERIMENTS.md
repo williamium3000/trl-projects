@@ -72,6 +72,12 @@ heter(Qwen-it/Llama-it)、unmaj、GT(含对齐他们 2000 的 exact2k 版)都已
 - Module 4(MLLM N=2):**4 co-learn + 8 GT + 8 TTRL = 20**(InternVL 侧 GT/TTRL 为 🟡,砍掉则 4+4+4=12)
 → **最小必跑 ≈ 8(7B)+ 12(MLLM 精简)= 20 个 run**;全量 ≈ 30+;N=3 再翻。
 
+## 已排除(非主表缺口,别误当待跑)
+- `gt-grpo/`:4 月老 GT-GRPO(无 best_model),已被 HF `grpo-qwen25-3b/llama32-3b-math345` 取代。
+- `opsd/` `co-opsd/`:OPSD/EMA 单/双模型 LoRA 子研究(多为 Qwen3,已弃),非主 co-learn 表。
+- `co-grpo-dp-disagree/`:disagree-heter 消融变体(含已弃 gemma3 文本对)→ ablation/附录。
+- `co-grpo-dp-corewardI/`(math12345)、5 月 `*_math_rephrased`(无权重):非数据解耦主线。
+
 ## 铁律(这次绝不能再犯)
 1. **每个训练 run 必开 best-by-val + save best_model**(GT 也要!上次 MLLM GT 没存是低级错误)。
 2. 7B 一律 lr3e-6。
