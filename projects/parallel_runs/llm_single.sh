@@ -14,6 +14,9 @@ METHOD="${2:?need method: gt|ttrl|intuitor|entropy}"
 
 REPO_ROOT="/mnt/bn/tns-algo-video-public-my2/yijiangli/project/trl-projects"
 cd "$REPO_ROOT"
+# 自包含:source LLM env(学长 LLM 那条 proven 路:system python + editable trl + HF + wandb)。
+# 另一台机器只敲一条 bash,无需手动配 env。
+source scripts/sbatch_env.sh
 
 # ---- model ----
 case "$MODEL_KEY" in
