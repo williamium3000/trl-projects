@@ -216,6 +216,14 @@ class BestKeeperCallback(TrainerCallback):
             return
         v = self.last_metrics.get(self.metric_name)
         if v is None:
+            # TRL merges reward metrics into the logged dict (state.log_history),
+            # not into the metrics handed to on_evaluate; fall back to the most
+            # recent logged value so best-ckpt tracking actually fires.
+            for entry in reversed(state.log_history):
+                if self.metric_name in entry:
+                    v = entry[self.metric_name]
+                    break
+        if v is None:
             return
         better = self.best is None or (
             (v > self.best) if self.greater_is_better else (v < self.best)
