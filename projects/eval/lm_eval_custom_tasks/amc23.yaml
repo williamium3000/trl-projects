@@ -15,7 +15,7 @@ training_split: null
 fewshot_split: null
 output_type: generate_until
 repeats: 8
-doc_to_text: "Problem: {{problem}}\nPlease reason step by step, and put your final answer within \\boxed{}."
+doc_to_text: "{{problem}}\n Please reason step by step, and put your final answer within \\boxed{}."
 doc_to_target: "{{answer}}"
 process_results: !function utils.process_results_amc
 generation_kwargs:
