@@ -38,18 +38,19 @@
 | `mllm-openmmr-gt-internvl` | openmmr | GT-GRPO | InternVL | BEST s800 | 46.69 | 46.75 | ✅ | 5.2(b) |
 | `mllm-open-r1-gt-internvl` | open_r1 | GT-GRPO | InternVL | BEST s400 | 45.20 | 45.74 | ✅ | 5.2(b) |
 
-**当前轮次缺口(HF 上没有,需补传/补训/补 eval):**
-- `mllm-open-r1-gt-qwenvl` — **本地训练完(open_r1_gt_qwenvl,step1000),HF 没传** → 待 eval 刷新 + 上传。
-- `mllm-mmr1-{colearn,ttrl,gt}-{qwenvl,internvl}` — **mmr1 当前轮次一个都没传**(本地 colearn/ttrl 已 eval:见下;`mmr1-gt-qwenvl` 训练中)。
-- **所有 endpoint ckpt** — 主表 headline 用,目前 HF 全无,**需上传(命名建议 `mllm-<ds>-<method>-<model>-endpoint`)**。
+**mmr1 当前轮次 — 已上传 HF(2026-06-09,核验通过)：**
+| HF repo (`q1716523669/`) | 方法 | 模型 | ckpt | BEST avg | END avg(未传) | 定稿 |
+|---|---|---|---|---:|---:|---|
+| `mllm-mmr1-colearn-qwenvl`   | co-learn | Qwen-VL | BEST s460 | 28.98 | 29.09 | ✅ |
+| `mllm-mmr1-colearn-internvl` | co-learn | InternVL | BEST s460 | 44.61 | 44.77 | ✅ |
+| `mllm-mmr1-ttrl-qwenvl`      | TTRL | Qwen-VL | BEST s100 | 27.10 | 14.33💀 | ✅ |
+| `mllm-mmr1-ttrl-internvl`    | TTRL | InternVL | BEST s350 | 44.41 | 43.54 | ✅ |
+| `mllm-mmr1-gt-internvl`      | GT-GRPO | InternVL | BEST s250 | 43.84 | 43.95 | ✅ |
 
-**本地已 eval 但没传 HF 的 mmr1(当前轮次,在 work_dirs):**
-| 本地 run/model | 方法 | 模型 | BEST avg | END avg |
-|---|---|---|---:|---:|
-| `phase4_..._152021/model_a` | co-learn | Qwen-VL | 28.98 | 29.09 |
-| `phase4_..._152021/model_b` | co-learn | InternVL | 44.61 | 44.77 |
-| `_evalcurve_..._sl1_..._072739` | TTRL | Qwen-VL | 27.10 | 14.33💀 |
-| `_evalcurve_..._sl1_..._072745` | TTRL | InternVL | 44.41 | 43.54 |
+**当前轮次仍缺口:**
+- `mllm-mmr1-gt-qwenvl` — 🏃 训练中(mmr1 的 GT-Qwen 那格)。
+- `mllm-open-r1-gt-qwenvl` — 本地训完(step1000),HF 没传 → 待 eval 刷新 + 上传。
+- **所有 endpoint ckpt** — 主表 headline 用,HF 全无(待定口径后上传 `mllm-<ds>-<method>-<model>-endpoint`)。
 
 ---
 
@@ -118,14 +119,19 @@
 | `qwen25-7b-gtgrpo-math345-eb128` | GT-GRPO | Qwen2.5-7B | 40 | ⚠️ 旧 LR |
 | `qwen25-7b-unmaj-math345-eb128-lr3e-6` | **TTRL** | Qwen2.5-7B | 50 | ✅(`-lr3e-6`) |
 | `qwen25-7b-unmaj-math345-eb128` | **TTRL** | Qwen2.5-7B | 110 | ⚠️ 旧 LR |
-| `qwen25-7b-entropy-math345-eb128` | **RENT** | Qwen2.5-7B | 30 | ⚠️ 待确认 LR |
-| `qwen25-7b-selfcertainty-math345-eb128` | **Intuitor** | Qwen2.5-7B | ? | ⚠️ |
+| `qwen25-7b-entropy-math345-eb128` | **RENT** | Qwen2.5-7B | — | ⚠️ **确认是 lr1e-6**;lr3e-6 🏃训中(032625)|
+| `qwen25-7b-selfcertainty-math345-eb128` | **Intuitor** | Qwen2.5-7B | ? | ⚠️ LR 待核(可能 lr1e-6)|
 | `qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen` | **Ours-heter** | Qwen 侧 | 100 | ✅ |
 | `qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama` | **Ours-heter** | Llama 侧 | 130 | ✅ |
-| `llama31-8b-gtgrpo-math345-eb128` | GT-GRPO | Llama-3.1-8B | ? | ✅ |
-| `llama31-8b-unmaj-math345-eb128` | **TTRL** | Llama-3.1-8B | ? | ✅ |
-| `llama31-8b-entropy-math345-eb128` | **RENT** | Llama-3.1-8B | ? | ✅ |
-| `llama31-8b-selfcertainty-math345-eb128` | **Intuitor** | Llama-3.1-8B | ? | ✅ |
+| `cogrpo-homo-qwen25-7b-math345-groupA` | homo ablation | Qwen×Qwen | 100 | ✅ **新传 2026-06-09** |
+| `cogrpo-homo-qwen25-7b-math345-groupB` | homo ablation | Qwen×Qwen | — | ✅ **新传 2026-06-09** |
+| (homo-Llama-8B) | homo ablation | Llama×Llama | — | 🏃 **重排训练中**(旧 run 没存下 best_model)|
+| (7B/8B 数据解耦) | 数据解耦 | Qwen7B / Llama8B | — | 🏃 训中(decoupled run);完整 best 出来再传 |
+| (CR-II 7B/8B) | CR-II | — | — | ❌ **没训**(co-opsd 方法,需另搭)|
+| `llama31-8b-gtgrpo-math345-eb128` | GT-GRPO | Llama-3.1-8B | ? | ⚠️ LR 待核 |
+| `llama31-8b-unmaj-math345-eb128` | **TTRL** | Llama-3.1-8B | ? | ⚠️ LR 待核 |
+| `llama31-8b-entropy-math345-eb128` | **RENT** | Llama-3.1-8B | ? | ⚠️ LR 待核 |
+| `llama31-8b-selfcertainty-math345-eb128` | **Intuitor** | Llama-3.1-8B | ? | ⚠️ LR 待核 |
 
 ## 6. CoMAS head-to-head (Qwen2.5-3B-it × Llama-3.2-3B-it, blended)
 
