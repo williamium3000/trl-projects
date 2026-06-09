@@ -39,7 +39,12 @@ PY="$SCRIPT_DIR/test_time_ensemble/ensemble_eval.py"
 
 # --- defaults ---
 MODELS=""
-K="12"
+# K = per-model samples; leave empty to derive from --total/N (budget-aligned).
+# ⚠️ SC-ensemble 是 co-learn 单模型的对照 → 两边须同总样本数。按 --total(总投票样本)
+#    驱动,脚本平摊给 N 个模型。要比的 co-learn 单模型须报 maj@(总样本=K*N)。
+#    默认 TOTAL=8(对齐 AMC/AIME 的 avg@8)。12/模型(=24)过大且不对齐,已弃为默认。
+K=""
+TOTAL="8"
 TEMPERATURE="0.6"
 MAX_TOKENS="2048"
 MAX_MODEL_LEN="4096"
@@ -56,6 +61,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --models)        MODELS="$2"; shift 2;;
         --k)             K="$2"; shift 2;;
+        --total)         TOTAL="$2"; shift 2;;
         --temperature)   TEMPERATURE="$2"; shift 2;;
         --max_tokens)    MAX_TOKENS="$2"; shift 2;;
         --max_model_len) MAX_MODEL_LEN="$2"; shift 2;;
@@ -82,6 +88,8 @@ fi
 # Split MODELS on comma into array.
 IFS=',' read -r -a MODEL_ARR <<< "$MODELS"
 N=${#MODEL_ARR[@]}
+# per-model K = ceil(TOTAL/N) unless --k explicitly given; align co-learn-single to maj@(K*N)
+[ -n "$K" ] || K=$(( (TOTAL + N - 1) / N ))
 K_TOTAL=$((K * N))
 
 # Auto shortname from model basenames if not provided.
@@ -106,7 +114,8 @@ echo "  MODELS         (N=$N)"
 for i in $(seq 0 $((N-1))); do
     echo "    [$i] ${MODEL_ARR[$i]}"
 done
-echo "  K per model    $K   (pool size K*N = $K_TOTAL)"
+echo "  K per model    $K   (total vote pool K*N = $K_TOTAL)"
+echo "  ⚠️ 对照 co-learn 单模型须报 maj@$K_TOTAL (同 $K_TOTAL 样本 / 1 模型)"
 echo "  Temperature    $TEMPERATURE"
 echo "  Bench          $BENCH"
 echo "  GPU            ${CUDA_VISIBLE_DEVICES:-(all)}"

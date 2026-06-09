@@ -1,16 +1,30 @@
 # Test-time SC ensemble baseline
 
-> EMNLP 2026 TODO §4.7 — no training, pure inference. K=12 samples per model,
-> pool 24/36 across N=2/3 cross-family models, majority-vote on canonicalized
-> final answer, grade against gold.
+> No training, pure inference. **`--total` 总投票样本数**(默认 8)平摊给 N 个跨族模型
+> (每模型 ceil(total/N)),pool 后对 canonicalized final answer **majority-vote**,grade vs gold.
+> 它是 co-learn 单模型的**公平对照**(test-time 拼两个模型 vs 训练时互学)。
+
+## ⚠️ 公平性铁律(对照成立的前提,务必照做)
+
+SC-ensemble 存在的意义 = 堵"你不就是 test 时拼两个模型?"。要它公平,**同预算、同口径、只差"互学没互学"**:
+
+1. **同总样本**:ensemble 总票数 = co-learn 单模型 maj@TOTAL 的 TOTAL(用 `--total`,两边同一个数)。默认 8(对齐 avg@8)。
+2. **同 metric**:这一对照两边都 **maj@TOTAL**(投票)。**别拿主表的 greedy/avg@8 来比**——SC-ensemble 是单独一行,co-learn 单模型在这行要重出 maj@TOTAL。
+3. **同 decoding**:T=0.6 / top_p=0.95 两边都用。
+4. **同 base + 同训练预算**:ensemble 的两模型 = 两个 **unmaj**(各自自训,2× 单训)= co-learn 的 2× 训练预算,天然对齐。
+5. **🔴 必须同时报 unmaj-单模型(每个模型单跑 maj@TOTAL)**:否则弱 peer(Llama/InternVL,我们实测会塌)会把 ensemble 的票拖到比单模型还低,"co-learn 单模型 ≥ ensemble"就成了**廉价的 strawman 胜利**。ensemble 至少要 ≥ 它最强成员,这个对照才算数;若被拖垮,要么诚实写明,要么换更强 ensemble 方案。
+6. **flat-pool MV 只是一种 ensemble**(对异质模型偏弱),别宣称是"最强 ensemble"。
+
+> 杀手锏读法:**co-learn 单模型(1 模型,TOTAL 票)≥ unmaj-ensemble(2 模型,TOTAL 票)** 且 ensemble ≥ 其单模型成员 → 才能说"co-train 把对方知识内化进单模型"。
 
 ## TL;DR
 
 ```bash
-# 4.7.1  Qwen2.5-3B + Llama-3.2-3B  (24-sample, core5 benches)
+# 4.7.1  Qwen2.5-3B + Llama-3.2-3B  (default --total 8 = 4/model, core5 benches)
 bash projects/eval/run_test_time_ensemble.sh \
     --models "Qwen/Qwen2.5-3B,meta-llama/Llama-3.2-3B-Instruct" \
-    --gpu 0
+    --total 8 --gpu 0
+# → 对照 co-learn 单模型须报 maj@8;并同时报 unmaj-单模型 maj@8(见公平性铁律 #5)
 
 # 4.7.2  Qwen2.5-3B + Gemma-3-4B
 bash projects/eval/run_test_time_ensemble.sh \
@@ -20,10 +34,10 @@ bash projects/eval/run_test_time_ensemble.sh \
 bash projects/eval/run_test_time_ensemble.sh \
     --models "meta-llama/Llama-3.2-3B-Instruct,google/gemma-3-4b-it" --gpu 0
 
-# 4.7.4  N=3 (36-sample)
+# 4.7.4  N=3 (--total 12 → 4/model;N=3 时建议 total=12 整除)
 bash projects/eval/run_test_time_ensemble.sh \
     --models "Qwen/Qwen2.5-3B,meta-llama/Llama-3.2-3B-Instruct,google/gemma-3-4b-it" \
-    --gpu 0
+    --total 12 --gpu 0
 ```
 
 3 pair × 2.5h + 1 triple × 4h ≈ 11.5h on 1 GPU sequential. 8 卡可 4 path 并发:
@@ -142,7 +156,8 @@ $OUT_DIR/ensemble_<short>_K12_T0.6_core5_<TS>/
 | MMLU 全集太慢 (~14k 题) | 我们 sample 500 (seed=42);要全集请改 `load_problems("mmlu")` |
 | CRUX `eval(literal)` 触发自定义类 | 包了 `{"__builtins__": {}}` sandbox + try/except 回退 |
 | vLLM 加载 N 个模型按 subprocess 顺序 | Phase 1 用 N 次独立 `python ensemble_eval.py generate` 调用,无 GPU 残留 |
-| K=12 模型回答全乱 (extract 失败率高) | scoring JSON 里 `avg_valid_per_problem` 监控,<6 就该 footnote |
+| 模型回答抽取失败率高 (有效票太少) | scoring JSON 里 `avg_valid_per_problem` 监控,远低于 total 就该 footnote |
+| 🔴 弱 peer 拖垮 ensemble (Llama/InternVL 烂票) | 必报 unmaj-单模型对照;ensemble < 最强单模型 = strawman,见公平性铁律 #5 |
 
 ## 跟训练的关系
 
