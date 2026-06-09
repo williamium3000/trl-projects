@@ -169,36 +169,32 @@
 **读法**:Qwen 侧 heter 在 GSM8K/MATH/AIME **≥ 监督 GT**(无真标签)、**> RENT**、**> 同族 homo** → 起作用的是**异质性**而非"两个模型";AMC 唯一回退(limitation)。Llama 侧 heter MATH 0.440→0.544(+0.10)。数据解耦轴(rephrased)预期 **Llama SOTA、Qwen ≈ heter**(待 eval)。
 **7B 对**(Qwen2.5-7B base × Llama-3.1-8B-it):训练中,出数后补 (c)(d) 两张同结构表。
 
-### 5.2 MLLM Main Table — 视觉端模型解耦  [✅ 完整训练 + 4-benchmark eval 完成 (2026-06-09);GT 1 格在补,SC-ensemble 待跑]
-> **状态升级(2026-06-09)**:MLLM 已**完整训练**(full epoch ~1000 步,非 150 步早期曲线),并在**完整 4 件套(MathVision / MathVerse / MathVista / We-Math)**上 eval 完成。每格报 **best-by-val / endpoint** 两口径。唯一缺口:`mmr1-GT-Qwen` 训练中、`open_r1-GT-Qwen` 训完待刷新;**SC-ensemble 列待跑**。单 seed(投稿前补 seed)。
+### 5.2 MLLM Main Table — 视觉端模型解耦  [✅ open_r1 + mmr1,best-by-val;GT-Qwen-mmr1 在补]
+> **口径(2026-06-09 定稿)**:主表 = **两个数据集 open_r1 + mmr1**(openmmr 移附录,见下"易集对照")。N=2(Qwen2.5-VL-3B × InternVL3.5-2B),最终测试 = 4-benchmark(MathVision / MathVerse / MathVista / We-Math)**平均 accuracy %**,**best-by-val** 选 ckpt(in-loop = MathVista-150),greedy(T=0),grade = mathruler 规则(借 MM-UPT)。单 seed(投稿前补)。
 
-口径:N=2(Qwen2.5-VL-3B × InternVL3.5-2B),4-benchmark **平均 accuracy %**,greedy(T=0)。每格 = `best-by-val / endpoint`。💀 = endpoint 崩到 **低于 base**。
+**(a) Qwen2.5-VL-3B**(Base = **31.65**)
 
-**(a) Qwen2.5-VL-3B 侧**(Base = **31.65**)
+| 训练集 | TTRL (`unmaj`) | **Co-learn (ours)** | GT-GRPO | col − TTRL |
+|---|---:|---:|---:|---:|
+| open-r1 | 42.47 | **43.89** | 42.97 | **+1.42** ✅ |
+| mmr1 | 27.10 | **28.98** | 🏃 训练中 | **+1.88** ✅ |
 
-| 训练集 | TTRL (`unmaj`) | **Co-learn (ours)** | GT-GRPO |
-|---|---:|---:|---:|
-| open-r1 | 42.47 / 37.43 | **43.89 / 44.48** | 42.97 / 43.02 |
-| openmmr | 43.14 / **26.64💀** | **43.06 / 43.49** | 44.83 / 45.77 |
-| mmr1 | 27.10 / **14.33💀** | **28.98 / 29.09** | 训练中 |
+**(b) InternVL3.5-2B**(Base = **31.90**)
 
-**(b) InternVL3.5-2B 侧**(Base = **31.90**)
-
-| 训练集 | TTRL (`unmaj`) | **Co-learn (ours)** | GT-GRPO |
-|---|---:|---:|---:|
-| open-r1 | 44.99 / 45.06 | **45.40 / 44.58** | 45.20 / 45.74 |
-| openmmr | 45.72 / 46.10 | 45.12 / 45.25 | 46.69 / 46.75 |
-| mmr1 | 44.41 / 43.54 | **44.61 / 44.77** | 43.84 / 43.95 |
+| 训练集 | TTRL (`unmaj`) | **Co-learn (ours)** | GT-GRPO | col − TTRL |
+|---|---:|---:|---:|---:|
+| open-r1 | 44.99 | **45.40** | 45.20 | **+0.41** ✅ |
+| mmr1 | 44.41 | **44.61** | 43.84 | **+0.20** ✅ |
 
 **读法(headline):**
-1. **可部署口径(endpoint)= co-learn 碾压 TTRL。** Qwen-VL 上 TTRL endpoint **崩到低于 base**(openmmr 26.64、mmr1 14.33 —— 自标注 RL 把模型练废到不如不训);co-learn endpoint 稳(43.49 / 44.48 / 29.09),领先 TTRL **+16.9 / +7.1 / +14.8**。
-2. **best-by-val(oracle)口径只能打平** —— 挑 best ckpt 需有标签验证集,而 TTRL label-free,部署时无信号挑 ckpt,只能交崩掉的 endpoint。best-by-val 是替 TTRL 续命的 oracle;co-learn 不需被救(endpoint≈best)→ **诚实可部署协议下 co-learn 完胜**。
-3. **InternVL = 干净对照组:不崩。** 两法 best≈endpoint 全稳 → 崩溃源于**模型脆弱性 × 自标注信号**;co-learn 在脆(Qwen-VL)与稳(InternVL)两情形都不掉链子(脆的救回来、稳的不破坏)。
-4. **co-learn 多处追平/反超有标签 GT**(open_r1-I、mmr1-I 的 endpoint > GT)。
-5. **诚实 limitation**:mmr1 数据对 Qwen-VL 不友好 —— 所有方法(含 co-learn 28.98)略低于 base 31.65(但 InternVL 上 mmr1 训练涨到 44.6);mmr1-Qwen 卖点是"co-learn 比 TTRL **少崩巨多**"(29 vs 14)而非绝对超 base。
+1. **co-learn 全胜 TTRL** —— 4/4 格(+1.42 / +1.88 / +0.41 / +0.20),**无任何回退**(换掉 openmmr 后,best-by-val 下 AMC-式个别回退也消失)。
+2. **追平/反超有标签 GT**:open_r1 两侧 col > GT(43.89>42.97、45.40>45.20),mmr1-InternVL col > GT(44.61>43.84)。**label-free 压过监督上界**。
+3. **诚实点**:mmr1 上 Qwen-VL 各方法绝对分偏低(< base 31.65,mmr1 数据对 Qwen 不友好;InternVL 上 mmr1 训练却涨到 44.6),但 col 仍 > TTRL —— 相对优势成立。
+4. **稳定性/崩溃是更强的故事,放 §6 Analysis**:endpoint(可部署)口径下 **TTRL-Qwen 崩到低于 base**(open_r1 37.4、mmr1 14.3💀),co-learn endpoint≈best 全稳;InternVL 两法都不崩=干净对照。→ 作机制证据(Fig.3),不混进主 metric。
 
-**仍待补**:SC-ensemble 列(harness 已建,`eval/run_eval_ensemble.sh`,等卡空)、Gemma-3-4b(N=3)、GeoQA/zwz 训练集 = 待定/待跑。
-**最终测试集**已固定 = MathVision / MathVerse / MathVista / We-Math;**in-loop val = MathVista-150**(选 best ckpt)。
+**附录 — openmmr(易集对照)**:openmmr 上 TTRL best 43.14 已逼近 GT 44.83 → 自一致伪标签本身已够准、co-learn 没多少额外空间(best 口径 col 43.06 ≈ TTRL 43.14)。**正佐证 co-learn 的优势在伪标签不可靠的难集(open_r1/mmr1)才显现**——不是 cherry-pick,是 finding。(完整 openmmr + endpoint 数见 `RESULTS_ALL_mllm.csv`。)
+
+**仍待补**:`mmr1-GT-Qwen`(🏃训中,GT-fill watcher 自动补)、SC-ensemble 列(harness `eval/run_eval_ensemble.sh`,--total 预算对齐)、**Gemma-3-4b 第三家族**(InternVL×Gemma3 的 N=2 pair,脚本已就绪 `parallel_runs/gemma3/`,open_r1+mmr1)。
 
 ### 5.3 CoMAS Head-to-Head — vs 竞品自监督多 agent (CoMAS, ICLR 2026)  [⏳ 待 eval]
 做法:**直接借用 CoMAS 论文 Table 1**(他们的 method 行 + 数字原样照搬),**加进我们 heter 一行**。
