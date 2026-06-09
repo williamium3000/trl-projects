@@ -136,37 +136,48 @@
 
 **(a) Qwen2.5-3B(base) 侧**
 
-| 方法 | GSM8K | MATH-500 | AMC | AIME | 状态 |
-|---|---:|---:|---:|---:|---|
-| Base | 0.686 | 0.590 | 0.289 | 0.000 | ✅ |
-| GT-GRPO(监督 ceiling) | 0.834 | 0.673 | 0.475 | 0.033 | ✅ |
-| TTRL (`unmaj`) | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
-| Intuitor (`unmaj_self_certainty`) | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
-| RENT (`unmaj_entropy`) | 0.788 | 0.603 | 0.400 | 0.067 | ✅ |
-| Co-rewarding-II (EMA) | ☐ | ☐ | ☐ | ☐ | ⏳/☐ ckpt 待指路 |
-| SC-ensemble (两 unmaj 的 test-time ensemble) | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Same-family homo (Qwen×Qwen) | 0.840 | 0.664 | 0.400 | 0.033 | ✅ ablation |
-| **Ours — 模型解耦 heter** | **0.842** | **0.678** | 0.375 | **0.100** | ✅ |
-| **Ours — 数据解耦 (rephrased)** | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
+| 方法 | GSM8K | MATH-500 | AMC | AIME | GPQA | HumanEval | MBPP | MMLU | MMLU-Pro | IFEval | CRUX | SciBench |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Base ᵒ | 0.686 | 0.590 | 0.289 | 0.000 | – | – | – | – | – | – | – | – |
+| GT-GRPO(监督 ceiling) | 0.801 | 0.650 | 0.361 | 0.167 | 0.177 | 0.402 | 0.584 | 0.652 | 0.401 | 0.244 | 🏃 | 🏃 |
+| TTRL (`unmaj`) | 0.792 | 0.646 | 0.289 | 0.067 | 0.222 | 0.427 | 0.568 | 0.650 | 0.380 | 0.274 | 🏃 | 🏃 |
+| Intuitor (`unmaj_self_certainty`) | 0.760 | 0.660 | 0.277 | 0.133 | 0.227 | 0.384 | 0.580 | 0.650 | 0.391 | 0.237 | 🏃 | 🏃 |
+| RENT (`unmaj_entropy`) | 0.776 | 0.618 | 0.301 | 0.067 | 0.248 | 0.378 | 0.578 | 0.651 | 0.375 | 0.264 | 🏃 | 🏃 |
+| Co-rewarding-II (EMA) | 0.769 | 0.640 | 0.374 | 0.067 | 0.248 | 0.396 | 0.570 | 0.651 | 0.388 | 0.242 | 🏃 | 🏃 |
+| **Ours — 数据解耦 (rephrased)** | 0.801 | 0.656 | 0.361 | 0.100 | 0.212 | 0.409 | 0.580 | 0.650 | 0.387 | 0.261 | 🏃 | 🏃 |
+| Same-family homo (Qwen×Qwen) | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 |
+| **Ours — 模型解耦 heter** | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 | 🏃 |
+| SC-ensemble (maj@8 跨模型) ⚠️ | 0.877 | 0.692 | 0.398 | 0.133 | 0.308 | – | – | – | – | – | – | – |
 
 **(b) Llama-3.2-3B-Instruct 侧**
 
-| 方法 | GSM8K | MATH-500 | AMC | AIME | 状态 |
-|---|---:|---:|---:|---:|---|
-| Base | 0.723 | 0.440 | 0.193 | 0.000 | ✅ |
-| GT-GRPO(监督 ceiling) | ☐ | ☐ | ☐ | ☐ | ⏳/☐ |
-| TTRL (`unmaj`) | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
-| Intuitor (`unmaj_self_certainty`) | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
-| RENT (`unmaj_entropy`) | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
-| Co-rewarding-II (EMA) | ☐ | ☐ | ☐ | ☐ | ☐ |
-| SC-ensemble (两 unmaj 的 test-time ensemble) | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Same-family homo (Llama×Llama) | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
-| **Ours — 模型解耦 heter** | 0.814 | 0.544 | 0.175 | 0.067 | ✅ |
-| **Ours — 数据解耦 (rephrased, 预期 SOTA)** | ☐ | ☐ | ☐ | ☐ | ⏳ ckpt 有 |
+| 方法 | GSM8K | MATH-500 | AMC | AIME | GPQA | HumanEval | MBPP | MMLU | MMLU-Pro | IFEval | CRUX | SciBench |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Base ᵒ | 0.723 | 0.440 | 0.193 | 0.000 | – | – | – | – | – | – | – | – |
+| GT-GRPO(监督 ceiling) | 0.726 | 0.502 | 0.169 | 0.100 | 0.217 | 0.524 | 0.488 | 0.625 | 0.353 | 0.482 | 🏃 | 🏃 |
+| TTRL (`unmaj`) | 0.710 | 0.428 | 0.181 | 0.100 | 0.232 | 0.531 | 0.474 | 0.623 | 0.352 | 0.505 | 🏃 | 🏃 |
+| Intuitor (`unmaj_self_certainty`) | 0.687 | 0.496 | 0.193 | 0.067 | 0.192 | 0.482 | 0.486 | 0.624 | 0.334 | 0.527 | 🏃 | 🏃 |
+| RENT (`unmaj_entropy`) | 0.692 | 0.460 | 0.205 | 0.067 | 0.182 | 0.518 | 0.478 | 0.622 | 0.348 | 0.549 | 🏃 | 🏃 |
+| Co-rewarding-II (EMA) | — | — | — | — | — | — | — | — | — | — | — | — |
+| **Ours — 数据解耦 (rephrased)** | 0.731 | 0.494 | 0.229 | 0.100 | 0.278 | 0.518 | 0.488 | 0.622 | 0.345 | 0.497 | 🏃 | 🏃 |
+| Same-family homo (Llama×Llama) | 0.721 | 0.492 | 0.217 | 0.100 | 0.268 | 0.524 | 0.492 | 0.624 | 0.352 | 0.508 | 🏃 | 🏃 |
+| **Ours — 模型解耦 heter** | 0.732 | 0.490 | 0.241 | 0.133 | 0.278 | 0.537 | 0.500 | 0.624 | 0.352 | 0.514 | 🏃 | 🏃 |
+| SC-ensemble (maj@8 跨模型) ⚠️ | 0.877 | 0.692 | 0.398 | 0.133 | 0.308 | – | – | – | – | – | – | – |
 
 > **SC-ensemble = 两个 unmaj(各自自训)模型 test-time 投票**;公平性设置见 §4.5。
 
-**读法**:Qwen 侧 heter 在 GSM8K/MATH/AIME **≥ 监督 GT**(无真标签)、**> RENT**、**> 同族 homo** → 起作用的是**异质性**而非"两个模型";AMC 唯一回退(limitation)。Llama 侧 heter MATH 0.440→0.544(+0.10)。数据解耦轴(rephrased)预期 **Llama SOTA、Qwen ≈ heter**(待 eval)。
+**口径与标注(2026-06-09 填表):**
+- **测量值 = lm-eval-harness, greedy (T=0, n=1), single ckpt (HF `q1716523669/*`), max_gen_toks=2048**。此为 §6 要求的"统一 lm-eval 重 eval"结果,**取代此前训练时 eval_reward 占位值**(旧 avg@8 参考值见 `projects/work_dirs/eval/EVAL_TRACKING.csv` 的 `REF:` 行)。
+- ⚠️ **AMC/AIME 此处是 greedy n=1(非 avg@8)**;AIME n=30 噪声极大(同 ckpt 跨次可摆动 ±0.08),avg@8 重测待补。
+- 🏃 = **eval 进行中**(`projects/eval/_fill_gaps.sh`,GPU0):**heter-Qwen / homo-Qwen 两行** + **全表 CRUX/SciBench 列**,~1–6h 内落地后自动入 `EVAL_TRACKING.csv`。
+- **— = 无 ckpt**:`Co-rewarding-II` Llama 侧(`Llama-3.2-3B-CoRewarding-II-MATH345` HF 404,不存在)。
+- **ᵒ Base 行** = outline 旧值,未用 lm-eval 重测(无 base 模型 eval)。
+- **LCB(LiveCodeBench)未列**:harness 模型未注册进 `lm_styles.py` + 不在本 eval suite。
+- **single-model maj@8 的 co-train vs self-train 主对比**(headline,见 §4.5.1)未并入此 greedy 表,数据在 `EVAL_TRACKING.csv` 的 `ens:colearn-single-*` / `ens:unmaj-single-*` 行。
+
+> ⚠️ **下方"读法"基于旧 avg@8/best-by-val 口径,尚未按上表 lm-eval greedy 数字重核**。换口径后部分结论需复查(尤其 heter ≥ 监督 GT、AMC 回退;且 heter-Qwen 行 eval 仍 🏃 进行中)。改写结论前先等 heter-Qwen/homo-Qwen 落地。
+
+**读法(旧口径,待重核)**:Qwen 侧 heter 在 GSM8K/MATH/AIME **≥ 监督 GT**(无真标签)、**> RENT**、**> 同族 homo** → 起作用的是**异质性**而非"两个模型";AMC 唯一回退(limitation)。Llama 侧 heter MATH 0.440→0.544(+0.10)。数据解耦轴(rephrased)预期 **Llama SOTA、Qwen ≈ heter**(待 eval)。
 **7B 对**(Qwen2.5-7B base × Llama-3.1-8B-it):训练中,出数后补 (c)(d) 两张同结构表。
 
 ### 5.2 MLLM Main Table — 视觉端模型解耦  [✅ open_r1 + mmr1,best-by-val;GT-Qwen-mmr1 在补]
