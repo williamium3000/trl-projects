@@ -178,3 +178,5 @@ shell-snapshots/
 settings.json
 work_dirs/
 .last_eval_ts
+projects/eval/eval_venv/
+projects/eval/.uv_cache/
