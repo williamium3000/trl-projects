@@ -82,7 +82,7 @@ CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launc
     --save_strategy steps \
     --save_steps 10 \
     --save_only_model true \
-    --save_total_limit 5 \
+    --save_total_limit 100 \
     --eval_strategy steps \
     --eval_steps 10 \
     --num_generations_eval 1 \

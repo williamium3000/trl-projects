@@ -1,37 +1,37 @@
 #!/usr/bin/env bash
-# co-OPSD · Qwen3-1.7B × Qwen3-1.7B · LoRA · same-tokenizer JSD.
+# co-OPSD · Qwen3-1.7B (A) × Qwen3-4B (B) · LoRA · same-tokenizer JSD · EMA teacher.
 #
-# WHY THIS RUN: co-OPSD has only ever been tested on Qwen2.5 (overnight phase2/4),
-# a model family that shows NO single-model OPSD gain (robust negative across
-# AIME/AMC/MATH × 2 clips — the Openthoughts thinking-trace data mismatches a
-# non-thinking model). That confounds the co-OPSD result. Qwen3-1.7B is the ONLY
-# model where single-model OPSD reproduces the paper (+5 AIME, P1 validated
-# 2026-05-30). This run tests the co-OPSD *mechanism* on that validated base:
-# does peer co-distillation match or beat self-distillation where OPSD works?
+# WHY THIS RUN: homogeneous co-OPSD (two identical Qwen3-1.7B) only MATCHES single-model
+# OPSD — two clones carry no decorrelated information (Blum-Mitchell: identical views give
+# no signal), so it is mathematically capped at the single-model ceiling. To EXCEED it we
+# need genuine diversity. This is the first heterogeneous cell: same Qwen3 tokenizer (=>
+# exact JSD, no GOLD/ULD noise) but real capability diversity (1.7B vs 4B). Both are native
+# thinking models (required: the Openthoughts thinking-trace data needs a thinking base).
 #
-# RECIPE: mirrors run_co_opsd_1b.sh = the README/run_opsd_1b.sh recipe that the
-# winning P1 run used (lr 5e-6, beta 0 = forward KL, NO warmup, max_grad_norm
-# 0.1, jsd_token_clip 0.05, max_completion 1024, temp 1.1). NOT paper Table 6
-# (lr 1e-5/beta 0.5) — that recipe did NOT reproduce. HARD RULE: do not improvise.
+# EMA teacher is ON by default: heterogeneity does NOT remove the moving-target instability
+# (both peers still co-train live), so the EMA anchor is still needed to stop the collapse.
 #
-# SAFETY: LoRA r64/alpha128 (bug-catalog: full-FT co-OPSD collapses ~step 60-80;
-# LoRA is stable and matches the validated P1 --use_peft path). Same-init pair,
-# symmetry broken by different shuffle seeds + stochastic on-policy sampling.
-# Collator defaults student_thinking=False / teacher_thinking=True (correct;
-# the standalone-OPSD enable_thinking regression does NOT exist in co_opsd_data).
+# ASYMMETRY CAVEAT: 4B->1.7B is strong-teaches-weak (1.7B should gain); 1.7B->4B is
+# weak-teaches-strong (may drag the 4B). Watch group_B; an asymmetric/weighted variant may
+# be needed if the 4B underperforms its own single-model OPSD.
+#
+# MEMORY: 4B is bigger than the validated 1.7B homo config. vllm_util dropped to 0.2/engine
+# + expandable_segments. FIRST RUN: watch step 1 for OOM; if it OOMs, fall back to BS=2 GA=2
+# (still EB=32) or VLLM_UTIL=0.15.
+#
+#   PREREQ: validate Qwen3-4B single-model OPSD reproduces a gain first
+#           (run_opsd_single_qwen3_4b.sh) — else the 4B teacher is unreliable & has no GT.
 #
 # 8 GPUs. Launch DETACHED:
-#   setsid bash projects/co-opsd/scripts/run_co_opsd_lora_qwen3_1.7b.sh \
-#     > projects/work_dirs/co-opsd/launch_qwen3.log 2>&1 &
+#   EMA=true bash projects/co-opsd/scripts/run_co_opsd_lora_qwen3_1.7b_x_4b.sh \
+#     > projects/work_dirs/co-opsd/launch_heter_1.7b_x_4b.log 2>&1 &
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 CO_OPSD_DIR="$REPO_ROOT/projects/co-opsd/opsd_upstream"
 
-# ---- GPU-occupancy guard: refuse to launch onto busy GPUs -------------------
-# A competing launch onto already-busy GPUs is what silently killed prior runs.
-# run_dynamic.py keeper holds ~991 MiB/GPU; abort only if something real (>2 GB).
+# ---- GPU-occupancy guard --------------------------------------------------
 MAX_USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | sort -rn | head -1)
 if [ "${MAX_USED:-0}" -gt 2000 ]; then
     echo "[guard] ABORT: a GPU already uses ${MAX_USED} MiB (>2000). Another job is running."
@@ -41,22 +41,22 @@ fi
 echo "[guard] GPUs clear (max used ${MAX_USED} MiB). Proceeding."
 
 MODEL1="Qwen/Qwen3-1.7B"
-MODEL2="Qwen/Qwen3-1.7B"
+MODEL2="Qwen/Qwen3-4B"
 M1_TAG="qwen3-1.7b"
-M2_TAG="qwen3-1.7b"
-DISTILL_LOSS="jsd"            # same tokenizer -> exact JSD
+M2_TAG="qwen3-4b"
+DISTILL_LOSS="jsd"            # same Qwen3 tokenizer -> exact JSD
 TEACHER_GT="${TEACHER_GT:-true}"            # teacher sees GT solution; set false for self-supervised (no-GT)
-EMA="${EMA:-false}"          # EMA teacher: peer scores with slow EMA weights (stable anchor)
+EMA="${EMA:-true}"           # heter still has moving-target instability -> EMA on by default
 EMA_DECAY="${EMA_DECAY:-0.999}"
 DATASET="siyanzhao/Openthoughts_math_30k_opsd"
-SEED1=42                      # model1 data shuffle seed
-SEED2=7                       # model2 data shuffle seed (different => symmetry break)
+SEED1=42
+SEED2=7
 
 NUM_PROC=8
-LR="${LR:-5e-6}"             # README recipe (the one that reproduced), NOT Table 6
-BETA="${BETA:-0}"            # forward KL
-CLIP="${CLIP:-0.05}"        # jsd_token_clip (thinking model => 0.05)
-BS="${BS:-4}"
+LR="${LR:-5e-6}"
+BETA="${BETA:-0}"
+CLIP="${CLIP:-0.05}"
+BS="${BS:-4}"               # 4B is big; if step-1 OOM, set BS=2 GA=2 (EB stays 32)
 GA="${GA:-1}"
 TEMP=1.1
 TOP_P=0.95
@@ -65,12 +65,8 @@ MAX_COMPLETION="${MAX_COMPLETION:-1024}"
 MAX_LEN="${MAX_LEN:-20000}"
 MAX_STEPS="${MAX_STEPS:-150}"
 SAVE_STEPS="${SAVE_STEPS:-25}"
-# co-OPSD has NO inline eval / best-keeper, so the eval curve is built post-hoc from
-# the saved checkpoints. With save_total_limit too small the early/peak checkpoints get
-# pruned before we can eval them (we lost the step-25 / step-100 peaks this way). Keep
-# the whole curve: with LoRA each ckpt is tiny, so a generous limit costs little disk.
 SAVE_LIMIT="${SAVE_LIMIT:-30}"
-VLLM_UTIL="${VLLM_UTIL:-0.2}"   # 2 engines/GPU; 0.2 each + expandable avoids the step-1 JSD-logits OOM (0.3 OOMs)
+VLLM_UTIL="${VLLM_UTIL:-0.2}"   # 2 engines/GPU; 4B bigger than 1.7B -> lower than homo
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 
 LORA_R=64
@@ -78,7 +74,7 @@ LORA_ALPHA=128
 
 EB=$(( BS * GA * NUM_PROC ))
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="coopsd_lora_${M1_TAG}+${M2_TAG}_${DISTILL_LOSS}_gt-${TEACHER_GT}_beta${BETA}_clip${CLIP}_lr${LR}_eb${EB}_t${TEMP}_seed${SEED1}-${SEED2}_steps${MAX_STEPS}${RUN_SUFFIX:-}_${TS}"
+RUN="coopsd_lora_${M1_TAG}+${M2_TAG}_${DISTILL_LOSS}_gt-${TEACHER_GT}_ema-${EMA}_beta${BETA}_clip${CLIP}_lr${LR}_eb${EB}_t${TEMP}_seed${SEED1}-${SEED2}_steps${MAX_STEPS}${RUN_SUFFIX:-}_${TS}"
 BASE_OUT="$REPO_ROOT/projects/work_dirs/co-opsd"
 mkdir -p "$BASE_OUT/$RUN"
 LOG="$BASE_OUT/$RUN/train.log"
@@ -93,14 +89,14 @@ export PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}"
 cd "$CO_OPSD_DIR"
 
 echo "[launch] RUN=$RUN"
-echo "[launch] hparams: lr=$LR beta=$BETA clip=$CLIP eb=$EB max_steps=$MAX_STEPS max_completion=$MAX_COMPLETION"
+echo "[launch] hparams: lr=$LR beta=$BETA clip=$CLIP eb=$EB ema=$EMA decay=$EMA_DECAY vllm_util=$VLLM_UTIL"
 
 set +e
 CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launch \
     --config_file accelerate.yaml \
     --num_processes "$NUM_PROC" \
     --gradient_accumulation_steps "$GA" \
-    --main_process_port 12971 \
+    --main_process_port 12973 \
     co_opsd_train.py \
     --model1_name_or_path "$MODEL1" \
     --model2_name_or_path "$MODEL2" \

@@ -23,6 +23,10 @@ MAX_NEW="${MAX_NEW:-38912}"
 TOP_P="${TOP_P:-none}"          # paper: top-p disabled. "none" => omit --top_p (vLLM default off)
 TOP_K="${TOP_K:--1}"           # paper: top-k disabled (-1)
 BASE_MODEL="${BASE_MODEL:-Qwen/Qwen3-1.7B}"
+# Heterogeneous runs: model2's adapter sits on a DIFFERENT base than model1's, so
+# m2-* checkpoints must be evaluated against their own base. Defaults to BASE_MODEL
+# (homo: no change). For a 1.7B x 4B run pass BASE_MODEL_M2=Qwen/Qwen3-4B.
+BASE_MODEL_M2="${BASE_MODEL_M2:-$BASE_MODEL}"
 GPUS_CSV="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
 
 while [[ $# -gt 0 ]]; do
@@ -83,10 +87,12 @@ run_one() {
   [[ -f "$out_file" ]] && { echo "[skip ] gpu$gpu $tag x $ds (exists)"; return 0; }
   echo "[start] gpu$gpu $tag x $ds"; local t0=$SECONDS
   local ck_flag=(); [[ -n "$ckpt" ]] && ck_flag=(--checkpoint_dir "$ckpt")
+  # m2-* adapters live on a different base in heterogeneous runs -> use BASE_MODEL_M2.
+  local mbase="$BASE_MODEL"; [[ "$tag" == m2-* ]] && mbase="$BASE_MODEL_M2"
   # Paper setting: top-p disabled => omit --top_p entirely (TOP_P=none); top-k=-1.
   local tp_flag=(); [[ "$TOP_P" != "none" ]] && tp_flag=(--top_p "$TOP_P")
   if CUDA_VISIBLE_DEVICES="$gpu" python "$EVAL_PY" \
-      --base_model "$BASE_MODEL" "${ck_flag[@]}" \
+      --base_model "$mbase" "${ck_flag[@]}" \
       --dataset "$ds" --val_n "$VAL_N" \
       --temperature "$TEMP" "${tp_flag[@]}" --top_k "$TOP_K" \
       --max_new_tokens "$MAX_NEW" \
@@ -103,7 +109,9 @@ declare -A PID_TO_GPU=()
 launch() { local gpu="$1" js="$2"; local tag ck ds; IFS='|' read -r tag ck ds <<< "$js"; run_one "$gpu" "$tag" "$ck" "$ds" & PID_TO_GPU[$!]="$gpu"; }
 
 job_idx=0
-for gpu in "${GPUS[@]}"; do (( job_idx >= TOTAL )) && break; launch "$gpu" "${JOBS[$job_idx]}"; ((++job_idx)); done
+# Stagger the initial wave: vLLM v1 picks a tcp init port per engine; launching
+# all GPUs at once races and one loses with EADDRINUSE. ~8s apart avoids the clash.
+for gpu in "${GPUS[@]}"; do (( job_idx >= TOTAL )) && break; launch "$gpu" "${JOBS[$job_idx]}"; ((++job_idx)); sleep 8; done
 while (( job_idx < TOTAL )); do
   done_pid=""
   if ! wait -n -p done_pid 2>/dev/null; then break; fi

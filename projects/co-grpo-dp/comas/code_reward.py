@@ -168,7 +168,11 @@ def passes_tests(completion_text: str, test_code: str, timeout: float = 4.0) -> 
             for fn in test_fns:
                 fn()
         return True
-    except (_TimeLimit, SystemExit, Exception):
+    except BaseException:
+        # BaseException, not Exception: CoMAS test_code uses `pytest.raises(...)`,
+        # whose "DID NOT RAISE" failure is `_pytest.outcomes.Failed` — a
+        # BaseException subclass that `except Exception` misses, so one bad
+        # coding completion would otherwise propagate and crash the trainer.
         return False
     finally:
         sys.argv = _saved_argv

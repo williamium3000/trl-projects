@@ -73,6 +73,18 @@ class CoOPSDScriptArguments:
             "pair always uses 'jsd'. Use 'uld' vs 'gold' to ablate the two cross-tokenizer losses."
         },
     )
+    use_ema_teacher: bool = field(
+        default=False,
+        metadata={
+            "help": "Score each peer's trajectory with a slow EMA of the teacher's own "
+            "weights instead of its live (co-trained) weights. Restores OPSD's stable-teacher "
+            "anchor to curb the moving-target drift that collapses homogeneous co-OPSD."
+        },
+    )
+    ema_decay: float = field(
+        default=0.999,
+        metadata={"help": "EMA decay for the teacher: ema = decay*ema + (1-decay)*weight."},
+    )
     run_config: str = field(default=None, metadata={"help": "Run name for output dir and WandB."})
     attn_implementation: str = field(
         default="flash_attention_2", metadata={"help": "Attention implementation for both models."}
@@ -210,6 +222,8 @@ def main():
         tokenizer2=tokenizer2,
         teacher_sees_gt_answer=script_args.teacher_sees_gt_answer,
         distill_loss_type=script_args.distill_loss_type,
+        use_ema_teacher=script_args.use_ema_teacher,
+        ema_decay=script_args.ema_decay,
     )
     trainer.train()
     trainer.save_model(training_args.output_dir)

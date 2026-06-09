@@ -33,7 +33,7 @@ COMMON_ARGS=(
     --warmup_ratio 0.03 --gradient_checkpointing --gradient_checkpointing_kwargs '{"use_reentrant": false}'
     --max_completion_length 3072 --num_generations 12 --temperature 1.0 --temperature_eval 0.6
     --use_vllm --vllm_mode colocate --vllm_max_model_length 3584
-    --logging_steps 1 --save_strategy steps --save_steps 10 --save_total_limit 3 --save_only_model true
+    --logging_steps 1 --save_strategy steps --save_steps 10 --save_total_limit 100 --save_only_model true
     --eval_strategy steps --eval_steps 10 --num_generations_eval 1 --per_device_eval_batch_size 1
     --adam_beta2 0.95 --beta 0 --loss_type bnpo --scale_rewards group --self_consistency_threshold 0.0
     --seed 42 --data_seed 42 --report_to wandb --wandb_project Co-learning

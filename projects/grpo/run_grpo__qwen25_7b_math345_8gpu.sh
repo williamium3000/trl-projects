@@ -25,7 +25,7 @@ cd "$REPO_ROOT"
 MODEL="Qwen/Qwen2.5-7B"
 DATASET="q1716523669/MATH-Level345"
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="qwen25_7b_grpo_math345_8gpu_lr1e-6_e2_${TS}"
+RUN="qwen25_7b_grpo_math345_8gpu_lr3e-6_e2_${TS}"
 OUT="projects/work_dirs/grpo/$RUN"
 mkdir -p "$OUT"
 
@@ -49,7 +49,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --train_dataset "$DATASET" \
     --output_dir "$OUT" \
     --run_config "$RUN" \
-    --learning_rate 1e-6 \
+    --learning_rate 3e-6 \
     --per_device_train_batch_size 4 \
     --gradient_accumulation_steps 48 \
     --num_train_epochs 2 \
