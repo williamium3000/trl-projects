@@ -7,9 +7,9 @@
 #
 # 13-bench columns: gsm8k, math_500, amc(avg@8), aime_24(avg@8), humaneval, gpqa_d, mbpp, lcb_v6, crux, scibench, mmlu, mmlu_pro, ifeval
 machine,owner,table_cell,hf_repo,method,model,gpu,status,progress,gsm8k,math_500,amc,aime_24,humaneval,gpqa_d,mbpp,lcb_v6,crux,scibench,mmlu,mmlu_pro,ifeval,notes
-workstation-shi,yubian,5.1b,q1716523669/grpo-llama32-3b-math345,GT-GRPO,Llama-3.2-3B-Inst,6,running,lm_eval~39%,,,,,,,,,,,,,,chat_template=ON
-workstation-shi,yubian,5.1b,q1716523669/Llama-3.2-3B-ungrpomaj-majvote-MATH345,TTRL,Llama-3.2-3B-Inst,7,running,lm_eval~35%,,,,,,,,,,,,,,chat_template=ON
-workstation-shi,yubian,5.1b,q1716523669/Llama-3.2-3B-ungrpomaj-entropy-MATH345,RENT,Llama-3.2-3B-Inst,6,queued,,,,,,,,,,,,,,,
+workstation-shi,yubian,5.1b,q1716523669/grpo-llama32-3b-math345,GT-GRPO,Llama-3.2-3B-Inst,6,done,13/13(lcb=NA),0.7983,0.4540,0.2530,0.0333,0.6037,0.2525,0.4960,NA,0.3000,0.1944,0.5945,0.3965,0.6673,sane vs base(math↑);lcb=NA(LCB注册表不认HF ckpt,全ckpt同)
+workstation-shi,yubian,5.1b,q1716523669/Llama-3.2-3B-ungrpomaj-majvote-MATH345,TTRL,Llama-3.2-3B-Inst,7,running,Run1收尾(mmlu loglik),,,,,,,,,,,,,,chat_template=ON
+workstation-shi,yubian,5.1b,q1716523669/Llama-3.2-3B-ungrpomaj-entropy-MATH345,RENT,Llama-3.2-3B-Inst,6,running,started 05:02,,,,,,,,,,,,,,
 workstation-shi,yubian,5.1b,q1716523669/llama32-3b-self-certainty-math345,Intuitor,Llama-3.2-3B-Inst,7,queued,,,,,,,,,,,,,,,
 workstation-shi,yubian,5.1b,q1716523669/Llama-3.2-3B-Instruct-CoRewarding-II-MATH345,CR-II,Llama-3.2-3B-Inst,6,queued,,,,,,,,,,,,,,,HF_INDEX名写错(非-Instruct那个是空repo)
 workstation-shi,yubian,5.1b,q1716523669/llama32-3b-datadecouple-rephr-math345-lr3e-6,DataDecouple,Llama-3.2-3B-Inst,7,queued,,,,,,,,,,,,,,,
