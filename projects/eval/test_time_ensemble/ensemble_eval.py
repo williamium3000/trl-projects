@@ -239,10 +239,6 @@ BENCH_SETS = {
               "mmlu", "mmlu_pro", "crux", "scibench"],
     # For supplementing greedy@1 baselines with maj@K on high-variance small-n math sets.
     "aime_amc": ["amc", "aime_25"],
-    # CoMAS Table 2 (§5.3) — the 5 single-final-answer benchmarks that take maj@K.
-    # The other 2 CoMAS columns (HumanEval, MBPP) are CODE → pass@1 only (no MV),
-    # run separately via lm_eval in run_comas_eval.sh. T=0.7 per CoMAS Consistency.
-    "comas5": ["gsm8k", "math_500", "gpqa_d", "mmlu", "scibench"],
 }
 
 
