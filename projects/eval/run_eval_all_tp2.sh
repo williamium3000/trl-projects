@@ -46,6 +46,7 @@ MAX_MODEL_LEN="4096"
 GPU_MEM="0.9"
 LIMIT=""
 CSV=""                                    # if set, aggregate.py appends here instead of RUN_DIR/results.csv
+TASKS_OVERRIDE=""                         # if set, replaces the default LM_EVAL_TASKS list (subset runs)
 CHAT_TEMPLATE=0                           # default OFF — base models like Qwen2.5-3B mis-handle chat tokens
 SKIP_LM_EVAL=0
 SKIP_LCB=0
@@ -63,6 +64,7 @@ while [ $# -gt 0 ]; do
         --gpu_mem)       GPU_MEM="$2"; shift 2;;
         --limit)         LIMIT="$2"; shift 2;;
         --csv)           CSV="$2"; shift 2;;
+        --tasks)         TASKS_OVERRIDE="$2"; shift 2;;
         --chat_template) CHAT_TEMPLATE=1; shift;;
         --skip_lm_eval)  SKIP_LM_EVAL=1; shift;;
         --skip_lcb)      SKIP_LCB=1; shift;;
@@ -126,10 +128,12 @@ if [ "$SKIP_LM_EVAL" = "0" ]; then
     # - GPQA default `max_gen_toks` is too short (256), instruct models get truncated before
     #   emitting an answer letter → [invalid]. Override via --gen_kwargs below.
     if [ "$CHAT_TEMPLATE" = "1" ]; then
-        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval_instruct,mbpp_instruct,gpqa_diamond_cot_zeroshot,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
+        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval_instruct,mbpp_instruct,gpqa_diamond_boxed,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
     else
-        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval,mbpp,gpqa_diamond_cot_zeroshot,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
+        LM_EVAL_TASKS="gsm8k,minerva_math500,math_500_chat,humaneval,mbpp,gpqa_diamond_boxed,mmlu,mmlu_pro,ifeval,aime_2024,amc23"
     fi
+    # --tasks overrides the full list (e.g. math-only re-runs: gsm8k,math_500_chat,amc23,aime_2024)
+    [ -n "$TASKS_OVERRIDE" ] && LM_EVAL_TASKS="$TASKS_OVERRIDE"
 
     EXTRA=()
     [ -n "$LIMIT" ] && EXTRA+=(--limit "$LIMIT")
@@ -149,7 +153,7 @@ if [ "$SKIP_LM_EVAL" = "0" ]; then
         --include_path "$CUSTOM_TASKS_DIR" \
         --batch_size auto \
         --confirm_run_unsafe_code \
-        --gen_kwargs "max_gen_toks=2048" \
+        --gen_kwargs "max_gen_toks=3072,do_sample=True,temperature=0.6,top_p=0.95" \
         --output_path "$LM_EVAL_OUT" \
         --log_samples \
         "${EXTRA[@]}"

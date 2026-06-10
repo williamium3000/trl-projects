@@ -18,9 +18,10 @@ doc_to_text: "{{problem}}\n Please reason step by step, and put your final answe
 doc_to_target: "{{answer}}"
 process_results: !function utils.process_results_amc
 generation_kwargs:
-  max_gen_toks: 4096
-  do_sample: false
-  temperature: 0.0
+  max_gen_toks: 3072
+  do_sample: true
+  temperature: 0.6
+  top_p: 0.95
   until: []
 metric_list:
   - metric: exact_match
