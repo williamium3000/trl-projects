@@ -12,20 +12,18 @@
 - **解码**:`temperature=0.6, top_p=0.95, max_gen_toks=3072`(对齐训练)
 - **选 ckpt**:best-by-val(`select_best_ckpt.py` / HF best_model)
 - **grader**:lm-eval 自带(math_verify/mathruler)+ `lm_eval_custom_tasks/utils.py` **bare-boxed 抽取(fcae96b6 被 a4a4d672 revert 了,Phase 0 先 un-revert,不然 RL ckpt 的 `boxed{` 答案全判 0)**
-- **要改的 task yaml(Phase 0 一次性做)**:`gsm8k` → T0.6 配置(`do_sample:true temperature:0.6 top_p:0.95`,现在是 greedy);`amc23/aime_2024` 已是 repeats:8+T0.6(avg@8),保留
-- **MATH-500 不跑 eval**:全部用训练时 best-ckpt 的 val 数(已有),论文 MATH 列直接填
+- **要改的 task yaml(Phase 0 一次性做)**:`gsm8k` → T0.6 配置(`do_sample:true temperature:0.6 top_p:0.95`,现在是 greedy);`math_500_chat.yaml` 同样 greedy → **改 T0.6**;`amc23/aime_2024` 已是 repeats:8+T0.6(avg@8),保留
 - **GSM8K 全量 test**(1319),不许子集(子集只 CoMAS 表用)
 
 ## 0''. 重跑范围(铁律 —— 只有数据不行的才重来)
 | 类别 | 怎么处理 |
 |---|---|
-| **数学:GSM8K / AMC / AIME** | **全部重跑**(旧数据是 greedy/口径不对 → T0.6 重来;AMC/AIME avg@8)|
-| **MATH-500** | **不跑**,填训练 best-ckpt val |
+| **数学:GSM8K / MATH-500 / AMC / AIME** | **全部重跑**(旧数据是 greedy/口径不对 → T0.6 重来;AMC/AIME avg@8;ckpt 一律用训练期 best-by-val)|
 | **非数学:HumanEval/MBPP/GPQA/MMLU/MMLU-Pro/IFEval** | **保留 table-c 已有数据,不重跑**(greedy 口径,全表一致即可)|
 | **CRUX / SciBench** | table-c 缺的格 → **补跑** |
-| **table-c 完全没有的 ckpt** | **跑全套 12**(13 减 math500):heter-Qwen-3B、homo-Qwen-3B、CR-II-Llama-3B、全部 7B/8B、CoMAS 4 个 |
+| **table-c 完全没有的 ckpt** | **跑全套 13**:heter-Qwen-3B、homo-Qwen-3B、CR-II-Llama-3B、全部 7B/8B、CoMAS 4 个 |
 
-→ 已有 table-c 数据的 3B ckpt,每个只欠 **5 个 task**(gsm8k/amc/aime/crux/scibench),很快。
+→ 已有 table-c 数据的 3B ckpt,每个只欠 **6 个 task**(gsm8k/math500/amc/aime/crux/scibench)。
 
 ## 0'. MLLM 口径
 - 文件夹 `trl-projects-mllm/eval/`,**uv venv(不是 conda)**;`eval_mllm.py` 4-bench(MathVision/Verse/Vista/WeMath),greedy T0(已验证),`--prompt answer`
@@ -47,7 +45,7 @@
 
 ## 1. 任务清单(HF repo 名已对照 HF_INDEX.md 核准)
 
-### 表A · CoMAS(**只跑 7-bench**:gsm8k全/math500*/humaneval/mbpp/scibench/gpqa/mmlu;*math500 也用训练 val 则 6)
+### 表A · CoMAS(**只跑 7-bench**:gsm8k全/math500/humaneval/mbpp/scibench/gpqa/mmlu)
 | # | ckpt(`q1716523669/`) | 角色 |
 |---|---|---|
 | A1 | `comas-heter-qwen2.5-3b-instruct` | **co-learn Q(主角)** |
@@ -58,19 +56,19 @@
 ### 表B · LLM 主表 3B · Qwen2.5-3B / Llama-3.2-3B
 | 方法 | Qwen-3B repo | Llama-3B repo | 范围 |
 |---|---|---|---|
-| Base | `Qwen/Qwen2.5-3B` | `meta-llama/Llama-3.2-3B-Instruct` | 补5 |
-| GT | `grpo-qwen25-3b-math345` | `grpo-llama32-3b-math345` | 补5 |
-| TTRL | `Qwen2.5-3B-ungrpomaj-majvote-MATH345` | `Llama-3.2-3B-ungrpomaj-majvote-MATH345` | 补5 |
-| Intuitor | `qwen25-3b-self-certainty-math345` | `llama32-3b-self-certainty-math345` | 补5 |
-| RENT | `Qwen2.5-3B-ungrpomaj-entropy-MATH345` | `Llama-3.2-3B-ungrpomaj-entropy-MATH345` | 补5 |
-| CR-II | `Qwen2.5-3B-CoRewarding-II-MATH345` | `Llama-3.2-3B-Instruct-CoRewarding-II-MATH345` | Q补5 / **L全12** |
-| 数据解耦 | `qwen25-3b-datadecouple-rephr-math345-lr3e-6` | `llama32-3b-datadecouple-rephr-math345-lr3e-6` | 补5 |
-| homo | `cogrpo-homo-qwen25-3b-math345-groupA` | `cogrpo-homo-llama32-3b-math345-groupA` | **Q全12** / L补5 |
-| **heter(headline)** | `cogrpo-heter-...-bs2-groupA-qwen` | `cogrpo-heter-...-bs2-groupB-llama` | **Q全12** / L补5 |
+| Base | `Qwen/Qwen2.5-3B` | `meta-llama/Llama-3.2-3B-Instruct` | 补6 |
+| GT | `grpo-qwen25-3b-math345` | `grpo-llama32-3b-math345` | 补6 |
+| TTRL | `Qwen2.5-3B-ungrpomaj-majvote-MATH345` | `Llama-3.2-3B-ungrpomaj-majvote-MATH345` | 补6 |
+| Intuitor | `qwen25-3b-self-certainty-math345` | `llama32-3b-self-certainty-math345` | 补6 |
+| RENT | `Qwen2.5-3B-ungrpomaj-entropy-MATH345` | `Llama-3.2-3B-ungrpomaj-entropy-MATH345` | 补6 |
+| CR-II | `Qwen2.5-3B-CoRewarding-II-MATH345` | `Llama-3.2-3B-Instruct-CoRewarding-II-MATH345` | Q补6 / **L全13** |
+| 数据解耦 | `qwen25-3b-datadecouple-rephr-math345-lr3e-6` | `llama32-3b-datadecouple-rephr-math345-lr3e-6` | 补6 |
+| homo | `cogrpo-homo-qwen25-3b-math345-groupA` | `cogrpo-homo-llama32-3b-math345-groupA` | **Q全13** / L补6 |
+| **heter(headline)** | `cogrpo-heter-...-bs2-groupA-qwen` | `cogrpo-heter-...-bs2-groupB-llama` | **Q全13** / L补6 |
 
-("补5" = gsm8k/amc/aime/crux/scibench;"全12" = 13 减 math500)
+("补6" = gsm8k/math500/amc/aime/crux/scibench,全 T0.6;"全13" = 13 个全跑)
 
-### 表C · LLM 主表 7B/8B(**全 12,tp2 = 2 卡/ckpt**)· Qwen2.5-7B / Llama-3.1-8B
+### 表C · LLM 主表 7B/8B(**全 13,tp2 = 2 卡/ckpt**)· Qwen2.5-7B / Llama-3.1-8B
 | 方法 | Qwen-7B repo | Llama-8B repo |
 |---|---|---|
 | Base | `Qwen/Qwen2.5-7B` | `meta-llama/Llama-3.1-8B-Instruct` |
@@ -83,7 +81,7 @@
 | homo | `cogrpo-homo-qwen25-7b-math345-groupA` | (8B homo 重训中,出来再补)|
 | **heter** | `qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen` | `...groupB-llama` |
 
-→ **~17 个 ckpt × 全12**;MATH 列照旧填训练 val
+→ **~17 个 ckpt × 全13**(ckpt = 训练期 best-by-val)
 
 ### 表D · Ensemble 3B 2×3(maj@8,`run_test_time_ensemble.sh --total 8`,T0.6/top_p0.95)
 固定:同两 family(Qwen2.5-3B + Llama-3.2-3B)、同数据/hparam/训练预算、同 decoding、**同总票数 8**。
@@ -138,14 +136,14 @@
 
 ## 3. 分发命令(模板,学长一条一个)
 ```bash
-# 3B 补5(1卡):
+# 3B 补6(1卡):
 conda activate eval-rlif && bash projects/eval/run_eval_all.sh \
-  --model q1716523669/<repo> --gpu <N> --tasks gsm8k_t06,amc23,aime_2024,crux,scibench \
+  --model q1716523669/<repo> --gpu <N> --tasks gsm8k_t06,math_500_chat,amc23,aime_2024,crux,scibench \
   --out_dir projects/work_dirs/eval/<tag>
-# 全12(1卡 3B / 2卡 tp2 7B8B):
-bash projects/eval/run_eval_all.sh      --model ... --gpu <N>      --skip math_500 ...
-bash projects/eval/run_eval_all_tp2.sh  --model ... --gpu <N,N+1>  --skip math_500 ...
-# CoMAS(7-bench 子集): --tasks gsm8k_t06,humaneval,mbpp,scibench,gpqa,mmlu
+# 全13(1卡 3B / 2卡 tp2 7B8B):
+bash projects/eval/run_eval_all.sh      --model ... --gpu <N>
+bash projects/eval/run_eval_all_tp2.sh  --model ... --gpu <N,N+1>
+# CoMAS(7-bench 子集): --tasks gsm8k_t06,math_500_chat,humaneval,mbpp,scibench,gpqa,mmlu
 # LLM ensemble(1卡):
 bash projects/eval/run_test_time_ensemble.sh --models "<m1>[,<m2>]" --total 8 --gpu <N> \
   --bench core5 --out_dir projects/work_dirs/eval/ens_<tag>
@@ -156,11 +154,11 @@ bash eval/run_eval_ensemble.sh --models "<m1>[,<m2>]" --total 8 --gpu <N> --tag 
 ## 4. 产物 → 填 outline
 - 每 ckpt → `projects/work_dirs/eval/<tag>/results.csv`;ensemble → 各自 results.csv
 - 汇总 → `aggregate.py` → 一张总 CSV → **手填进 main 的 `PAPER_OUTLINE.md` §5.1(a)(b)+7B/8B+§5.3(ensemble)+附录**
-- MATH 列填训练 best ckpt val;非数学列照搬 table-c 已有数
+- 数学 4 列(GSM8K/MATH/AMC/AIME)用今晚 T0.6 重跑数;非数学列照搬 table-c 已有数
 
 ## 5. 叙事优先级(先保证这些出)
 1. **heter-Qwen-3B + heter-Llama-3B(headline)**
 2. 7B/8B heter(规模佐证)
 3. Ensemble:**co 单模型 maj@8 ≥ self-ensemble 4+4**(3B 表D + 7B/8B 表D' + MLLM 表E',公平杀手锏)
 4. 崩溃曲线(§6,已有)
-5. MATH/IFEval 弱项 → MATH 用训练数;IFEval 进附录
+5. MATH/IFEval 弱项 → MATH 重跑后(T0.6 + bare-boxed 修复,旧 greedy 数被坑 ~+0.06)预期翻盘;IFEval 进附录
