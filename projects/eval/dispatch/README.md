@@ -27,12 +27,15 @@ conda activate eval-rlif && python -c "import vllm,torch,transformers,datasets; 
 | `pod1.sh` | 表B Qwen-3B 列 7×补6(1 波)| 我们 Pod-1,8 卡 |
 | `pod2.sh` | 表B Llama-3B 列(8×补6)+ CR-II-L 全13 + 表D 3B Ensemble 6 格 | 我们 Pod-2,8 卡 |
 | `pod3.sh` | 表C 7B/8B 全13 ×12(tp2,heter/TTRL/RENT/GT/CR-II/base)| 我们 Pod-3,8 卡 |
-| `xz_a1_7b8b.sh` | 表C:Intuitor-7B/8B + 解耦-7B/8B(tp2,1 波)| 学长 job 1 |
-| `xz_a2_homo7b.sh` | 表C:homo-7B groupA/groupB(tp2)| 学长 job 2 |
-| `xz_b_ensemble_7b8b.sh` | 表D' 7B/8B Ensemble 6 格 | 学长 job 3 |
-| `xz_c_mllm_gemma.sh` | 表E gemma3 6+1 格(4-bench,mllm uv venv)| 学长 job 4 |
-| `xz_d1_mllm_ens_openr1.sh` | 表E' MLLM Ensemble open_r1 6 格(--total 8)| 学长 job 5 |
-| `xz_d2_mllm_ens_mmr1.sh` | 表E' MLLM Ensemble mmr1 6 格(--total 8)| 学长 job 6 |
+| `xz_a1_7b8b.sh` | 表C:Intuitor-7B/8B + 解耦-7B/8B(tp2,1 波)| ~~学长 job 1~~ **已在我们 Pod-1 跑,别重复跑** |
+| `xz_a2_homo7b.sh` | 表C:homo-7B groupA/groupB(tp2)| ~~学长 job 2~~ **已在我们 Pod-1 跑(接 A1 后),别重复跑** |
+| `xz_b_ensemble_7b8b.sh` | 表D' 7B/8B Ensemble 6 格 | 学长 job 3 ⚠️ 先 `export HF_TOKEN` |
+| `xz_c_mllm_gemma.sh` | 表E gemma3 6+1 格(4-bench,mllm uv venv,读 NAS 本地 ckpt 不用 token)| 学长 job 4 |
+| `xz_d1_mllm_ens_openr1.sh` | 表E' MLLM Ensemble open_r1 6 格(--total 8)| 学长 job 5 ⚠️ 先 `export HF_TOKEN` |
+| `xz_d2_mllm_ens_mmr1.sh` | 表E' MLLM Ensemble mmr1 6 格(--total 8)| 学长 job 6 ⚠️ 先 `export HF_TOKEN` |
+
+⚠️ **HF token(今早学长 job 全灭的根因)**:`q1716523669/*` 全部是**私有 repo**,学长 pod 上没有 token → 下载 401。
+B/D1/D2 已加 fail-fast 守卫;跑前 `export HF_TOKEN=<token>`(token 找 yijiang 拿,**别写进任何文件**)。
 | `xz_e_comas4.sh` | 表A CoMAS×4(7-bench)| ~~学长 job 7~~ **已在我们 Pod-1 跑,别重复跑** |
 | `xz_f_3b_full13.sh` | 表B heter-Q/homo-Q 3B 全13 | ~~学长 job 8~~ **已在我们 Pod-1 跑,别重复跑** |
 

@@ -11,6 +11,10 @@ MLLM=/mnt/bn/tns-algo-video-public-my2/yijiangli/project/trl-projects-mllm
 cd "$MLLM"
 source scripts/mllm_env.sh
 
+# 私有 HF repo 守卫: 没 token 直接报错, 别等下载时全军覆没 (今早 job 全灭根因)
+[ -n "${HF_TOKEN:-}" ] || [ -f "$HOME/.cache/huggingface/token" ] || {
+    echo "ERROR: q1716523669/* 是私有 repo, 先 export HF_TOKEN=<token> 再跑 (token 问 yijiang 拿)"; exit 1; }
+
 ORG=q1716523669
 OUT=work_dirs/eval/mllm_ens_night
 CSV=$OUT/mllm_ensemble.csv
