@@ -1,8 +1,24 @@
 # dispatch/ — 今晚 eval 分发脚本(对应 main 的 EVALUATION.md)
 
 每个脚本自包含:激活 conda eval-rlif(或 mllm uv venv)→ 8 卡并行 → 汇总 CSV。
-**前提**:① 该 pod 装好 eval-rlif(`bash projects/eval/setup.sh`);② `git pull` 到最新 main(grader 修复 + T0.6 在 d3fb85d9+)。
-vllm 的 `libcudart.so.13` 问题已通过 env 内 activate.d 钩子修好(NAS 共享,所有 pod 自动生效,无需操作)。
+**前提**:① conda env `eval-rlif` 在 NAS 上(`yijiangli/miniconda3/envs/`),所有 pod 激活即用,**无需在 pod 上跑 setup.sh**;② `git pull` 到最新 main(grader 修复 + T0.6 在 d3fb85d9+)。
+
+## env 踩坑记录(2026-06-10 晚,Phase 0 冒烟炸出,均已集中修复)
+
+发车前自查一条命令(任何 pod):
+```bash
+conda activate eval-rlif && python -c "import vllm,torch,transformers,datasets; print(vllm.__version__, torch.__version__, transformers.__version__, datasets.__version__)"
+# 必须是: 0.14.0  2.9.1+cu129  4.57.1  3.6.0 — 不对就别跑,喊人
+```
+
+| # | 症状 | 根因 | 修复 |
+|---|---|---|---|
+| 1 | vllm engine 起 kernel 时 `CUDA driver version is insufficient`(import 不报错!) | vllm ≥0.21 默认 wheel 是 **CUDA 13** 编译,pod 驱动 535.129.03 只支持 CUDA 12.x | 钉 `vllm==0.14.0 + torch==2.9.1+cu129`(训练侧实跑组合);cu13 runtime 假修复(activate.d hook)已移除 |
+| 2 | `cannot import name 'is_offline_mode' from 'huggingface_hub'` | transformers 被污染到 5.9.0,和 hf_hub 0.36.2 不兼容 | 钉 `transformers==4.57.1` |
+| 3 | LCB 炸 `Dataset scripts are no longer supported` | datasets 5.0 移除 script 支持,`code_generation_lite.py` 是老式 script | 钉 `datasets==3.6.0` + 补 `pebble` |
+| 4 | 下载炸 `'hf_transfer' package is not available` | pod 全局 `HF_HUB_ENABLE_HF_TRANSFER=1` 但 env 没装 | 补 `hf_transfer` |
+
+教训:**新建 env 一律钉版本**(setup.sh §5b 已钉死),禁止裸 `pip install vllm`;上游默认 CUDA 版本已切 13,我们驱动跟不上。
 
 | 脚本 | 跑什么 | 资源 |
 |---|---|---|

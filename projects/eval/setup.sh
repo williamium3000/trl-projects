@@ -29,7 +29,8 @@ set -euo pipefail
 # --- 0. Config -----------------------------------------------------------------
 EVAL_ENV_NAME="${EVAL_ENV_NAME:-eval-rlif}"
 PY_VER="3.12"
-TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu128}"
+# cu129: 必须和 pod 驱动 535.129.03 (CUDA 12.x) 匹配 — 见 §5b 坑位记录 #1
+TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu129}"
 SKIP_FLASH_ATTN="${SKIP_FLASH_ATTN:-0}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -130,7 +131,8 @@ if python -c "import torch" 2>/dev/null; then
     TORCH_CUDA=$(python -c "import torch; print(torch.version.cuda)")
     green "torch $TORCH_VER (cuda $TORCH_CUDA) 已装,跳过。"
 else
-    pip install --no-cache-dir torch torchvision --index-url "$TORCH_INDEX"
+    # 钉 2.9.1: 训练侧系统 python 实跑过的版本 (vllm 0.14.0 配套) — 坑位记录 #1
+    pip install --no-cache-dir "torch==2.9.1" torchvision --index-url "$TORCH_INDEX"
     python -c "import torch; print('torch', torch.__version__, 'cuda', torch.version.cuda)"
 fi
 
@@ -146,6 +148,11 @@ fi
 # Fix #11 — Gemma3/SentencePiece U+2581 in humaneval/mbpp extractors.
 apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_gemma_u2581.patch"
 
+# 先钉 vllm==0.14.0 (cu12 编译), 否则 lm_eval 的 [vllm] extra 会拉最新版 —
+# vllm >=0.21 默认 wheel 是 CUDA 13 编译, 在驱动 535 的 pod 上 import 不报错、
+# 跑 kernel 才炸 "CUDA driver version is insufficient"。坑位记录 #1。
+pip install --no-cache-dir "vllm==0.14.0" --extra-index-url "$TORCH_INDEX"
+
 # `lm_eval[vllm,ifeval,math,sentencepiece]`:
 #   vllm        - --model vllm backend
 #   ifeval      - immutabledict + langdetect + nltk
@@ -159,6 +166,26 @@ python -c "import lm_eval; print('lm_eval', lm_eval.__version__)"
 header "§5 Project deps (requirements.txt)"
 
 pip install --no-cache-dir -r "$SCRIPT_DIR/requirements.txt"
+
+# --- 5b. 版本钉死 (2026-06-10 踩坑记录, 全是上游默认版本换代砸的) ---------------
+# #1 vllm 默认 wheel 切到 CUDA 13, pod 驱动 535.129.03 只支持 CUDA 12.x:
+#    import 正常, vllm engine 起 flash-attn kernel 时炸
+#    "CUDA driver version is insufficient for CUDA runtime version"。
+#    → 钉 vllm==0.14.0 + torch==2.9.1 (cu129 index), 与训练侧系统 python 实跑组合一致。
+#    (注: nvidia-cuda-runtime-cu13 是 0.0.1 假包, 千万别装; 曾用
+#     nvidia-cuda-runtime==13.0.96 + activate.d LD_LIBRARY_PATH hook 续命,
+#     治标不治本, 已随 vllm 降级一并移除。)
+# #2 transformers 5.9.0 (被假包构建依赖拉上来) 和 huggingface_hub 0.36.2 不兼容:
+#    "cannot import name 'is_offline_mode'"。→ 钉 4.57.1 (vllm 0.14/训练侧同款)。
+# #3 datasets >=4.0 移除 dataset-script 支持, LCB 的 code_generation_lite.py 炸
+#    "Dataset scripts are no longer supported"。→ 钉 3.6.0 (最后支持 script 的版本线)。
+# #4 HF_HUB_ENABLE_HF_TRANSFER=1 (pod 全局 env) 但包没装 → 下载直接 ValueError。
+# #5 pebble: LCB 评测进程池 import, livecodebench 包声明了但 --no-deps 装不上。
+pip install --no-cache-dir \
+    "transformers==4.57.1" \
+    "datasets==3.6.0" \
+    hf_transfer \
+    pebble
 
 # NLTK punkt for ifeval (some recent ifeval task forks call sent_tokenize).
 python - <<'PY'
