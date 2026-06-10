@@ -181,9 +181,12 @@ pip install --no-cache-dir -r "$SCRIPT_DIR/requirements.txt"
 #    "Dataset scripts are no longer supported"。→ 钉 3.6.0 (最后支持 script 的版本线)。
 # #4 HF_HUB_ENABLE_HF_TRANSFER=1 (pod 全局 env) 但包没装 → 下载直接 ValueError。
 # #5 pebble: LCB 评测进程池 import, livecodebench 包声明了但 --no-deps 装不上。
+# #6 numpy 2.4 > numba 上限 2.2: vllm worker 起来就炸
+#    "Numba needs NumPy 2.2 or less"。→ 钉 2.2.6 (保持 numpy-2 ABI, 别降回 1.x)。
 pip install --no-cache-dir \
     "transformers==4.57.1" \
     "datasets==3.6.0" \
+    "numpy==2.2.6" \
     hf_transfer \
     pebble
 
