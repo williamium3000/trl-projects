@@ -24,23 +24,35 @@ conda activate eval-rlif && python -c "import vllm,torch,transformers,datasets; 
 
 教训:**新建 env 一律钉版本**(setup.sh §5b 已钉死),禁止裸 `pip install vllm`;上游默认 CUDA 版本已切 13,我们驱动跟不上。
 
-| 脚本 | 跑什么 | 资源 |
+## 三-Pod 实时分工(2026-06-10 下午,3×8 卡并行)
+
+⚠️ **HF token(今早学长 job 全灭的根因)**:`q1716523669/*` 全部是**私有 repo**,空 pod 上没 token → 下载 401 全灭。
+**每个 pod 发车前先 `export HF_TOKEN=<token>`**(token 找 yijiang 拿,**别写进任何文件**)。B/D1/D2/G 已加 fail-fast 守卫。
+
+| Pod | 跑什么(顺序)| 状态 |
 |---|---|---|
-| `pod1.sh` | 表B Qwen-3B 列 7×补6(1 波)| 我们 Pod-1,8 卡 |
-| `pod2.sh` | 表B Llama-3B 列(8×补6)+ CR-II-L 全13 + 表D 3B Ensemble 6 格 | 我们 Pod-2,8 卡 |
-| `pod3.sh` | 表C 7B/8B 全13 ×12(tp2,heter/TTRL/RENT/GT/CR-II/base)| 我们 Pod-3,8 卡 |
-| `xz_a1_7b8b.sh` | 表C:Intuitor-7B/8B + 解耦-7B/8B(tp2,1 波)| ~~学长 job 1~~ **已在我们 Pod-1 跑,别重复跑** |
-| `xz_a2_homo7b.sh` | 表C:homo-7B groupA/groupB(tp2)| ~~学长 job 2~~ **已在我们 Pod-1 跑(接 A1 后),别重复跑** |
-| `xz_b_ensemble_7b8b.sh` | 表D' 7B/8B Ensemble 6 格 | 学长 job 3 ⚠️ 先 `export HF_TOKEN` |
-| `xz_c_mllm_gemma.sh` | 表E gemma3 6+1 格(4-bench,mllm uv venv,读 NAS 本地 ckpt 不用 token)| 学长 job 4 |
-| `xz_d1_mllm_ens_openr1.sh` | 表E' MLLM Ensemble open_r1 6 格(--total 8)| 学长 job 5 ⚠️ 先 `export HF_TOKEN` |
-| `xz_d2_mllm_ens_mmr1.sh` | 表E' MLLM Ensemble mmr1 6 格(--total 8)| 学长 job 6 ⚠️ 先 `export HF_TOKEN` |
+| **Pod-1**(我们,在跑)| homo-7B A/B 全13 + qwen/llama LCB 补跑 → **wave2 自动接** `pod2.sh`(Llama-3B 列 + CR-II-L + 3B ens)| 自动接力,别动 |
+| **Pod-2**(空)→ LLM 头条 | ① `xz_b_ensemble_7b8b.sh`(7B/8B ensemble:g5 共训对 vs g4 TTRL对)② `xz_g_qwen7b_maj8.sh`(qwen-7b 全方法 maj@8 重测 core5)| ⚠️ 先 export HF_TOKEN |
+| **Pod-3**(空)→ MLLM 全包 | ① `xz_c_mllm_gemma.sh`(gemma3,本地 ckpt 可不要 token)② `xz_d1_mllm_ens_openr1.sh` ③ `xz_d2_mllm_ens_mmr1.sh`| ⚠️ 先 export HF_TOKEN |
 
-⚠️ **HF token(今早学长 job 全灭的根因)**:`q1716523669/*` 全部是**私有 repo**,学长 pod 上没有 token → 下载 401。
-B/D1/D2 已加 fail-fast 守卫;跑前 `export HF_TOKEN=<token>`(token 找 yijiang 拿,**别写进任何文件**)。
-| `xz_e_comas4.sh` | 表A CoMAS×4(7-bench)| ~~学长 job 7~~ **已在我们 Pod-1 跑,别重复跑** |
-| `xz_f_3b_full13.sh` | 表B heter-Q/homo-Q 3B 全13 | ~~学长 job 8~~ **已在我们 Pod-1 跑,别重复跑** |
+**Pod-2 / Pod-3 一键粘贴**:
+```bash
+cd /mnt/bn/tns-algo-video-public-my2/yijiangli/project/trl-projects && git pull
+export HF_TOKEN=<问 yijiang 拿>
+# —— Pod-2 ——
+bash projects/eval/dispatch/xz_b_ensemble_7b8b.sh
+bash projects/eval/dispatch/xz_g_qwen7b_maj8.sh
+# —— Pod-3 ——
+bash projects/eval/dispatch/xz_c_mllm_gemma.sh
+bash projects/eval/dispatch/xz_d1_mllm_ens_openr1.sh
+bash projects/eval/dispatch/xz_d2_mllm_ens_mmr1.sh
+```
 
-(旧 `xz_a_7b8b_remainder.sh` / `xz_d_mllm_ensemble.sh` 已拆分作废,别跑。)
+### 已跑完 / 别重复跑
+`xz_a1`(Intuitor+解耦 7B/8B)、`xz_a2`(homo-7B)、`xz_e_comas4`、`xz_f_3b_full13`、`pod1.sh`、`pod3.sh` —— **已在 Pod-1/原 pod3 跑过,别重跑**。
+
+### ⚠️ 作废脚本名(学长昨天粘到的,已删除/改名,粘了会 `No such file`)
+- `xz_a_7b8b_remainder.sh` → 拆成 `xz_a1_7b8b.sh` + `xz_a2_homo7b.sh`(并行省一波;我们自己在 Pod-1 跑了)
+- `xz_d_mllm_ensemble.sh` → 拆成 `xz_d1_mllm_ens_openr1.sh` + `xz_d2_mllm_ens_mmr1.sh`(原脚本 12 格塞不进 8 卡一波,拆成两个 6 格各一波)
 
 跑完后:`python projects/eval/aggregate.py`(LLM)/ 各 CSV → 填 `PAPER_OUTLINE.md`。
