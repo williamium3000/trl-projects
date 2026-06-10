@@ -1,5 +1,5 @@
 diff --git a/lcb_runner/lm_styles.py b/lcb_runner/lm_styles.py
-index d10b211..bf830f5 100644
+index d10b211..5c66d36 100644
 --- a/lcb_runner/lm_styles.py
 +++ b/lcb_runner/lm_styles.py
 @@ -30,6 +30,7 @@ class LMStyle(Enum):
@@ -10,7 +10,7 @@ index d10b211..bf830f5 100644
      DeepSeekR1 = "DeepSeekR1"
  
      TogetherAI = "TogetherAI"
-@@ -861,6 +862,207 @@ LanguageModelList: list[LanguageModel] = [
+@@ -861,6 +862,221 @@ LanguageModelList: list[LanguageModel] = [
          datetime(2024, 4, 1),
          "https://huggingface.co/agentica-org/DeepCoder-14B-Preview",
      ),
@@ -214,6 +214,20 @@ index d10b211..bf830f5 100644
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
 +        "https://huggingface.co/q1716523669/llama31-8b-selfcertainty-math345-eb128",
++    ),
++    LanguageModel(
++        "/mnt/bn/tns-algo-video-public-my2/yijiangli/project/trl-projects/projects/work_dirs/co-grpo-dp/cogrpo_homo__llama31_8b__math345_full_lr3e-6_e2_20260609_170200/group_A/best_model",
++        "homo-Llama-3.1-8B-groupA-best",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "local: cogrpo_homo__llama31_8b 0609_170200 group_A best_model (step100)",
++    ),
++    LanguageModel(
++        "/mnt/bn/tns-algo-video-public-my2/yijiangli/project/trl-projects/projects/work_dirs/co-grpo-dp/cogrpo_homo__llama31_8b__math345_full_lr3e-6_e2_20260609_170200/group_B/best_model",
++        "homo-Llama-3.1-8B-groupB-best",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "local: cogrpo_homo__llama31_8b 0609_170200 group_B best_model (step10, 早停留意)",
 +    ),
  ]
  
