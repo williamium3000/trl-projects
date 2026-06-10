@@ -72,6 +72,7 @@ while [ $# -gt 0 ]; do
         --csv)           CSV="$2"; shift 2;;
         --limit)         LIMIT="$2"; shift 2;;
         --short)         SHORTNAME="$2"; shift 2;;
+        --chat_template) CHAT_FLAG="--chat_template"; shift;;
         -h|--help)       sed -n '2,35p' "$0"; exit 0;;
         *) echo "unknown arg: $1" >&2; exit 1;;
     esac
@@ -146,6 +147,7 @@ for i in $(seq 0 $((N-1))); do
         --max_model_len "$MAX_MODEL_LEN" \
         --gpu_mem "$GPU_MEM" \
         --out "$OUT_JSONL" \
+        ${CHAT_FLAG:-} \
         $LIMIT_ARG
 done
 

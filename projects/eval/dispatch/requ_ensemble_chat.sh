@@ -16,11 +16,11 @@ else
   UQ=$ORG/Qwen2.5-3B-ungrpomaj-majvote-MATH345;     UL=$ORG/Llama-3.2-3B-ungrpomaj-majvote-MATH345
   CQ=$ORG/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupA-qwen; CL=$ORG/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupB-llama
 fi
-{ ens 0 "$UQ" ${SIZE}_self_single_qwen; }  > "$OUT/g0.log" 2>&1 &
-{ ens 1 "$UL" ${SIZE}_self_single_llama; } > "$OUT/g1.log" 2>&1 &
-{ ens 2 "$CQ" ${SIZE}_co_single_qwen; }    > "$OUT/g2.log" 2>&1 &
-{ ens 3 "$CL" ${SIZE}_co_single_llama; }   > "$OUT/g3.log" 2>&1 &
-{ ens 4 "$UQ,$UL" ${SIZE}_self_ens44; }    > "$OUT/g4.log" 2>&1 &
-{ ens 5 "$CQ,$CL" ${SIZE}_co_ens44; }      > "$OUT/g5.log" 2>&1 &
+{ ens 2 "$UQ" ${SIZE}_self_single_qwen; }  > "$OUT/g0.log" 2>&1 &
+{ ens 3 "$UL" ${SIZE}_self_single_llama; } > "$OUT/g1.log" 2>&1 &
+{ ens 4 "$CQ" ${SIZE}_co_single_qwen; }    > "$OUT/g2.log" 2>&1 &
+{ ens 5 "$CL" ${SIZE}_co_single_llama; }   > "$OUT/g3.log" 2>&1 &
+{ ens 6 "$UQ,$UL" ${SIZE}_self_ens44; }    > "$OUT/g4.log" 2>&1 &
+{ ens 7 "$CQ,$CL" ${SIZE}_co_ens44; }      > "$OUT/g5.log" 2>&1 &
 wait
 echo "==== REQU-ENS-$SIZE chat_template DONE ===="; cat "$CSV"
