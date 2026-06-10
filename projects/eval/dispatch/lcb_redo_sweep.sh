@@ -24,9 +24,9 @@ lcb () { local g=$1 m=$2; shift 2; bash projects/eval/run_eval_all_tp2.sh --mode
 { lcb 2,3 "$ORG/qwen25-7b-gtgrpo-math345-eb128-lr3e-6"
   lcb 2,3 "$ORG/qwen25-7b-crii-math345-lr3e-6"
   lcb 2,3 "Qwen/Qwen2.5-7B"; }                              > "$OUT/slot23.outer.log" 2>&1 &
+# (llama31-8b-selfcertainty root=崩溃final 不补 — best_model/ 子目录另跑全13, 见坑#8)
 { lcb 4,5 "$ORG/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama" --chat_template
-  lcb 4,5 "$ORG/llama31-8b-entropy-math345-eb128" --chat_template
-  lcb 4,5 "$ORG/llama31-8b-selfcertainty-math345-eb128" --chat_template; } > "$OUT/slot45.outer.log" 2>&1 &
+  lcb 4,5 "$ORG/llama31-8b-entropy-math345-eb128" --chat_template; } > "$OUT/slot45.outer.log" 2>&1 &
 { lcb 6,7 "$ORG/llama31-8b-gtgrpo-math345-eb128" --chat_template
   lcb 6,7 "$ORG/llama31-8b-crii-math345-lr3e-6" --chat_template
   lcb 6,7 "/mnt/bn/tns-algo-video-public-my2/wangpeng.an/model/Meta-Llama-3.1-8B-Instruct" --chat_template; } > "$OUT/slot67.outer.log" 2>&1 &

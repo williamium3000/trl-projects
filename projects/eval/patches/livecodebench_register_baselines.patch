@@ -1,5 +1,5 @@
 diff --git a/lcb_runner/lm_styles.py b/lcb_runner/lm_styles.py
-index d10b211..e3d3b24 100644
+index d10b211..bf830f5 100644
 --- a/lcb_runner/lm_styles.py
 +++ b/lcb_runner/lm_styles.py
 @@ -30,6 +30,7 @@ class LMStyle(Enum):
@@ -10,7 +10,7 @@ index d10b211..e3d3b24 100644
      DeepSeekR1 = "DeepSeekR1"
  
      TogetherAI = "TogetherAI"
-@@ -861,6 +862,200 @@ LanguageModelList: list[LanguageModel] = [
+@@ -861,6 +862,207 @@ LanguageModelList: list[LanguageModel] = [
          datetime(2024, 4, 1),
          "https://huggingface.co/agentica-org/DeepCoder-14B-Preview",
      ),
@@ -207,6 +207,13 @@ index d10b211..e3d3b24 100644
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
 +        "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
++    ),
++    LanguageModel(
++        "/mnt/bn/tns-algo-video-public-my2/yijiangli/project/trl-projects/projects/work_dirs/hf_local/llama31-8b-selfcertainty-best/best_model",
++        "Intuitor-Llama-3.1-8B-best",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/llama31-8b-selfcertainty-math345-eb128",
 +    ),
  ]
  
