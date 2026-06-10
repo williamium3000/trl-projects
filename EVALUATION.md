@@ -134,7 +134,8 @@
 - 3B 补5 每个 ~40min;全12 ~2.5h;7B tp2 全12 ~3-4h → 7B/8B 是瓶颈,Pod-3+学长 1-4 全压上。
 - 学长起不动 8 个时,优先级:job1-4(主表 7B/8B)> job5(D')> job6(E)> job7-8(E')。E' 也可等 gemma 训练 pod 空出来我们自己跑。
 
-## 3. 分发命令(模板,学长一条一个)
+## 3. 分发命令
+> **一键脚本已写好:`projects/eval/dispatch/`**(pod1/2/3.sh + xz_a~d.sh + README)。每脚本自包含 8 卡并行,见该目录 README。下面是底层模板(手工跑单个用):
 ```bash
 # 3B 补6(1卡):
 conda activate eval-rlif && bash projects/eval/run_eval_all.sh \
