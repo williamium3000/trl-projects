@@ -1,5 +1,5 @@
 diff --git a/lcb_runner/lm_styles.py b/lcb_runner/lm_styles.py
-index d10b211..a57b19c 100644
+index d10b211..e3d3b24 100644
 --- a/lcb_runner/lm_styles.py
 +++ b/lcb_runner/lm_styles.py
 @@ -30,6 +30,7 @@ class LMStyle(Enum):
@@ -10,7 +10,7 @@ index d10b211..a57b19c 100644
      DeepSeekR1 = "DeepSeekR1"
  
      TogetherAI = "TogetherAI"
-@@ -861,6 +862,66 @@ LanguageModelList: list[LanguageModel] = [
+@@ -861,6 +862,200 @@ LanguageModelList: list[LanguageModel] = [
          datetime(2024, 4, 1),
          "https://huggingface.co/agentica-org/DeepCoder-14B-Preview",
      ),
@@ -74,82 +74,140 @@ index d10b211..a57b19c 100644
 +        datetime(2025, 5, 31),
 +        "https://huggingface.co/q1716523669/cogrpo-homo-qwen25-3b-math345-groupB",
 +    ),
++    # ---- trl-projects 7B/8B math345 ckpts + bases (2026-06-10 night eval) ----
++    LanguageModel(
++        "q1716523669/qwen25-7b-selfcertainty-math345-eb128",
++        "Intuitor-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-selfcertainty-math345-eb128",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-decoupled-rephrQ-x-llama31-8b-origL-groupA-qwen",
++        "Decoupled-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-decoupled-rephrQ-x-llama31-8b-origL-groupA-qwen",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-homo-qwen25-7b-math345-groupA",
++        "CoGRPO-Homo-Qwen2.5-7B-A",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/cogrpo-homo-qwen25-7b-math345-groupA",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-homo-qwen25-7b-math345-groupB",
++        "CoGRPO-Homo-Qwen2.5-7B-B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/cogrpo-homo-qwen25-7b-math345-groupB",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen",
++        "CoGRPO-Heter-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-entropy-math345-eb128-lr3e-6",
++        "RENT-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-entropy-math345-eb128-lr3e-6",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-unmaj-math345-eb128-lr3e-6",
++        "TTRL-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-unmaj-math345-eb128-lr3e-6",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-gtgrpo-math345-eb128-lr3e-6",
++        "GT-GRPO-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-gtgrpo-math345-eb128-lr3e-6",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-crii-math345-lr3e-6",
++        "CR-II-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-crii-math345-lr3e-6",
++    ),
++    LanguageModel(
++        "q1716523669/llama31-8b-selfcertainty-math345-eb128",
++        "Intuitor-Llama-3.1-8B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/llama31-8b-selfcertainty-math345-eb128",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-decoupled-origQ-x-llama31-8b-rephrL-groupB-llama",
++        "Decoupled-Llama-3.1-8B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-decoupled-origQ-x-llama31-8b-rephrL-groupB-llama",
++    ),
++    LanguageModel(
++        "q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama",
++        "CoGRPO-Heter-Llama-3.1-8B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama",
++    ),
++    LanguageModel(
++        "q1716523669/llama31-8b-entropy-math345-eb128",
++        "RENT-Llama-3.1-8B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/llama31-8b-entropy-math345-eb128",
++    ),
++    LanguageModel(
++        "q1716523669/llama31-8b-unmaj-math345-eb128",
++        "TTRL-Llama-3.1-8B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/llama31-8b-unmaj-math345-eb128",
++    ),
++    LanguageModel(
++        "q1716523669/llama31-8b-gtgrpo-math345-eb128",
++        "GT-GRPO-Llama-3.1-8B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/llama31-8b-gtgrpo-math345-eb128",
++    ),
++    LanguageModel(
++        "q1716523669/llama31-8b-crii-math345-lr3e-6",
++        "CR-II-Llama-3.1-8B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/llama31-8b-crii-math345-lr3e-6",
++    ),
++    LanguageModel(
++        "q1716523669/Llama-3.2-3B-Instruct-CoRewarding-II-MATH345",
++        "CR-II-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/q1716523669/Llama-3.2-3B-Instruct-CoRewarding-II-MATH345",
++    ),
++    LanguageModel(
++        "Qwen/Qwen2.5-7B",
++        "Qwen2.5-7B-Base",
++        LMStyle.GenericBase,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/Qwen/Qwen2.5-7B",
++    ),
++    LanguageModel(
++        "/mnt/bn/tns-algo-video-public-my2/wangpeng.an/model/Meta-Llama-3.1-8B-Instruct",
++        "Llama-3.1-8B-Ins-local",
++        LMStyle.LLaMa3,
++        datetime(2026, 6, 10),
++        "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct",
++    ),
  ]
  
  LanguageModelStore: dict[str, LanguageModel] = {
-diff --git a/lcb_runner/prompts/code_execution.py b/lcb_runner/prompts/code_execution.py
-index cbf961d..144d37b 100644
---- a/lcb_runner/prompts/code_execution.py
-+++ b/lcb_runner/prompts/code_execution.py
-@@ -108,7 +108,7 @@ def format_prompt_execution_base(
-         from transformers import AutoTokenizer
- 
-         tokenizer = AutoTokenizer.from_pretrained(
--            "meta-llama/Meta-Llama-3-8B-Instruct", padding_side="left", use_fast=False
-+            "meta-llama/Llama-3.2-3B-Instruct", padding_side="left", use_fast=False
-         )
-         return tokenizer.apply_chat_template(
-             chat_messages,
-diff --git a/lcb_runner/prompts/code_generation.py b/lcb_runner/prompts/code_generation.py
-index 22ba3f8..a30ca67 100644
---- a/lcb_runner/prompts/code_generation.py
-+++ b/lcb_runner/prompts/code_generation.py
-@@ -265,7 +265,31 @@ def format_prompt_generation(
-         from transformers import AutoTokenizer
- 
-         tokenizer = AutoTokenizer.from_pretrained(
--            "meta-llama/Meta-Llama-3-8B-Instruct", padding_side="left", use_fast=False
-+            "meta-llama/Llama-3.2-3B-Instruct", padding_side="left", use_fast=False
-+        )
-+        return tokenizer.apply_chat_template(
-+            chat_messages,
-+            tokenize=False,
-+            add_generation_prompt=True,
-+            truncation=False,
-+            padding=False,
-+        )
-+
-+    if LanguageModelStyle == LMStyle.Gemma3:
-+        # Gemma3 chat template doesn't support `system` role — fold instructions into user msg.
-+        chat_messages = [
-+            {
-+                "role": "user",
-+                "content": (
-+                    PromptConstants.SYSTEM_MESSAGE_GENERIC
-+                    + "\n\n"
-+                    + get_generic_question_template_answer(question)
-+                ),
-+            },
-+        ]
-+        from transformers import AutoTokenizer
-+        tokenizer = AutoTokenizer.from_pretrained(
-+            "google/gemma-3-4b-it", padding_side="left", use_fast=True
-         )
-         return tokenizer.apply_chat_template(
-             chat_messages,
-diff --git a/lcb_runner/prompts/self_repair.py b/lcb_runner/prompts/self_repair.py
-index 21ded04..aab5ebf 100644
---- a/lcb_runner/prompts/self_repair.py
-+++ b/lcb_runner/prompts/self_repair.py
-@@ -209,7 +209,7 @@ def format_prompt_self_repair(
-         from transformers import AutoTokenizer
- 
-         tokenizer = AutoTokenizer.from_pretrained(
--            "meta-llama/Meta-Llama-3-8B-Instruct", padding_side="left", use_fast=False
-+            "meta-llama/Llama-3.2-3B-Instruct", padding_side="left", use_fast=False
-         )
-         return tokenizer.apply_chat_template(
-             chat_messages,
-diff --git a/lcb_runner/prompts/test_output_prediction.py b/lcb_runner/prompts/test_output_prediction.py
-index 90d8719..07cb9dc 100644
---- a/lcb_runner/prompts/test_output_prediction.py
-+++ b/lcb_runner/prompts/test_output_prediction.py
-@@ -194,7 +194,7 @@ def format_prompt_test_output(
-         from transformers import AutoTokenizer
- 
-         tokenizer = AutoTokenizer.from_pretrained(
--            "meta-llama/Meta-Llama-3-8B-Instruct", padding_side="left", use_fast=False
-+            "meta-llama/Llama-3.2-3B-Instruct", padding_side="left", use_fast=False
-         )
-         return tokenizer.apply_chat_template(
-             chat_messages,
