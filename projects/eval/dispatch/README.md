@@ -18,6 +18,7 @@ conda activate eval-rlif && python -c "import vllm,torch,transformers,datasets; 
 | 3 | LCB 炸 `Dataset scripts are no longer supported` | datasets 5.0 移除 script 支持,`code_generation_lite.py` 是老式 script | 钉 `datasets==3.6.0` + 补 `pebble` |
 | 4 | 下载炸 `'hf_transfer' package is not available` | pod 全局 `HF_HUB_ENABLE_HF_TRANSFER=1` 但 env 没装 | 补 `hf_transfer` |
 | 5 | vllm worker 炸 `Numba needs NumPy 2.2 or less. Got NumPy 2.4` | numpy 2.4 超 numba 上限 | 钉 `numpy==2.2.6`(保持 np2 ABI,别降 1.x) |
+| 6 | Qwen-instruct 系 mbpp_instruct 全 0.0000(humaneval 正常,llama 正常)| 提取 regex 把裸代码开头的 `def`/`from` 当 ``` 语言标签吞掉 → 砍头代码全 SyntaxError | `patches/lmeval_mbpp_lang_tag.patch`(语言标签必须带换行);共享 env editable 指向本 checkout,已即时生效 |
 
 教训:**新建 env 一律钉版本**(setup.sh §5b 已钉死),禁止裸 `pip install vllm`;上游默认 CUDA 版本已切 13,我们驱动跟不上。
 

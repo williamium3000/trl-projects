@@ -147,6 +147,9 @@ if [ ! -d "$LM_EVAL_DIR/.git" ]; then
 fi
 # Fix #11 — Gemma3/SentencePiece U+2581 in humaneval/mbpp extractors.
 apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_gemma_u2581.patch"
+# Fix #12 — mbpp_instruct extractor swallowed first keyword ("def"/"from") of
+# unfenced code as a ``` language tag → Qwen-instruct mbpp = 0.0. 坑位记录 #6.
+apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_mbpp_lang_tag.patch"
 
 # 先钉 vllm==0.14.0 (cu12 编译), 否则 lm_eval 的 [vllm] extra 会拉最新版 —
 # vllm >=0.21 默认 wheel 是 CUDA 13 编译, 在驱动 535 的 pod 上 import 不报错、
