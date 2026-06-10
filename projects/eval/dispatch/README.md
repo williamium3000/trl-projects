@@ -32,8 +32,8 @@ conda activate eval-rlif && python -c "import vllm,torch,transformers,datasets; 
 | `xz_c_mllm_gemma.sh` | 表E gemma3 6+1 格(4-bench,mllm uv venv)| 学长 job 4 |
 | `xz_d1_mllm_ens_openr1.sh` | 表E' MLLM Ensemble open_r1 6 格(--total 8)| 学长 job 5 |
 | `xz_d2_mllm_ens_mmr1.sh` | 表E' MLLM Ensemble mmr1 6 格(--total 8)| 学长 job 6 |
-| `xz_e_comas4.sh` | 表A CoMAS×4(7-bench)| 学长 job 7 |
-| `xz_f_3b_full13.sh` | 表B heter-Q/homo-Q 3B 全13 | 学长 job 8 |
+| `xz_e_comas4.sh` | 表A CoMAS×4(7-bench)| ~~学长 job 7~~ **已在我们 Pod-1 跑,别重复跑** |
+| `xz_f_3b_full13.sh` | 表B heter-Q/homo-Q 3B 全13 | ~~学长 job 8~~ **已在我们 Pod-1 跑,别重复跑** |
 
 (旧 `xz_a_7b8b_remainder.sh` / `xz_d_mllm_ensemble.sh` 已拆分作废,别跑。)
 
