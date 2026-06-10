@@ -60,7 +60,11 @@ HF 账号:`q1716523669`(private token 上传)。本地:`*/work_dirs/.../best_mod
 | Llama-3.1-8B Intuitor | HF `llama31-8b-selfcertainty-math345-eb128` | 1e-6 | ✅ |
 | Llama-3.1-8B TTRL / RENT | — | — | ❌ |
 | **7B heter (co-learn,核心)** | **local** `cogrpo_heter__qwen25_7b__llama31_8b__math345_full_lr3e-6`(0604_144654)A/B | **3e-6 ⚠️** | 100/130 | ✅ **local,未传 HF**;⚠️ **lr3e-6 ≠ 7B 单基线 lr1e-6,confound** |
-| 7B homo / CR-II / 数据解耦 | — | — | ❌ |
+| 7B homo (Qwen×Qwen) | HF `cogrpo-homo-qwen25-7b-math345-group{A,B}`(local 0607)| 3e-6 | ✅(2026-06-10 评测中)|
+| **8B homo (Llama×Llama)** | **local** `cogrpo_homo__llama31_8b__math345_full_lr3e-6_e2_20260609_170200` A/B | 3e-6 | ✅ **local,未传HF**;A=step100 健康 / B=step10 早停留意;`xz_h_homo8b_llama.sh` 评 |
+| 7B CR-II / 数据解耦 | HF `qwen25-7b-crii-math345-lr3e-6` / `qwen25-7b-decoupled-*-lr3e-6` | 3e-6 | ✅(已评)|
+
+> **🟢 2026-06-10 勘误(推翻本节 lr1e-6 / ❌ 标注)**:7B/8B 单基线**已统一重跑 lr3e-6**(`llm_single.sh` 第 64 行写死 `--learning_rate 3e-6`,trainer_state 实测佐证),评测用的是带 `-lr3e-6` 后缀的重跑版;旧 lr1e-6 仓库弃用不评。**→ lr confound 已消除,7B/8B 全表 lr3e-6 一致,heter vs 基线对比公平。** Llama-8B TTRL/RENT 也已补(`llama31-8b-unmaj/entropy-math345-eb128`,3e-6)。
 
 ## 第二部分 CoMAS(Qwen2.5-3B-**it** × Llama-3.2-3B-it,blended)— heter 已训完 ✅
 | 方法 | ckpt | lr | best-step | 状态 |
