@@ -70,14 +70,16 @@
 
 ## 4. Experimental Setup
 
-**4.1 Models.**
-| 档 | 模型(heter 对) | 状态 |
+**4.1 Models.** 两个模态各覆盖**小档 + 大档两个量级**,每档跨 family 配对(异质解耦的核心)。
+| 档 | 模型(heter 对 / 家族) | 状态 |
 |---|---|---|
 | LLM 3B | Qwen2.5-3B(base) × Llama-3.2-3B-Instruct | ✅ 有结果 |
-| LLM 7B | **Qwen2.5-7B(base)** × Llama-3.1-8B-Instruct | ⏳ 训练中 |
-| MLLM 3B | **Qwen2.5-VL-3B × InternVL3.5-2B**(N=2,主表) | ✅ 完整训练+4-bench eval 完成 (2026-06-09) |
-| MLLM N=3 | + Gemma-3-4b-it | ☐ 待定(N=3 本轮可不做) |
+| LLM 7B/8B | **Qwen2.5-7B(base)** × Llama-3.1-8B-Instruct | ✅ 主体有结果 |
+| MLLM 小档 | **Qwen2.5-VL-3B × InternVL3.5-2B × Gemma-3-4B**(三家族,N=2 配对) | ✅ 完整训练 + 4-bench eval 完成 |
+| MLLM 大档 (scale) | **Qwen2.5-VL-7B × InternVL3.5-8B × Gemma-3-12B**(三家族,N=2 配对,open_r1) | 🏃 脚本就绪 + 1-step smoke 验证;正式训练 in progress |
 | CoMAS 对比 | **Qwen2.5-3B-Instruct × Llama-3.2-3B-Instruct** | 对齐 CoMAS 论文(Qwen2.5-3B-it),与主表 base 是不同模型 |
+
+> **MLLM 大档(scale 轴,验证方法在更大模型上不退化)**:把三家族各升一档(VL-7B / Intern-8B / Gemma-12B;Gemma 无 8B,12B 是最接近的同量级)。训练 recipe 与小档**逐项对齐**(只换模型),保证"小档结论 → 大档"是干净的 scale 外推。每个 family 出 GT / TTRL / co-learn 三条,co-learn 覆盖三个跨家族配对。
 
 > **gemma3(今日定)**:smoke 测的是"gemma3-4b 文本数学 **GT-GRPO 能不能涨 accuracy**"——**不能**:base MATH-500 已 0.748(gemma-3-4b-it 数学饱和),GT 训 5 步 reward 平/噪声无上升 → **gemma3 退出 LLM 线**。(附带:之前"只降不增"是 `sequence_mask` 的 IS-ratio bug,`token_truncate` 机制上能修到 IS≈1.0、梯度健康,但饱和 base 仍无增益——作 Appendix footnote。)gemma3 **仅留 MLLM 线**(视觉端 GT 0.395→0.454 可用)。
 > **Qwen3-1.7B-Base 已弃**(训练不成功)。→ LLM 线不再有"第三模型 / N=3",就是 **3B 对 + 7B 对**两组 Qwen×Llama,各自跑全 baseline + co-reward。
@@ -126,6 +128,14 @@
   - 杀手锏:**co-learn-single ≥ unmaj-ensemble**(单个 co-trained 模型 ≥ 两个自训模型拼)→ co-train 把对方知识**内化**进单模型,test 时省一半还不输。
 - **Budget 账**:co-learn-single = 训练 2× / test 1×;unmaj-ensemble = 训练 2× / test 2×。→ co-learn-single 若 ≥,训练同价、test 更省。
 
+**4.6 训练协议(实现设计,所有方法共享).**
+- **RL 算法**:GRPO(group-relative,组内 reward 标准化),per-prompt 多采样;reward = 规则可验证正确性(无 LLM judge、无 reward model)。GT / TTRL / Intuitor / RENT / CR-II / co-learn / 数据解耦**只在"标签/奖励来源"上不同**,优化器、采样、batch 全部 hold(干净 attribution)。
+- **微调规模**:**全参数微调**(非 LoRA),ZeRO-3 分片;大档(7B/8B/12B)额外开 **optimizer CPU offload** 以在同样 GPU 预算下容纳全参状态。
+- **Rollout 引擎**:vLLM **colocate**(训练/采样同卡),配 **token 级 importance-sampling 校正**——修正 vLLM kernel 与训练框架间的 per-token logp 漂移,否则该漂移会沿序列连乘、把 IS 乘子压到 ~1e-5 致梯度塌(对 Gemma 尤其关键;校正后 IS≈1.0)。
+- **异质 co-learn 实现**:两个模型各占一组不相交 GPU,**文件 rendezvous** 每步交换各自多数票伪标签;两侧独立优化、互为对方提供训练信号。
+- **Attention 后端**:Qwen-VL / InternVL 用 FlashAttention-2,Gemma 用 SDPA(head_dim 约束)。
+- **公平对照**:`num_generations`、`max_completion_length`、**有效 batch (EB)** 在 GT/TTRL/co-learn 三者间**完全一致**;eval 一律 greedy、固定 prompt 口径。
+
 ---
 
 ## 5. Results
@@ -166,7 +176,77 @@
 
 > **SC-ensemble = 两个 unmaj(各自自训)模型 test-time 投票**;公平性设置见 §4.5。
 
-**读法**:Qwen 侧 heter 在 GSM8K/MATH/AIME **≥ 监督 GT**(无真标签)、**> RENT**、**> 同族 homo** → 起作用的是**异质性**而非"两个模型";AMC 唯一回退(limitation)。Llama 侧 heter MATH 0.440→0.544(+0.10)。数据解耦轴(rephrased)预期 **Llama SOTA、Qwen ≈ heter**(待 eval)。
+**(c) Full-13 generalization 主表**(MATH345 训练,best-by-val,**single-sample** %;非数学=泛化套件)。加粗 = ours(heter / decoupled / homo)。源 = `projects/eval/results_tables/{qwen2.5-3b,qwen2.5-7b,llama3.2-3b,llama3.1-8b}.csv` + `llm_main_MASTER.csv`(94% 填满,2026-06-11)。
+
+**Qwen2.5-3B**
+
+| method | GSM8K | MATH500 | AMC | AIME | HEval | GPQA | MBPP | LCB | CRUX | SciB | MMLU | MMLUp | IFEval |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| base | 73.4 | 56.6 | 28.9 | 6.7 | 39.0 | 21.2 | 52.2 | 13.7 | 5.8 | 23.1 | 65.1 | 33.8 | 24.0 |
+| GT | 76.2 | 64.6 | 36.1 | 6.7 | 65.2 | 20.7 | 54.4 | — | 43.2 | 27.7 | 65.2 | 36.3 | 24.2 |
+| TTRL | 80.4 | 66.4 | 31.3 | 3.3 | 63.4 | 22.2 | 51.8 | — | 42.8 | 30.7 | 65.0 | 34.2 | 27.4 |
+| RENT | 75.6 | 62.8 | 31.3 | 0.0 | 59.2 | 18.2 | 52.4 | — | 38.2 | 26.7 | 65.1 | 33.8 | 27.0 |
+| Intuitor | 74.9 | 64.2 | 26.5 | 3.3 | 59.8 | 27.3 | 50.4 | — | 41.5 | 30.5 | 65.0 | 35.1 | 26.2 |
+| CR-II | 75.5 | 63.4 | 30.1 | 6.7 | 61.0 | 24.8 | 53.2 | — | 32.5 | 27.9 | 65.1 | 34.7 | 27.2 |
+| **decoupled** | 81.0 | 66.6 | 36.1 | 10.0 | 62.8 | 25.8 | 55.6 | — | 40.0 | 26.9 | 65.0 | 34.9 | 30.7 |
+| **homo** | 78.5 | 66.0 | 37.4 | 13.3 | 65.8 | 22.2 | 56.0 | 15.2 | 44.9 | 30.3 | 65.1 | 37.3 | 24.0 |
+| **heter** | 80.1 | 66.8 | 33.7 | 3.3 | 64.0 | 22.7 | 56.8 | 15.2 | 42.6 | 29.3 | 65.2 | 36.7 | 26.8 |
+
+**Qwen2.5-7B**
+
+| method | GSM8K | MATH500 | AMC | AIME | HEval | GPQA | MBPP | LCB | CRUX | SciB | MMLU | MMLUp | IFEval |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| base | 82.9 | 70.0 | 39.8 | 3.3 | 47.6 | 18.7 | 62.8 | 21.1 | 48.9 | 26.5 | 71.8 | 44.9 | 32.0 |
+| GT | 78.3 | 77.6 | 49.4 | 13.3 | 56.1 | 23.7 | 64.4 | 25.5 | 57.5 | 40.7 | 71.9 | 23.5 | 33.6 |
+| TTRL | 80.6 | 74.8 | 39.8 | 13.3 | 51.8 | 25.8 | 65.4 | 23.9 | 56.6 | 39.7 | 71.9 | 40.8 | 33.1 |
+| RENT | 78.8 | 75.4 | 47.0 | 13.3 | 50.6 | 29.8 | 61.6 | 26.2 | 53.9 | 39.5 | 71.8 | 43.8 | 32.5 |
+| Intuitor | 82.9 | 75.4 | 41.0 | 13.3 | 51.8 | 28.3 | 64.0 | 24.8 | 53.8 | 39.9 | 71.7 | 44.6 | 33.6 |
+| CR-II | 81.9 | 72.6 | 43.4 | 13.3 | 52.4 | 26.8 | 64.0 | — | 55.9 | 41.7 | 72.2 | 40.9 | 35.7 |
+| **decoupled** | 80.2 | 74.4 | 38.6 | 3.3 | 54.3 | 37.9 | 63.2 | 26.6 | 56.5 | 40.9 | 71.7 | 33.5 | 34.2 |
+| **homo** | 78.9 | 74.6 | 41.0 | 10.0 | 52.4 | 25.8 | 61.8 | 25.0 | 56.6 | 40.5 | 72.0 | 36.6 | 32.0 |
+| **heter** | 81.3 | 75.2 | 44.6 | 13.3 | 52.4 | 26.3 | 65.6 | 26.5 | 58.2 | 40.3 | 72.0 | 41.0 | 35.3 |
+
+**Llama-3.2-3B**
+
+| method | GSM8K | MATH500 | AMC | AIME | HEval | GPQA | MBPP | LCB | CRUX | SciB | MMLU | MMLUp | IFEval |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| base | 73.6 | 43.8 | 18.1 | 3.3 | 51.2 | 21.2 | 50.8 | 12.0 | 25.4 | 15.6 | 58.1 | 35.2 | 68.4 |
+| GT | 78.8 | 53.8 | 25.3 | 6.7 | 60.4 | 20.7 | 50.2 | — | 30.5 | 21.2 | 59.2 | 37.9 | 66.7 |
+| TTRL | 77.9 | 50.2 | 26.5 | 6.7 | 59.2 | 24.8 | 51.2 | — | 28.4 | 17.0 | 58.3 | 36.0 | 68.2 |
+| RENT | 75.4 | 45.2 | 12.0 | 0.0 | 59.2 | 17.7 | 49.4 | — | 26.2 | 16.0 | 59.1 | 34.7 | 65.8 |
+| Intuitor | 75.8 | 40.8 | 21.7 | 6.7 | 54.3 | 12.6 | 51.4 | — | 26.8 | 16.6 | 58.1 | 35.5 | 69.1 |
+| CR-II | 75.4 | 53.4 | 24.1 | 13.3 | 54.9 | 23.7 | 49.2 | 12.1 | 29.4 | 17.6 | 57.6 | 36.4 | 68.6 |
+| **decoupled** | 78.4 | 55.2 | 30.1 | 10.0 | 59.2 | 22.2 | 50.4 | — | 26.4 | 19.0 | 57.7 | 35.1 | 67.3 |
+| **homo** | 78.4 | 52.4 | 26.5 | 16.7 | 57.9 | 21.7 | 49.6 | — | 30.1 | 20.8 | 57.0 | 36.7 | 68.0 |
+| **heter** | 80.5 | 56.2 | 27.7 | 6.7 | 59.2 | 21.2 | 50.4 | 11.0 | 25.5 | 20.4 | 56.8 | 36.1 | 67.7 |
+
+**Llama-3.1-8B**
+
+| method | GSM8K | MATH500 | AMC | AIME | HEval | GPQA | MBPP | LCB | CRUX | SciB | MMLU | MMLUp | IFEval |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| base | 82.9 | 49.6 | 18.1 | 3.3 | 65.2 | 22.2 | 58.4 | — | 41.6 | 24.6 | 63.0 | 43.9 | 73.8 |
+| GT | 82.7 | 53.2 | 25.3 | 6.7 | 64.0 | 30.3 | 59.2 | 15.2 | 44.5 | 29.7 | 62.3 | 48.1 | 71.0 |
+| TTRL | 83.9 | 51.0 | 27.7 | 10.0 | 64.6 | 21.2 | 58.2 | 16.3 | 47.9 | 23.8 | 62.9 | 46.3 | 71.9 |
+| RENT | 79.5 | 48.2 | 21.7 | 10.0 | 67.7 | 19.7 | 60.0 | 16.0 | 40.6 | 22.0 | 65.0 | 45.8 | 74.3 |
+| Intuitor | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| CR-II | 84.7 | 52.0 | 24.1 | 10.0 | 67.1 | 22.2 | 59.8 | 16.5 | 45.1 | 29.7 | 51.1 | 50.0 | 66.2 |
+| **heter** | 83.6 | 54.8 | 27.7 | 6.7 | 67.7 | 18.2 | 57.6 | 17.7 | 49.1 | 28.9 | 57.7 | 49.7 | 64.9 |
+| **decoupled** (rephrL)¹ | 85.4 | 55.6 | 26.5 | 6.7 | 64.6 | 27.3 | 57.2 | 17.1 | 51.6 | 24.9 | 65.6 | 47.4 | 72.8 |
+| **homo**² | — | — | — | — | — | — | — | — | — | — | — | — | — |
+
+> ¹ Llama-8B decoupled(rephrL,改写 Llama 那侧)数来自 `night_xza/xza.csv`,**待并入 csv**。² homo-8B(Llama×Llama)ckpt 已训(`work_dirs/co-grpo-dp/cogrpo_homo__llama31_8b_*`),**待 eval**。Intuitor-8B ckpt 训崩(eval 全 0),需重训。
+> **缺口**:LCB(多数方法慢任务未跑)、Llama-8B Intuitor(坏)/homo(待 eval)。94% 填满。
+
+> **读法(诚实,full-13 single-sample)**:
+> 1. **heter ≥ 全部自监督 baseline**(math4:3/4 模型,7B 与 RENT 并列);**heter ≥ 监督 GT 在 3/4 模型**(Q3 持平 / L3·L8 反超 / 7B 略低)→ **label-free 追平/反超监督**,是最强卖点。
+> 2. **decoupled(rephrase)数学稳**:Qwen-3B 48.4、Llama-3B 43.4 均 > GT。
+> 3. ⚠️ **"异质 > 同族(heter > homo)"单样本下不成立**:homo 在 Qwen-3B / Llama-3B 上 ≥ heter(被 AMC/AIME 高方差拉)。**异质性的优势需 maj@K / ≥3 seeds 降噪才显**(放 §5.x ensemble),主表别写"异质碾压同族"。
+> 4. 非数学:heter 赢 code(HumanEval/MBPP)+ MMLU-Pro,GPQA/SciBench/IFEval 略输不同 baseline → "不牺牲泛化",非 headline。
+
+
+> **SC-ensemble = 两个 unmaj(各自自训)模型 test-time 投票**;公平性设置见 §4.5。
+
+**读法(诚实,2026-06-11 更新)**:① heter 在 GSM8K/MATH **≥ 监督 GT**(无真标签)、**≥ 全部自监督**(TTRL/RENT/Intuitor/CR-II)——label-free 追平/反超监督是主卖点。② ⚠️ **"heter > 同族 homo"在单样本 math4 下不稳**:homo 在 Qwen-3B / Llama-3B 上 ≥ heter(AMC/AIME 高方差),**异质性的优势要靠 maj@K / ≥3 seeds 降噪才显**——**主表勿写"异质碾压同族"**。③ 数据解耦(rephrased)数学稳:Llama-3B MATH-500 0.552 > GT。完整 13-bench single-sample 见 (c)。
 **7B 对**(Qwen2.5-7B base × Llama-3.1-8B-it):训练中,出数后补 (c)(d) 两张同结构表。
 
 ### 5.2 MLLM Main Table — 视觉端模型解耦  [✅ open_r1 + mmr1 全表完成(含 Gemma 第三家族),best-by-val,2026-06-11]
@@ -248,8 +328,10 @@
 | MAPoRL | 85.80 | 55.40 | 75.61 | 57.00 | 39.08 | 31.47 | 63.20 |
 | TTRL | 88.20 | 56.80 | 73.78 | 59.00 | 38.48 | 27.23 | 63.80 |
 | CoMAS | 87.20 | 55.80 | 77.44 | 59.20 | 37.68 | 29.69 | 65.60 |
-| **Ours — heter (maj@K)** | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
+| **Ours — heter (single-sample†)** | 76.27 | 67.40 | 71.95 | 56.60 | 31.26 | 32.83 | 64.54 |
+| Ours — heter (maj@K, 对齐口径) | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ |
 
+> † single-sample lm-eval(口径 ≠ CoMAS 的 **maj@K self-consistency**,数会偏低,**不可直接和上面竞品比**);maj@K 行待补。注:此处 HumanEval **71.95** 正常(印证 §5.1 那个 40.85 是 grader bug)。源 = `night_xze/xze.csv`(`comas-heter-qwen2.5-3b-instruct`)。
 > heter(Qwen×Llama)在他们是 appendix/Fig.5(仅均值 Δ +2.78%),主表没有 → 不碰 appendix。
 
 **定位(headline = "把它做到 SOTA",不是"发现异质性"):**
