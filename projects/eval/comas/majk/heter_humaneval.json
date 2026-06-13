@@ -1,0 +1,1000 @@
+{
+  "dataset": "HumanEval",
+  "model": "q1716523669/comas-heter-qwen2.5-3b-instruct",
+  "k": 5,
+  "n": 164,
+  "acc_majk": 0.7195,
+  "acc_single_1samp": 0.6768,
+  "extract_rate": 1.0,
+  "vote_source": {
+    "exec/testinput": 88,
+    "exec/doctest": 72,
+    "ast": 4
+  },
+  "results": [
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": false,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 6,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 6,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "ast",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 6,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "ast",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "ast",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "ast",
+      "n_probes": 0,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 6,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 6,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 5,
+      "majk": false,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 1,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 7,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 2,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 6,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 3,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "exec",
+      "n_probes": 8,
+      "majk": false,
+      "single": false
+    }
+  ]
+}

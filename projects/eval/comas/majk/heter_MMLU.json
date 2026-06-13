@@ -1,0 +1,9 @@
+{
+  "dataset": "MMLU",
+  "model": "q1716523669/comas-heter-qwen2.5-3b-instruct",
+  "k": 5,
+  "n": 500,
+  "acc_majk": 0.658,
+  "acc_single_1samp": 0.63,
+  "extract_rate": 0.998
+}

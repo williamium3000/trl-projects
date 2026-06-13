@@ -1,0 +1,9 @@
+{
+  "dataset": "GSM8K",
+  "model": "q1716523669/comas-heter-qwen2.5-3b-instruct",
+  "k": 5,
+  "n": 500,
+  "acc_majk": 0.874,
+  "acc_single_1samp": 0.83,
+  "extract_rate": 1.0
+}

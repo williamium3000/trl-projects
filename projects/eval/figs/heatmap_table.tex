@@ -1,0 +1,63 @@
+\begin{table*}[t]\centering\footnotesize
+\setlength{\tabcolsep}{4.2pt}\renewcommand{\arraystretch}{1.12}
+\definecolor{heat}{RGB}{33,102,172}
+\begin{tabular}{lcccccccccccc}
+\toprule
+Method & GSM8K & MATH500 & AMC & AIME & HEval & GPQA & MBPP & LCB & CRUX & SciB & MMLU & MMLUp \\
+\midrule
+\multicolumn{13}{c}{\textit{Qwen2.5-3B}}\\
+\midrule
+Before RL & 73.4 & 56.6 & 28.9 & 6.7 & 39.0 & 21.2 & 52.2 & 13.7 & 5.8 & 23.1 & 65.1 & 33.8 \\
+\hspace{1em}-- GT-Reward & 76.2 & 64.6 & 36.1 & 6.7 & 65.2 & 20.7 & 54.4 & 14.5 & 43.2 & 27.7 & 65.2 & 36.3 \\
+\cmidrule(lr){1-13}
+TTRL & \cellcolor{heat!53}80.4 & \cellcolor{heat!53}66.4 & \cellcolor{heat!29}31.3 & \cellcolor{heat!19}3.3 & \cellcolor{heat!39}63.4 & \cellcolor{heat!29}22.2 & \cellcolor{heat!17}51.8 & \cellcolor{heat!47}15.9 & \cellcolor{heat!49}42.8 & \cellcolor{heat!58}30.7 & \cellcolor{heat!12}65.0 & \cellcolor{heat!12}34.2 \\
+Intuitor & \cellcolor{heat!6}74.9 & \cellcolor{heat!24}64.2 & \cellcolor{heat!6}26.5 & \cellcolor{heat!19}3.3 & \cellcolor{heat!11}59.8 & \cellcolor{heat!58}27.3 & \cellcolor{heat!6}50.4 & \cellcolor{heat!51}16.4 & \cellcolor{heat!44}41.5 & \cellcolor{heat!55}30.5 & \cellcolor{heat!6}65.0 & \cellcolor{heat!26}35.1 \\
+RENT & \cellcolor{heat!12}75.6 & \cellcolor{heat!6}62.8 & \cellcolor{heat!29}31.3 & \cellcolor{heat!6}0.0 & \cellcolor{heat!6}59.2 & \cellcolor{heat!6}18.2 & \cellcolor{heat!22}52.4 & \cellcolor{heat!35}14.5 & \cellcolor{heat!30}38.2 & \cellcolor{heat!6}26.7 & \cellcolor{heat!21}65.1 & \cellcolor{heat!6}33.8 \\
+Co-rewarding-II & \cellcolor{heat!11}75.5 & \cellcolor{heat!14}63.4 & \cellcolor{heat!23}30.1 & \cellcolor{heat!32}6.7 & \cellcolor{heat!20}61.0 & \cellcolor{heat!44}24.8 & \cellcolor{heat!29}53.2 & \cellcolor{heat!6}11.0 & \cellcolor{heat!6}32.5 & \cellcolor{heat!22}27.9 & \cellcolor{heat!35}65.1 & \cellcolor{heat!20}34.7 \\
+\textbf{Data-decoupled \emph{(ours)}} & \cellcolor{heat!58}81.0 & \cellcolor{heat!55}66.6 & \cellcolor{heat!52}36.1 & \cellcolor{heat!45}10.0 & \cellcolor{heat!34}62.8 & \cellcolor{heat!49}25.8 & \cellcolor{heat!48}55.6 & \cellcolor{heat!58}17.2 & \cellcolor{heat!38}40.0 & \cellcolor{heat!9}26.9 & \cellcolor{heat!14}65.0 & \cellcolor{heat!23}34.9 \\
+\textbf{Homo co-learn \emph{(ours)}} & \cellcolor{heat!37}78.5 & \cellcolor{heat!48}66.0 & \cellcolor{heat!58}37.4 & \cellcolor{heat!58}13.3 & \cellcolor{heat!58}65.8 & \cellcolor{heat!29}22.2 & \cellcolor{heat!52}56.0 & \cellcolor{heat!41}15.2 & \cellcolor{heat!58}44.9 & \cellcolor{heat!53}30.3 & \cellcolor{heat!21}65.1 & \cellcolor{heat!58}37.3 \\
+\textbf{Cross-family \emph{(ours)}} & \cellcolor{heat!50}80.1 & \cellcolor{heat!58}66.8 & \cellcolor{heat!41}33.7 & \cellcolor{heat!19}3.3 & \cellcolor{heat!44}64.0 & \cellcolor{heat!32}22.7 & \cellcolor{heat!58}56.8 & \cellcolor{heat!41}15.2 & \cellcolor{heat!49}42.6 & \cellcolor{heat!40}29.3 & \cellcolor{heat!58}65.2 & \cellcolor{heat!50}36.7 \\
+\midrule
+\multicolumn{13}{c}{\textit{Qwen2.5-7B}}\\
+\midrule
+Before RL & 82.9 & 70.0 & 39.8 & 3.3 & 47.6 & 18.7 & 62.8 & 21.1 & 48.9 & 26.5 & 71.8 & 44.9 \\
+\hspace{1em}-- GT-Reward & 78.3 & 77.6 & 49.4 & 13.3 & 56.1 & 23.7 & 64.4 & 25.5 & 57.5 & 40.7 & 71.9 & 23.5 \\
+\cmidrule(lr){1-13}
+TTRL & \cellcolor{heat!28}80.6 & \cellcolor{heat!47}74.8 & \cellcolor{heat!13}39.8 & \cellcolor{heat!58}13.3 & \cellcolor{heat!23}51.8 & \cellcolor{heat!6}25.8 & \cellcolor{heat!55}65.4 & \cellcolor{heat!6}23.9 & \cellcolor{heat!39}56.6 & \cellcolor{heat!11}39.7 & \cellcolor{heat!28}71.9 & \cellcolor{heat!40}40.8 \\
+Intuitor & \cellcolor{heat!58}82.9 & \cellcolor{heat!58}75.4 & \cellcolor{heat!21}41.0 & \cellcolor{heat!58}13.3 & \cellcolor{heat!23}51.8 & \cellcolor{heat!17}28.3 & \cellcolor{heat!37}64.0 & \cellcolor{heat!24}24.8 & \cellcolor{heat!6}53.8 & \cellcolor{heat!15}39.9 & \cellcolor{heat!6}71.7 & \cellcolor{heat!58}44.6 \\
+RENT & \cellcolor{heat!6}78.8 & \cellcolor{heat!58}75.4 & \cellcolor{heat!58}47.0 & \cellcolor{heat!58}13.3 & \cellcolor{heat!6}50.6 & \cellcolor{heat!23}29.8 & \cellcolor{heat!6}61.6 & \cellcolor{heat!49}26.2 & \cellcolor{heat!7}53.9 & \cellcolor{heat!6}39.5 & \cellcolor{heat!16}71.8 & \cellcolor{heat!54}43.8 \\
+Co-rewarding-II & \cellcolor{heat!45}81.9 & \cellcolor{heat!6}72.6 & \cellcolor{heat!36}43.4 & \cellcolor{heat!58}13.3 & \cellcolor{heat!32}52.4 & \cellcolor{heat!10}26.8 & \cellcolor{heat!37}64.0 & \cellcolor{heat!44}25.9 & \cellcolor{heat!30}55.9 & \cellcolor{heat!58}41.7 & \cellcolor{heat!58}72.2 & \cellcolor{heat!41}40.9 \\
+\textbf{Data-decoupled \emph{(ours)}} & \cellcolor{heat!23}80.2 & \cellcolor{heat!39}74.4 & \cellcolor{heat!6}38.6 & \cellcolor{heat!6}3.3 & \cellcolor{heat!58}54.3 & \cellcolor{heat!58}37.9 & \cellcolor{heat!27}63.2 & \cellcolor{heat!58}26.6 & \cellcolor{heat!38}56.5 & \cellcolor{heat!39}40.9 & \cellcolor{heat!6}71.7 & \cellcolor{heat!6}33.5 \\
+\textbf{Homo co-learn \emph{(ours)}} & \cellcolor{heat!7}78.9 & \cellcolor{heat!43}74.6 & \cellcolor{heat!21}41.0 & \cellcolor{heat!41}10.0 & \cellcolor{heat!32}52.4 & \cellcolor{heat!6}25.8 & \cellcolor{heat!9}61.8 & \cellcolor{heat!27}25.0 & \cellcolor{heat!39}56.6 & \cellcolor{heat!30}40.5 & \cellcolor{heat!33}72.0 & \cellcolor{heat!21}36.6 \\
+\textbf{Cross-family \emph{(ours)}} & \cellcolor{heat!38}81.3 & \cellcolor{heat!54}75.2 & \cellcolor{heat!43}44.6 & \cellcolor{heat!58}13.3 & \cellcolor{heat!32}52.4 & \cellcolor{heat!8}26.3 & \cellcolor{heat!58}65.6 & \cellcolor{heat!56}26.5 & \cellcolor{heat!58}58.2 & \cellcolor{heat!25}40.3 & \cellcolor{heat!39}72.0 & \cellcolor{heat!41}41.0 \\
+\midrule
+\multicolumn{13}{c}{\textit{Llama-3.2-3B}}\\
+\midrule
+Before RL & 73.6 & 43.8 & 18.1 & 3.3 & 51.2 & 21.2 & 50.8 & 12.0 & 25.4 & 15.6 & 58.1 & 35.2 \\
+\hspace{1em}-- GT-Reward & 78.8 & 53.8 & 25.3 & 6.7 & 60.4 & 20.7 & 50.2 & 12.1 & 30.5 & 21.2 & 59.2 & 37.9 \\
+\cmidrule(lr){1-13}
+TTRL & \cellcolor{heat!32}77.9 & \cellcolor{heat!38}50.2 & \cellcolor{heat!48}26.5 & \cellcolor{heat!27}6.7 & \cellcolor{heat!58}59.2 & \cellcolor{heat!58}24.8 & \cellcolor{heat!53}51.2 & \cellcolor{heat!44}12.0 & \cellcolor{heat!38}28.4 & \cellcolor{heat!17}17.0 & \cellcolor{heat!39}58.3 & \cellcolor{heat!39}36.0 \\
+Intuitor & \cellcolor{heat!11}75.8 & \cellcolor{heat!6}40.8 & \cellcolor{heat!34}21.7 & \cellcolor{heat!27}6.7 & \cellcolor{heat!6}54.3 & \cellcolor{heat!6}12.6 & \cellcolor{heat!58}51.4 & \cellcolor{heat!44}12.0 & \cellcolor{heat!20}26.8 & \cellcolor{heat!12}16.6 & \cellcolor{heat!36}58.1 & \cellcolor{heat!26}35.5 \\
+RENT & \cellcolor{heat!7}75.4 & \cellcolor{heat!21}45.2 & \cellcolor{heat!6}12.0 & \cellcolor{heat!6}0.0 & \cellcolor{heat!58}59.2 & \cellcolor{heat!28}17.7 & \cellcolor{heat!11}49.4 & \cellcolor{heat!23}11.5 & \cellcolor{heat!14}26.2 & \cellcolor{heat!6}16.0 & \cellcolor{heat!58}59.1 & \cellcolor{heat!6}34.7 \\
+Co-rewarding-II & \cellcolor{heat!6}75.4 & \cellcolor{heat!49}53.4 & \cellcolor{heat!41}24.1 & \cellcolor{heat!48}13.3 & \cellcolor{heat!12}54.9 & \cellcolor{heat!54}23.7 & \cellcolor{heat!6}49.2 & \cellcolor{heat!47}12.1 & \cellcolor{heat!50}29.4 & \cellcolor{heat!23}17.6 & \cellcolor{heat!23}57.6 & \cellcolor{heat!48}36.4 \\
+\textbf{Data-decoupled \emph{(ours)}} & \cellcolor{heat!37}78.4 & \cellcolor{heat!55}55.2 & \cellcolor{heat!58}30.1 & \cellcolor{heat!37}10.0 & \cellcolor{heat!58}59.2 & \cellcolor{heat!47}22.2 & \cellcolor{heat!34}50.4 & \cellcolor{heat!44}12.0 & \cellcolor{heat!16}26.4 & \cellcolor{heat!39}19.0 & \cellcolor{heat!27}57.7 & \cellcolor{heat!16}35.1 \\
+\textbf{Homo co-learn \emph{(ours)}} & \cellcolor{heat!37}78.4 & \cellcolor{heat!45}52.4 & \cellcolor{heat!48}26.5 & \cellcolor{heat!58}16.7 & \cellcolor{heat!45}57.9 & \cellcolor{heat!45}21.7 & \cellcolor{heat!15}49.6 & \cellcolor{heat!58}12.4 & \cellcolor{heat!58}30.1 & \cellcolor{heat!58}20.8 & \cellcolor{heat!10}57.0 & \cellcolor{heat!58}36.7 \\
+\textbf{Cross-family \emph{(ours)}} & \cellcolor{heat!58}80.5 & \cellcolor{heat!58}56.2 & \cellcolor{heat!51}27.7 & \cellcolor{heat!27}6.7 & \cellcolor{heat!58}59.2 & \cellcolor{heat!43}21.2 & \cellcolor{heat!34}50.4 & \cellcolor{heat!6}11.0 & \cellcolor{heat!6}25.5 & \cellcolor{heat!54}20.4 & \cellcolor{heat!6}56.8 & \cellcolor{heat!42}36.1 \\
+\midrule
+\multicolumn{13}{c}{\textit{Llama-3.1-8B}}\\
+\midrule
+Before RL & 82.9 & 49.6 & 18.1 & 3.3 & 65.2 & 22.2 & 58.4 & 16.8 & 41.6 & 24.6 & 63.0 & 43.9 \\
+\hspace{1em}-- GT-Reward & 82.7 & 53.2 & 25.3 & 6.7 & 64.0 & 30.3 & 59.2 & 15.2 & 44.5 & 29.7 & 62.3 & 48.1 \\
+\cmidrule(lr){1-13}
+TTRL & \cellcolor{heat!44}83.9 & \cellcolor{heat!34}51.0 & \cellcolor{heat!58}27.7 & \cellcolor{heat!58}10.0 & \cellcolor{heat!6}64.6 & \cellcolor{heat!23}21.2 & \cellcolor{heat!22}58.2 & \cellcolor{heat!19}16.3 & \cellcolor{heat!42}47.9 & \cellcolor{heat!22}23.8 & \cellcolor{heat!48}62.9 & \cellcolor{heat!13}46.3 \\
+Intuitor & \cellcolor{heat!8}79.7 & \cellcolor{heat!6}45.8 & \cellcolor{heat!6}21.7 & \cellcolor{heat!6}3.3 & \cellcolor{heat!23}65.8 & \cellcolor{heat!55}26.8 & \cellcolor{heat!19}58.0 & \cellcolor{heat!14}16.1 & \cellcolor{heat!6}39.2 & \cellcolor{heat!6}21.2 & \cellcolor{heat!55}64.9 & \cellcolor{heat!10}46.1 \\
+RENT & \cellcolor{heat!6}79.5 & \cellcolor{heat!19}48.2 & \cellcolor{heat!6}21.7 & \cellcolor{heat!58}10.0 & \cellcolor{heat!49}67.7 & \cellcolor{heat!15}19.7 & \cellcolor{heat!52}60.0 & \cellcolor{heat!11}16.0 & \cellcolor{heat!12}40.6 & \cellcolor{heat!11}22.0 & \cellcolor{heat!56}65.0 & \cellcolor{heat!6}45.8 \\
+Co-rewarding-II & \cellcolor{heat!51}84.7 & \cellcolor{heat!39}52.0 & \cellcolor{heat!27}24.1 & \cellcolor{heat!58}10.0 & \cellcolor{heat!41}67.1 & \cellcolor{heat!29}22.2 & \cellcolor{heat!48}59.8 & \cellcolor{heat!24}16.5 & \cellcolor{heat!31}45.1 & \cellcolor{heat!58}29.7 & \cellcolor{heat!6}51.1 & \cellcolor{heat!58}50.0 \\
+\textbf{Data-decoupled \emph{(ours)}} & \cellcolor{heat!57}85.4 & \cellcolor{heat!58}55.6 & \cellcolor{heat!48}26.5 & \cellcolor{heat!32}6.7 & \cellcolor{heat!6}64.6 & \cellcolor{heat!58}27.3 & \cellcolor{heat!6}57.2 & \cellcolor{heat!40}17.1 & \cellcolor{heat!58}51.6 & \cellcolor{heat!28}24.9 & \cellcolor{heat!58}65.6 & \cellcolor{heat!25}47.3 \\
+\textbf{Homo co-learn \emph{(ours)}} & \cellcolor{heat!58}85.4 & \cellcolor{heat!36}51.4 & \cellcolor{heat!16}22.9 & \cellcolor{heat!6}3.3 & \cellcolor{heat!58}68.3 & \cellcolor{heat!35}23.2 & \cellcolor{heat!58}60.4 & \cellcolor{heat!6}15.8 & \cellcolor{heat!41}47.6 & \cellcolor{heat!47}27.9 & \cellcolor{heat!48}62.8 & \cellcolor{heat!42}48.7 \\
+\textbf{Cross-family \emph{(ours)}} & \cellcolor{heat!42}83.6 & \cellcolor{heat!54}54.8 & \cellcolor{heat!58}27.7 & \cellcolor{heat!32}6.7 & \cellcolor{heat!49}67.7 & \cellcolor{heat!6}18.2 & \cellcolor{heat!12}57.6 & \cellcolor{heat!58}17.7 & \cellcolor{heat!48}49.1 & \cellcolor{heat!53}28.9 & \cellcolor{heat!30}57.7 & \cellcolor{heat!55}49.7 \\
+\bottomrule
+\end{tabular}
+\caption{Main results on the full benchmark suite (12 tasks; IFEval deferred to the appendix). Self-supervised rows are heat-shaded per column (darker = higher \emph{among self-supervised methods}); \textbf{bold} = ours. AMC/AIME use avg@8; the rest are single-sample.}
+\label{tab:main}
+\end{table*}

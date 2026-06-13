@@ -1,0 +1,8 @@
+# mmr1 gemma 主表 —— 部分结果(2026-06-13 deadline 时任务被杀,GPU 清空)
+# ttrl 已完整并入 MASTER (avg4=0.3868)。以下为续跑时可复用的部分 benchmark 数(0-1)。
+# 缺的 benchmark 标 NA;avg4 仅 4/4 完整时给出。续跑只需补 NA 列。
+dataset,model,method,tag,mathvision,mathverse,mathvista,wemath,avg4,status
+mmr1,gemma,base,mmr1_base_gemma,0.2145,0.3003,0.4630,NA,NA,3of4_need_wemath
+mmr1,gemma,gt,mmr1_gt_gemma,0.1855,0.2774,0.5190,NA,NA,3of4_need_wemath
+mmr1,gemma,ttrl,mmr1_ttrl_gemma,0.2204,0.3020,0.4720,0.5529,0.3868,COMPLETE_in_MASTER
+mmr1,gemma,colearn,mmr1_colearn_gemma,0.1493,NA,NA,NA,NA,1of4_need_3benches

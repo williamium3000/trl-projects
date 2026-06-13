@@ -1,0 +1,18 @@
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{5pt}\renewcommand{\arraystretch}{1.12}
+\definecolor{heat}{RGB}{33,102,172}
+\begin{tabular}{l ccccccc}
+\toprule
+Method & GSM8K & MATH-500 & HumanEval & MBPP & SciBench & GPQA & MMLU \\
+\midrule
+Untrained & 85.40 & 55.00 & 73.78 & 55.80 & 36.47 & 28.79 & 63.20 \\
+SRLM & \cellcolor{heat!19}86.40 & \cellcolor{heat!6}55.40 & \cellcolor{heat!35}75.00 & \cellcolor{heat!6}56.20 & \cellcolor{heat!6}36.67 & \cellcolor{heat!31}29.24 & \cellcolor{heat!46}65.20 \\
+MAPoRL & \cellcolor{heat!6}85.80 & \cellcolor{heat!6}55.40 & \cellcolor{heat!41}75.61 & \cellcolor{heat!10}57.00 & \cellcolor{heat!58}39.08 & \cellcolor{heat!58}31.47 & \cellcolor{heat!6}63.20 \\
+TTRL & \cellcolor{heat!58}88.20 & \cellcolor{heat!30}56.80 & \cellcolor{heat!23}73.78 & \cellcolor{heat!18}59.00 & \cellcolor{heat!45}38.48 & \cellcolor{heat!6}27.23 & \cellcolor{heat!18}63.80 \\
+CoMAS & \cellcolor{heat!36}87.20 & \cellcolor{heat!13}55.80 & \cellcolor{heat!58}77.44 & \cellcolor{heat!19}59.20 & \cellcolor{heat!28}37.68 & \cellcolor{heat!36}29.69 & \cellcolor{heat!54}65.60 \\
+\textbf{Cross-family (ours)} & \cellcolor{heat!41}87.40 & \cellcolor{heat!58}58.40 & \cellcolor{heat!6}71.95 & \cellcolor{heat!58}68.00 & \cellcolor{heat!10}36.87 & \cellcolor{heat!36}29.69 & \cellcolor{heat!58}65.80 \\
+\bottomrule
+\end{tabular}
+\caption{Comparison with multi-agent self-supervised methods (Qwen2.5-3B-Instruct, 2k prompts, $\mathrm{maj}@5$); competitor numbers from \citet{comas2025}. Rows are heat-shaded per column (darker = higher); ours uses two agents and no judge, matching or exceeding CoMAS on five of seven.}
+\label{tab:comas}
+\end{table}

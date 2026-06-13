@@ -1,0 +1,37 @@
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{5pt}\renewcommand{\arraystretch}{1.12}
+\definecolor{heat}{RGB}{33,102,172}
+\begin{tabular}{ll ccccc}
+\toprule
+Backbone & Method & MathVision & MathVerse & MathVista & We-Math & \textbf{Avg} \\
+\midrule
+\multicolumn{7}{c}{\textit{open\_r1}}\\
+\midrule
+\textbf{InternVL-3.5-2B} & Base & 15.82 & 21.83 & 42.60 & 47.36 & 31.90 \\
+ & GT-Reward & \cellcolor{heat!58}26.55 & \cellcolor{heat!58}35.33 & \cellcolor{heat!39}59.60 & \cellcolor{heat!6}59.31 & \cellcolor{heat!33}45.20 \\
+ & TTRL & \cellcolor{heat!6}26.05 & \cellcolor{heat!6}33.81 & \cellcolor{heat!58}60.00 & \cellcolor{heat!25}60.11 & \cellcolor{heat!6}44.99 \\
+ & \textbf{Co-learning} & \cellcolor{heat!27}26.25 & \cellcolor{heat!44}34.92 & \cellcolor{heat!6}58.90 & \cellcolor{heat!58}61.55 & \cellcolor{heat!58}45.40 \\
+\textbf{Qwen2.5-VL-3B} & Base & 21.91 & 25.30 & 39.90 & 39.48 & 31.65 \\
+ & GT-Reward & \cellcolor{heat!44}21.71 & \cellcolor{heat!58}31.29 & \cellcolor{heat!58}60.90 & \cellcolor{heat!6}57.99 & \cellcolor{heat!24}42.97 \\
+ & TTRL & \cellcolor{heat!6}21.09 & \cellcolor{heat!6}29.24 & \cellcolor{heat!6}57.60 & \cellcolor{heat!48}61.95 & \cellcolor{heat!6}42.47 \\
+ & \textbf{Co-learning} & \cellcolor{heat!58}21.94 & \cellcolor{heat!37}30.48 & \cellcolor{heat!47}60.20 & \cellcolor{heat!58}62.93 & \cellcolor{heat!58}43.89 \\
+\textbf{Gemma-3-4B} & Base & 16.22 & 21.75 & 31.20 & 50.69 & 29.96 \\
+ & GT-Reward & \cellcolor{heat!58}22.27 & \cellcolor{heat!58}30.41 & \cellcolor{heat!58}49.10 & \cellcolor{heat!25}57.18 & \cellcolor{heat!58}39.74 \\
+ & TTRL & \cellcolor{heat!55}22.20 & \cellcolor{heat!6}29.06 & \cellcolor{heat!6}46.80 & \cellcolor{heat!6}56.32 & \cellcolor{heat!6}38.60 \\
+ & \textbf{Co-learning} & \cellcolor{heat!6}20.89 & \cellcolor{heat!38}29.90 & \cellcolor{heat!26}47.70 & \cellcolor{heat!58}58.62 & \cellcolor{heat!37}39.28 \\
+\midrule
+\multicolumn{7}{c}{\textit{mmr1}}\\
+\midrule
+\textbf{Qwen2.5-VL-3B} & Base & 18.55 & 26.04 & 52.70 & 51.67 & 37.24 \\
+ & GT-Reward & \cellcolor{heat!33}19.57 & \cellcolor{heat!39}27.34 & \cellcolor{heat!58}59.40 & \cellcolor{heat!58}57.82 & \cellcolor{heat!57}41.03 \\
+ & TTRL & \cellcolor{heat!6}17.99 & \cellcolor{heat!6}24.72 & \cellcolor{heat!6}56.30 & \cellcolor{heat!6}52.87 & \cellcolor{heat!6}37.97 \\
+ & \textbf{Co-learning} & \cellcolor{heat!58}21.05 & \cellcolor{heat!58}28.91 & \cellcolor{heat!21}57.20 & \cellcolor{heat!53}57.30 & \cellcolor{heat!58}41.12 \\
+\textbf{InternVL-3.5-2B} & Base & 24.77 & 34.21 & 55.60 & 57.87 & 43.11 \\
+ & GT-Reward & \cellcolor{heat!6}25.99 & \cellcolor{heat!6}34.37 & \cellcolor{heat!58}59.00 & \cellcolor{heat!6}59.25 & \cellcolor{heat!6}44.65 \\
+ & TTRL & \cellcolor{heat!58}26.38 & \cellcolor{heat!58}35.36 & \cellcolor{heat!6}57.70 & \cellcolor{heat!58}61.78 & \cellcolor{heat!58}45.30 \\
+ & \textbf{Co-learning} & \cellcolor{heat!14}26.05 & \cellcolor{heat!29}34.80 & \cellcolor{heat!42}58.60 & \cellcolor{heat!45}61.15 & \cellcolor{heat!46}45.15 \\
+\bottomrule
+\end{tabular}
+\caption{Multimodal reasoning (mean accuracy). \textbf{Co-learning} is label-free; GT-Reward uses labels. GT/TTRL/Co rows are heat-shaded per column within each backbone (darker = higher). mmr1 uses the corrected MCQ grader.}
+\label{tab:mllm}
+\end{table}

@@ -1,0 +1,45 @@
+{
+  "dataset": "HumanEval",
+  "model": "q1716523669/comas-heter-qwen2.5-3b-instruct",
+  "k": 5,
+  "n": 5,
+  "acc_majk": 0.8,
+  "acc_single_1samp": 0.8,
+  "extract_rate": 1.0,
+  "vote_source": {
+    "ast": 4,
+    "exec": 1
+  },
+  "results": [
+    {
+      "how": "ast",
+      "n_probes": 0,
+      "majk": false,
+      "single": false
+    },
+    {
+      "how": "ast",
+      "n_probes": 0,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "ast",
+      "n_probes": 0,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "exec",
+      "n_probes": 4,
+      "majk": true,
+      "single": true
+    },
+    {
+      "how": "ast",
+      "n_probes": 0,
+      "majk": true,
+      "single": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+dataset,setting,models,mathvision,mathverse,mathvista,wemath,avg4
+open_r1,co_single_qwenvl,qwenvl,25.43,35.66,64.8,65.8,47.92
+open_r1,co_single_internvl,internvl,30.46,38.6,63.3,67.87,50.06
+open_r1,co_ensemble,qwenvl+internvl,28.95,38.48,67.0,69.08,50.88
+open_r1,self_single_qwenvl,qwenvl,23.36,32.03,63.1,64.89,45.84
+open_r1,self_single_internvl,internvl,30.3,37.08,63.5,66.9,49.45
+open_r1,self_ensemble,qwenvl+internvl,27.93,35.56,66.3,68.1,49.47
+mmr1,co_single_qwenvl,qwenvl,25.86,34.59,66.0,64.94,47.85
+mmr1,co_single_internvl,internvl,30.79,40.94,65.3,67.53,51.14
+mmr1,co_ensemble,qwenvl+internvl,30.49,39.75,69.4,69.54,52.30
+mmr1,self_single_qwenvl,qwenvl,17.27,30.71,63.4,60.57,42.99
+mmr1,self_single_internvl,internvl,28.78,39.47,63.7,66.9,49.71
+mmr1,self_ensemble,qwenvl+internvl,25.53,37.77,67.0,66.44,49.19

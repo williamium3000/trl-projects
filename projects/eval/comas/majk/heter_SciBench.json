@@ -1,0 +1,9 @@
+{
+  "dataset": "SciBench",
+  "model": "q1716523669/comas-heter-qwen2.5-3b-instruct",
+  "k": 5,
+  "n": 499,
+  "acc_majk": 0.3687,
+  "acc_single_1samp": 0.3387,
+  "extract_rate": 1.0
+}

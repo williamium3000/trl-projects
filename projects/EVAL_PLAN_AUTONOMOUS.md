@@ -2,6 +2,15 @@
 
 > 给我自己跨多轮跟踪用(防上下文丢)。任务:DECOUPLED 跑完 → 上传 ckpt → **自主 eval 所有论文主表需要的实验**,顺序从 8B×7B / CoMAS / Co-rewarding 开始。
 
+## ⚡ P0(用户最新指令,优先于 eval)— DECOUPLED 跑完先训 CR-II 7B
+DECOUPLED 跑完、GPU 空 → **先训 Co-rewarding-II 7B,Qwen 先、Llama 后,首先确保跑通**:
+1. 数据:`Co-rewarding/cr2_math345_7b/_prep_data.log` 确认 `data/math345/{train,val500}.parquet` 已生成(已提前 CPU 准备)。
+2. **CR-II Qwen2.5-7B**:`cd Co-rewarding/Co-rewarding-II && bash ../cr2_math345_7b/run_cr2__qwen25_7b__math345.sh`
+   - **先确保跑通**:盯前几步——ray+vllm engine init、reward 计算、EMA teacher、无 OOM。OOM 就按 README 降 `gpu_memory_utilization`(0.6→0.5/0.4)或 `ppo_micro_batch_size_per_gpu`(8→4)。跑通了再让它跑满。
+3. **CR-II Llama-3.1-8B**:`bash ../cr2_math345_7b/run_cr2__llama31_8b__math345.sh`(同样先确保跑通)。
+4. 训完 → 进下面的 eval 队列(CR-II 用我们 pipeline avg@8,别粘他们论文数)。
+> 这俩训练用满 8 卡,和下面的 eval 抢卡 → **先训 CR-II 7B,再 eval**。
+
 ## 触发链
 1. DECOUPLED 7B×8B 跑完(监控 `brrfhd6r9`/`bs8fwmf3m` 触发 re-invoke 我)。
 2. **先验+传 ckpt**:DECOUPLED 两组 best_model + endpoint → HF(`huggingface-cli upload q1716523669/<名> <best_model> --private`)。顺带传未传的 7B heter(0604_144654 group_A/B)。

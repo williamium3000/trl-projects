@@ -1,0 +1,18 @@
+\begin{table}[t]\centering\small
+\setlength{\tabcolsep}{6pt}\renewcommand{\arraystretch}{1.12}
+\definecolor{heat}{RGB}{33,102,172}
+\begin{tabular}{l ccccc}
+\toprule
+Setting & GSM8K & MATH-500 & AMC & AIME & GPQA \\
+\midrule
+\textbf{co}-single (Qwen) & \cellcolor{heat!52}87.40 & \cellcolor{heat!58}72.80 & \cellcolor{heat!48}37.40 & \cellcolor{heat!58}6.70 & \cellcolor{heat!13}26.80 \\
+self-single (Qwen) & \cellcolor{heat!54}88.20 & \cellcolor{heat!46}68.80 & \cellcolor{heat!58}39.80 & \cellcolor{heat!32}3.30 & \cellcolor{heat!36}29.80 \\
+\textbf{co}-single (Llama) & \cellcolor{heat!52}87.30 & \cellcolor{heat!15}58.80 & \cellcolor{heat!32}33.70 & \cellcolor{heat!32}3.30 & \cellcolor{heat!51}31.80 \\
+self-single (Llama) & \cellcolor{heat!6}65.70 & \cellcolor{heat!6}56.00 & \cellcolor{heat!6}27.70 & \cellcolor{heat!6}0.00 & \cellcolor{heat!6}25.80 \\
+\textbf{co}-ensemble & \cellcolor{heat!58}90.10 & \cellcolor{heat!52}70.80 & \cellcolor{heat!58}39.80 & \cellcolor{heat!6}0.00 & \cellcolor{heat!58}32.80 \\
+self-ensemble & \cellcolor{heat!54}88.20 & \cellcolor{heat!43}68.00 & \cellcolor{heat!53}38.60 & \cellcolor{heat!6}0.00 & \cellcolor{heat!54}32.30 \\
+\bottomrule
+\end{tabular}
+\caption{Test-time self-consistency at matched vote budget ($\mathrm{maj}@K$, $T{=}0.6$, 3B). \textbf{co} = co-trained pair, self = independently self-trained. Heat-shaded per column. A single co-trained model is at or above the self-trained \emph{ensemble}, so the benefit is from co-training, not test-time combination.}
+\label{tab:ensemble}
+\end{table}

@@ -1,0 +1,326 @@
+% ============================================================
+%  references.bib  —  Cross-Family Co-Learning
+%  Entries marked "% VERIFY" are recent (2025) works: the title is
+%  reliable but please confirm the exact arXiv id / author list / venue
+%  before camera-ready. Everything else is a well-established reference.
+% ============================================================
+
+% ---------- RLVR / reasoning base ----------
+@article{shao2024deepseekmath,
+  title   = {DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models},
+  author  = {Shao, Zhihong and Wang, Peiyi and Zhu, Qihao and Xu, Runxin and Song, Junxiao and Bi, Xiao and others},
+  journal = {arXiv preprint arXiv:2402.03300},
+  year    = {2024}
+}
+@article{guo2025deepseekr1,
+  title   = {DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning},
+  author  = {DeepSeek-AI and Guo, Daya and Yang, Dejian and Zhang, Haowei and others},
+  journal = {arXiv preprint arXiv:2501.12948},
+  year    = {2025}
+}
+@inproceedings{wang2023selfconsistency,
+  title     = {Self-Consistency Improves Chain of Thought Reasoning in Language Models},
+  author    = {Wang, Xuezhi and Wei, Jason and Schuurmans, Dale and Le, Quoc and Chi, Ed and Narang, Sharan and Chowdhery, Aakanksha and Zhou, Denny},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2023}
+}
+
+% ---------- Label-free / self-referential RL (baselines) ----------
+@article{zuo2025ttrl,                 % VERIFY arXiv id / authors
+  title   = {TTRL: Test-Time Reinforcement Learning},
+  author  = {Zuo, Yuxin and others},
+  journal = {arXiv preprint arXiv:2504.16084},
+  year    = {2025}
+}
+@article{intuitor2025,                % VERIFY arXiv id / authors
+  title   = {Learning to Reason without External Rewards},
+  author  = {Zhao, Xuandong and others},
+  journal = {arXiv preprint arXiv:2505.19590},
+  year    = {2025}
+}
+@article{rent2025,                    % VERIFY arXiv id / authors
+  title   = {Maximizing Confidence Alone Improves Reasoning},
+  author  = {Prabhudesai, Mihir and others},
+  journal = {arXiv preprint arXiv:2505.22660},
+  year    = {2025}
+}
+@article{corewarding2025,             % VERIFY arXiv id / authors
+  title   = {Co-rewarding: Stable Self-supervised RL for Eliciting Reasoning in Large Language Models},
+  author  = {Zhang, Wei and others},
+  journal = {arXiv preprint arXiv:2508.00410},
+  year    = {2025}
+}
+@article{yue2025rlvr,                 % VERIFY arXiv id / authors
+  title   = {Does Reinforcement Learning Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?},
+  author  = {Yue, Yang and Chen, Zhiqi and Lu, Rui and others},
+  journal = {arXiv preprint arXiv:2504.13837},
+  year    = {2025}
+}
+
+% ---------- Multi-agent RL for reasoning ----------
+@article{comas2025,
+  title   = {CoMAS: Co-Evolving Multi-Agent Systems via Interaction Rewards},
+  author  = {Xue, Xiangyuan and Zhou, Yifan and Zhang, Guibin and Zhang, Zaibin and Li, Yijiang and Zhang, Chen and Yin, Zhenfei and Torr, Philip and Ouyang, Wanli and Bai, Lei},
+  journal = {arXiv preprint arXiv:2510.08529},
+  year    = {2025}
+}
+@article{maporl2025,                  % VERIFY arXiv id / authors
+  title   = {MAPoRL: Multi-Agent Post-Co-Training for Collaborative Large Language Models with Reinforcement Learning},
+  author  = {Park, Chanwoo and others},
+  journal = {arXiv preprint arXiv:2502.18439},
+  year    = {2025}
+}
+@inproceedings{du2023debate,
+  title     = {Improving Factuality and Reasoning in Language Models through Multiagent Debate},
+  author    = {Du, Yilun and Li, Shuang and Torralba, Antonio and Tenenbaum, Joshua B. and Mordatch, Igor},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2024}
+}
+@inproceedings{liang2023encouraging,
+  title     = {Encouraging Divergent Thinking in Large Language Models through Multi-Agent Debate},
+  author    = {Liang, Tian and He, Zhiwei and Jiao, Wenxiang and Wang, Xing and Wang, Yan and Wang, Rui and Yang, Yujiu and Tu, Zhaopeng and Shi, Shuming},
+  booktitle = {Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2024}
+}
+@inproceedings{zhang2018mutual,
+  title     = {Deep Mutual Learning},
+  author    = {Zhang, Ying and Xiang, Tao and Hospedales, Timothy M. and Lu, Huchuan},
+  booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2018}
+}
+
+% ---------- Co-training / self-supervised learning ----------
+@inproceedings{blum1998cotraining,
+  title     = {Combining Labeled and Unlabeled Data with Co-Training},
+  author    = {Blum, Avrim and Mitchell, Tom},
+  booktitle = {Conference on Computational Learning Theory (COLT)},
+  year      = {1998}
+}
+@inproceedings{li2023diverse,         % VERIFY this is the intended paper
+  title     = {Diverse Cotraining Makes Strong Semi-Supervised Segmentor},
+  author    = {Li, Yijiang and Wang, Xinjiang and Yang, Lihe and Feng, Litong and Zhang, Wayne and Gao, Yibing},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  year      = {2023}
+}
+@inproceedings{chen2020simclr,
+  title     = {A Simple Framework for Contrastive Learning of Visual Representations},
+  author    = {Chen, Ting and Kornblith, Simon and Norouzi, Mohammad and Hinton, Geoffrey},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2020}
+}
+@inproceedings{grill2020byol,
+  title     = {Bootstrap Your Own Latent: A New Approach to Self-Supervised Learning},
+  author    = {Grill, Jean-Bastien and Strub, Florian and Altch{\'e}, Florent and Tallec, Corentin and Richemond, Pierre and others},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2020}
+}
+@inproceedings{caron2021dino,
+  title     = {Emerging Properties in Self-Supervised Vision Transformers},
+  author    = {Caron, Mathilde and Touvron, Hugo and Misra, Ishan and J{\'e}gou, Herv{\'e} and Mairal, Julien and Bojanowski, Piotr and Joulin, Armand},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  year      = {2021}
+}
+@inproceedings{kirk2024diversity,
+  title     = {Understanding the Effects of RLHF on LLM Generalisation and Diversity},
+  author    = {Kirk, Robert and Mediratta, Ishita and Nalmpantis, Christoforos and Luketina, Jelena and Hambro, Eric and Grefenstette, Edward and Raileanu, Roberta},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024}
+}
+
+% ---------- Multimodal RLVR ----------
+@article{visionr12025,                % VERIFY arXiv id / authors
+  title   = {Vision-R1: Incentivizing Reasoning Capability in Multimodal Large Language Models},
+  author  = {Huang, Wenxuan and others},
+  journal = {arXiv preprint arXiv:2503.06749},
+  year    = {2025}
+}
+@article{shen2025vlmr1,               % VERIFY arXiv id / authors
+  title   = {VLM-R1: A Stable and Generalizable R1-style Large Vision-Language Model},
+  author  = {Shen, Haozhan and others},
+  journal = {arXiv preprint arXiv:2504.07615},
+  year    = {2025}
+}
+@article{liu2025visualrft,            % VERIFY arXiv id / authors
+  title   = {Visual-RFT: Visual Reinforcement Fine-Tuning},
+  author  = {Liu, Ziyu and others},
+  journal = {arXiv preprint arXiv:2503.01785},
+  year    = {2025}
+}
+@article{mmupt2025,                   % VERIFY arXiv id / authors / exact name
+  title   = {Unsupervised Post-Training for Multi-Modal LLM Reasoning via GRPO (MM-UPT)},
+  author  = {Wei, Lai and others},
+  journal = {arXiv preprint arXiv:2505.22453},
+  year    = {2025}
+}
+
+% ---------- Models ----------
+@article{yang2024qwen25,
+  title   = {Qwen2.5 Technical Report},
+  author  = {Yang, An and Yang, Baosong and Zhang, Beichen and Hui, Binyuan and others (Qwen Team)},
+  journal = {arXiv preprint arXiv:2412.15115},
+  year    = {2024}
+}
+@article{dubey2024llama3,
+  title   = {The Llama 3 Herd of Models},
+  author  = {Grattafiori, Aaron and Dubey, Abhimanyu and Jauhri, Abhinav and others},
+  journal = {arXiv preprint arXiv:2407.21783},
+  year    = {2024}
+}
+@article{bai2025qwenvl,
+  title   = {Qwen2.5-VL Technical Report},
+  author  = {Bai, Shuai and Chen, Keqin and Liu, Xuejing and Wang, Jialin and others (Qwen Team)},
+  journal = {arXiv preprint arXiv:2502.13923},
+  year    = {2025}
+}
+@inproceedings{chen2024internvl,
+  title     = {InternVL: Scaling up Vision Foundation Models and Aligning for Generic Visual-Linguistic Tasks},
+  author    = {Chen, Zhe and Wu, Jiannan and Wang, Wenhai and Su, Weijie and Chen, Guo and others},
+  booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year      = {2024}
+}
+@article{gemma2025,
+  title   = {Gemma 3 Technical Report},
+  author  = {{Gemma Team}},
+  journal = {arXiv preprint arXiv:2503.19786},
+  year    = {2025}
+}
+@article{deepseekv3,
+  title   = {DeepSeek-V3 Technical Report},
+  author  = {DeepSeek-AI},
+  journal = {arXiv preprint arXiv:2412.19437},
+  year    = {2024}
+}
+
+% ---------- Datasets / training data ----------
+@inproceedings{hendrycks2021math,
+  title     = {Measuring Mathematical Problem Solving with the MATH Dataset},
+  author    = {Hendrycks, Dan and Burns, Collin and Kadavath, Saurav and Arora, Akul and Basart, Steven and Tang, Eric and Song, Dawn and Steinhardt, Jacob},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2021}
+}
+@misc{openr1_2025,                    % VERIFY (project/repo)
+  title        = {Open-R1: A Fully Open Reproduction of DeepSeek-R1},
+  author       = {{Hugging Face}},
+  year         = {2025},
+  howpublished = {\url{https://github.com/huggingface/open-r1}}
+}
+@misc{mmr1_2025,                      % VERIFY (dataset/repo)
+  title        = {MMR1: Advancing the Frontiers of Multimodal Reasoning},
+  author       = {{MMR1 Team}},
+  year         = {2025},
+  howpublished = {\url{https://github.com/LengSicong/MMR1}}
+}
+
+% ---------- Text benchmarks ----------
+@article{cobbe2021gsm8k,
+  title   = {Training Verifiers to Solve Math Word Problems},
+  author  = {Cobbe, Karl and Kosaraju, Vineet and Bavarian, Mohammad and Chen, Mark and others},
+  journal = {arXiv preprint arXiv:2110.14168},
+  year    = {2021}
+}
+@inproceedings{lightman2023letsverify,
+  title     = {Let's Verify Step by Step},
+  author    = {Lightman, Hunter and Kosaraju, Vineet and Burda, Yura and Edwards, Harri and Baker, Bowen and Lee, Teddy and Leike, Jan and Schulman, John and Sutskever, Ilya and Cobbe, Karl},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024}
+}
+@article{chen2021humaneval,
+  title   = {Evaluating Large Language Models Trained on Code},
+  author  = {Chen, Mark and Tworek, Jerry and Jun, Heewoo and Yuan, Qiming and others},
+  journal = {arXiv preprint arXiv:2107.03374},
+  year    = {2021}
+}
+@article{austin2021mbpp,
+  title   = {Program Synthesis with Large Language Models},
+  author  = {Austin, Jacob and Odena, Augustus and Nye, Maxwell and Bosma, Maarten and others},
+  journal = {arXiv preprint arXiv:2108.07732},
+  year    = {2021}
+}
+@inproceedings{jain2024livecodebench,
+  title     = {LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code},
+  author    = {Jain, Naman and Han, King and Gu, Alex and Li, Wen-Ding and Yan, Fanjia and Zhang, Tianjun and Wang, Sida and Solar-Lezama, Armando and Sen, Koushik and Stoica, Ion},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2025}
+}
+@inproceedings{rein2024gpqa,
+  title     = {GPQA: A Graduate-Level Google-Proof Q\&A Benchmark},
+  author    = {Rein, David and Hou, Betty Li and Stickland, Asa Cooper and Petty, Jackson and Pang, Richard Yuanzhe and Dirani, Julien and Michael, Julian and Bowman, Samuel R.},
+  booktitle = {Conference on Language Modeling (COLM)},
+  year      = {2024}
+}
+@inproceedings{gu2024cruxeval,
+  title     = {CRUXEval: A Benchmark for Code Reasoning, Understanding and Execution},
+  author    = {Gu, Alex and Roziere, Baptiste and Leather, Hugh and Solar-Lezama, Armando and Synnaeve, Gabriel and Wang, Sida I.},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2024}
+}
+@inproceedings{wang2024scibench,
+  title     = {SciBench: Evaluating College-Level Scientific Problem-Solving Abilities of Large Language Models},
+  author    = {Wang, Xiaoxuan and Hu, Ziniu and Lu, Pan and Zhu, Yanqiao and Zhang, Jieyu and Subramaniam, Satyen and Loomba, Arjun R. and Zhang, Shichang and Sun, Yizhou and Wang, Wei},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2024}
+}
+@inproceedings{hendrycks2021mmlu,
+  title     = {Measuring Massive Multitask Language Understanding},
+  author    = {Hendrycks, Dan and Burns, Collin and Basart, Steven and Zou, Andy and Mazeika, Mantas and Song, Dawn and Steinhardt, Jacob},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021}
+}
+@inproceedings{wang2024mmlupro,
+  title     = {MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark},
+  author    = {Wang, Yubo and Ma, Xueguang and Zhang, Ge and Ni, Yuansheng and others},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2024}
+}
+@article{zhou2023ifeval,
+  title   = {Instruction-Following Evaluation for Large Language Models},
+  author  = {Zhou, Jeffrey and Lu, Tianjian and Mishra, Swaroop and Brahma, Siddhartha and Basu, Sujoy and Luan, Yi and Zhou, Denny and Hou, Le},
+  journal = {arXiv preprint arXiv:2311.07911},
+  year    = {2023}
+}
+
+% ---------- Multimodal benchmarks ----------
+@inproceedings{wang2024mathvision,
+  title     = {Measuring Multimodal Mathematical Reasoning with MATH-Vision Dataset},
+  author    = {Wang, Ke and Pan, Junting and Shi, Weikang and Lu, Zimu and Zhan, Mingjie and Li, Hongsheng},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2024}
+}
+@inproceedings{zhang2024mathverse,
+  title     = {MathVerse: Does Your Multi-modal LLM Truly See the Diagrams in Visual Math Problems?},
+  author    = {Zhang, Renrui and Jiang, Dongzhi and Zhang, Yichi and Lin, Haokun and Guo, Ziyu and others},
+  booktitle = {European Conference on Computer Vision (ECCV)},
+  year      = {2024}
+}
+@inproceedings{lu2024mathvista,
+  title     = {MathVista: Evaluating Mathematical Reasoning of Foundation Models in Visual Contexts},
+  author    = {Lu, Pan and Bansal, Hritik and Xia, Tony and Liu, Jiacheng and Li, Chunyuan and Hajishirzi, Hannaneh and Cheng, Hao and Chang, Kai-Wei and Galley, Michel and Gao, Jianfeng},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024}
+}
+@article{qiao2024wemath,
+  title   = {We-Math: Does Your Large Multimodal Model Achieve Human-like Mathematical Reasoning?},
+  author  = {Qiao, Runqi and Tan, Qiuna and Dong, Guanting and Wu, Minhui and Sun, Chong and others},
+  journal = {arXiv preprint arXiv:2407.01284},
+  year    = {2024}
+}
+
+% ---------- Infrastructure ----------
+@misc{vonwerra2022trl,
+  title        = {TRL: Transformer Reinforcement Learning},
+  author       = {von Werra, Leandro and Belkada, Younes and Tunstall, Lewis and Beeching, Edward and Thrush, Tristan and Lambert, Nathan and Huang, Shengyi and Rasul, Kashif and Gallou{\'e}dec, Quentin},
+  year         = {2020},
+  howpublished = {\url{https://github.com/huggingface/trl}}
+}
+@inproceedings{kwon2023vllm,
+  title     = {Efficient Memory Management for Large Language Model Serving with PagedAttention},
+  author    = {Kwon, Woosuk and Li, Zhuohan and Zhuang, Siyuan and Sheng, Ying and Zheng, Lianmin and Yu, Cody Hao and Gonzalez, Joseph E. and Zhang, Hao and Stoica, Ion},
+  booktitle = {ACM Symposium on Operating Systems Principles (SOSP)},
+  year      = {2023}
+}
+@inproceedings{rajbhandari2020zero,
+  title     = {ZeRO: Memory Optimizations Toward Training Trillion Parameter Models},
+  author    = {Rajbhandari, Samyam and Rasley, Jeff and Ruwase, Olatunji and He, Yuxiong},
+  booktitle = {International Conference for High Performance Computing, Networking, Storage and Analysis (SC)},
+  year      = {2020}
+}
