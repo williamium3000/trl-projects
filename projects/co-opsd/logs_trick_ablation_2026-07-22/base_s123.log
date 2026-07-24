@@ -1,0 +1,1543 @@
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+W0713 23:55:11.300000 3047256 site-packages/torch/distributed/run.py:803] 
+W0713 23:55:11.300000 3047256 site-packages/torch/distributed/run.py:803] *****************************************
+W0713 23:55:11.300000 3047256 site-packages/torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0713 23:55:11.300000 3047256 site-packages/torch/distributed/run.py:803] *****************************************
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+⚙️  Running in WANDB offline mode
+⚙️  Running in WANDB offline mode⚙️  Running in WANDB offline mode
+
+⚙️  Running in WANDB offline mode
+`torch_dtype` is deprecated! Use `dtype` instead!
+wandb: Tracking run with wandb version 0.25.1
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /anvil/scratch/x-hluo4/co_opsd_night/coopsd_tip/opsd_upstream/wandb/offline-run-20260713_235542-asd32y4t
+`torch_dtype` is deprecated! Use `dtype` instead!
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]wandb: Detected [openai] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Install Weave with `pip install weave` then add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai/
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  3.53it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:01<00:01,  1.07s/it]Loading checkpoint shards:  50%|█████     | 1/2 [00:01<00:01,  1.06s/it]Loading checkpoint shards:  50%|█████     | 1/2 [00:01<00:01,  1.07s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.85it/s]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.85it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:01<00:00,  1.86it/s]
+
+Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  6.68it/s]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 26.79it/s]
+Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 26.62it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 26.72it/s]
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 60.75it/s]
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:45] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+[2026-07-13 23:55:45] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:45] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+[2026-07-13 23:55:45] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:45] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+[2026-07-13 23:55:45] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+[co-OPSD] LoRA enabled: r=64, alpha=128, targets=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj']
+trainable params: 69,730,304 || all params: 1,790,305,280 || trainable%: 3.8949
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:45] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+[2026-07-13 23:55:45] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 07:18:25 2026).
+Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map:   3%|▎         | 871/29434 [00:00<00:03, 8599.34 examples/s]Map:   3%|▎         | 871/29434 [00:00<00:03, 8590.14 examples/s]Map:   3%|▎         | 872/29434 [00:00<00:03, 8606.09 examples/s]Map:   3%|▎         | 875/29434 [00:00<00:03, 8629.61 examples/s]Map:   6%|▌         | 1807/29434 [00:00<00:03, 9040.48 examples/s]Map:   6%|▌         | 1807/29434 [00:00<00:03, 9037.45 examples/s]Map:   6%|▌         | 1808/29434 [00:00<00:03, 9044.76 examples/s]Map:   6%|▌         | 1811/29434 [00:00<00:03, 9053.18 examples/s]Map:   9%|▉         | 2791/29434 [00:00<00:02, 9399.06 examples/s]Map:   9%|▉         | 2791/29434 [00:00<00:02, 9397.37 examples/s]Map:   9%|▉         | 2792/29434 [00:00<00:02, 9402.52 examples/s]Map:   9%|▉         | 2795/29434 [00:00<00:02, 9407.18 examples/s]Map:  13%|█▎        | 3787/29434 [00:00<00:02, 9619.71 examples/s]Map:  13%|█▎        | 3788/29434 [00:00<00:02, 9618.81 examples/s]Map:  13%|█▎        | 3788/29434 [00:00<00:02, 9620.80 examples/s]Map:  13%|█▎        | 3793/29434 [00:00<00:02, 9626.16 examples/s]Map:  16%|█▋        | 4808/29434 [00:00<00:02, 9828.71 examples/s]Map:  16%|█▋        | 4809/29434 [00:00<00:02, 9828.78 examples/s]Map:  16%|█▋        | 4810/29434 [00:00<00:02, 9830.69 examples/s]Map:  16%|█▋        | 4814/29434 [00:00<00:02, 9832.74 examples/s]Map:  20%|█▉        | 5856/29434 [00:00<00:02, 10047.08 examples/s]Map:  20%|█▉        | 5857/29434 [00:00<00:02, 10046.43 examples/s]Map:  20%|█▉        | 5858/29434 [00:00<00:02, 10047.08 examples/s]Map:  20%|█▉        | 5862/29434 [00:00<00:02, 10049.74 examples/s]Map:  24%|██▎       | 6925/29434 [00:00<00:02, 10252.66 examples/s]Map:  24%|██▎       | 6926/29434 [00:00<00:02, 10252.44 examples/s]Map:  24%|██▎       | 6927/29434 [00:00<00:02, 10252.82 examples/s]Map:  24%|██▎       | 6931/29434 [00:00<00:02, 10254.47 examples/s]Map:  27%|██▋       | 7996/29434 [00:00<00:02, 10395.40 examples/s]Map:  27%|██▋       | 7997/29434 [00:00<00:02, 10395.34 examples/s]Map:  27%|██▋       | 7998/29434 [00:00<00:02, 10395.56 examples/s]Map:  27%|██▋       | 8000/29434 [00:00<00:02, 10334.51 examples/s]Map:  31%|███       | 9034/29434 [00:00<00:01, 10334.60 examples/s]Map:  33%|███▎      | 9567/29434 [00:00<00:01, 10424.61 examples/s]Map:  33%|███▎      | 9568/29434 [00:00<00:01, 10424.98 examples/s]Map:  33%|███▎      | 9570/29434 [00:00<00:01, 10425.48 examples/s]Map:  34%|███▍      | 10133/29434 [00:01<00:01, 10534.91 examples/s]Map:  36%|███▋      | 10680/29434 [00:01<00:01, 10618.50 examples/s]Map:  36%|███▋      | 10681/29434 [00:01<00:01, 10619.21 examples/s]Map:  36%|███▋      | 10683/29434 [00:01<00:01, 10619.88 examples/s]Map:  38%|███▊      | 11238/29434 [00:01<00:01, 10687.90 examples/s]Map:  40%|████      | 11791/29434 [00:01<00:01, 10754.17 examples/s]Map:  40%|████      | 11791/29434 [00:01<00:01, 10754.69 examples/s]Map:  40%|████      | 11794/29434 [00:01<00:01, 10755.61 examples/s]Map:  42%|████▏     | 12372/29434 [00:01<00:01, 10881.85 examples/s]Map:  44%|████▍     | 12935/29434 [00:01<00:01, 10950.85 examples/s]Map:  44%|████▍     | 12934/29434 [00:01<00:01, 10947.14 examples/s]Map:  44%|████▍     | 12938/29434 [00:01<00:01, 10950.72 examples/s]Map:  46%|████▌     | 13539/29434 [00:01<00:01, 11117.62 examples/s]Map:  48%|████▊     | 14093/29434 [00:01<00:01, 11132.59 examples/s]Map:  48%|████▊     | 14094/29434 [00:01<00:01, 11134.59 examples/s]Map:  48%|████▊     | 14096/29434 [00:01<00:01, 11133.04 examples/s]Map:  50%|█████     | 14722/29434 [00:01<00:01, 11330.23 examples/s]Map:  52%|█████▏    | 15278/29434 [00:01<00:01, 11341.75 examples/s]Map:  52%|█████▏    | 15276/29434 [00:01<00:01, 11332.63 examples/s]Map:  52%|█████▏    | 15282/29434 [00:01<00:01, 11342.18 examples/s]Map:  54%|█████▍    | 15911/29434 [00:01<00:01, 11494.64 examples/s]Map:  56%|█████▌    | 16472/29434 [00:01<00:01, 11518.31 examples/s]Map:  56%|█████▌    | 16457/29434 [00:01<00:01, 11469.61 examples/s]Map:  56%|█████▌    | 16448/29434 [00:01<00:01, 11433.43 examples/s]Map:  60%|█████▉    | 17627/29434 [00:01<00:01, 11525.67 examples/s]Map:  60%|█████▉    | 17609/29434 [00:01<00:01, 11458.17 examples/s]Map:  60%|█████▉    | 17658/29434 [00:01<00:01, 11550.25 examples/s]Map:  60%|█████▉    | 17626/29434 [00:01<00:01, 11445.18 examples/s]Map:  64%|██████▍   | 18830/29434 [00:01<00:00, 11672.57 examples/s]Map:  64%|██████▍   | 18794/29434 [00:01<00:00, 11570.86 examples/s]Map:  64%|██████▍   | 18859/29434 [00:01<00:00, 11672.79 examples/s]Map:  64%|██████▍   | 18826/29434 [00:01<00:00, 11604.96 examples/s]Map:  68%|██████▊   | 20031/29434 [00:01<00:00, 11772.49 examples/s]Map:  68%|██████▊   | 19973/29434 [00:01<00:00, 11632.29 examples/s]Map:  68%|██████▊   | 20061/29434 [00:01<00:00, 11765.96 examples/s]Map:  68%|██████▊   | 20019/29434 [00:01<00:00, 11697.46 examples/s]Map:  72%|███████▏  | 21271/29434 [00:01<00:00, 11957.64 examples/s]Map:  72%|███████▏  | 21153/29434 [00:01<00:00, 11680.74 examples/s]Map:  72%|███████▏  | 21303/29434 [00:01<00:00, 11950.34 examples/s]Map:  72%|███████▏  | 21217/29434 [00:01<00:00, 11779.02 examples/s]Map:  77%|███████▋  | 22526/29434 [00:02<00:00, 12131.51 examples/s]Map:  76%|███████▌  | 22367/29434 [00:02<00:00, 11815.74 examples/s]Map:  77%|███████▋  | 22561/29434 [00:02<00:00, 12128.99 examples/s]Map:  78%|███████▊  | 22988/29434 [00:02<00:00, 11786.14 examples/s]Map:  81%|████████  | 23780/29434 [00:02<00:00, 12248.22 examples/s]Map:  80%|████████  | 23577/29434 [00:02<00:00, 11897.81 examples/s]Map:  81%|████████  | 23810/29434 [00:02<00:00, 12230.48 examples/s]Map:  82%|████████▏ | 24194/29434 [00:02<00:00, 11857.05 examples/s]Map:  86%|████████▌ | 25325/29434 [00:02<00:00, 11799.80 examples/s]Map:  87%|████████▋ | 25636/29434 [00:02<00:00, 12240.25 examples/s]Map:  87%|████████▋ | 25652/29434 [00:02<00:00, 12244.28 examples/s]Map:  88%|████████▊ | 25968/29434 [00:02<00:00, 11842.88 examples/s]Map:  90%|█████████ | 26531/29434 [00:02<00:00, 11868.14 examples/s]Map:  91%|█████████▏| 26883/29434 [00:02<00:00, 12300.26 examples/s]Map:  91%|█████████▏| 26894/29434 [00:02<00:00, 12290.13 examples/s]Map:  92%|█████████▏| 27202/29434 [00:02<00:00, 11969.70 examples/s]Map:  94%|█████████▍| 27732/29434 [00:02<00:00, 11903.86 examples/s]Map:  96%|█████████▌| 28117/29434 [00:02<00:00, 12309.07 examples/s]Map:  96%|█████████▌| 28139/29434 [00:02<00:00, 12332.65 examples/s]Map:  97%|█████████▋| 28409/29434 [00:02<00:00, 11994.60 examples/s]Map:  98%|█████████▊| 28941/29434 [00:02<00:00, 11952.61 examples/s]Map: 100%|█████████▉| 29372/29434 [00:02<00:00, 12375.24 examples/s]Map: 100%|█████████▉| 29412/29434 [00:02<00:00, 12441.75 examples/s]Map: 100%|██████████| 29434/29434 [00:02<00:00, 11234.17 examples/s]
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:49] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+[2026-07-13 23:55:49] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+Map: 100%|██████████| 29434/29434 [00:02<00:00, 11217.14 examples/s]
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:49] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+[2026-07-13 23:55:49] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map: 100%|██████████| 29434/29434 [00:02<00:00, 11107.08 examples/s]
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:49] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+[2026-07-13 23:55:49] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+Map: 100%|██████████| 29434/29434 [00:02<00:00, 11085.63 examples/s]
+Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+[2026-07-13 23:55:49] WARNING load.py:825: Using the latest cached version of the dataset since siyanzhao/Openthoughts_math_30k_opsd couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+[2026-07-13 23:55:49] WARNING cache.py:95: Found the latest cached dataset configuration 'default' at /home/x-hluo4/william/.cache/huggingface/datasets/siyanzhao___openthoughts_math_30k_opsd/default/0.0.0/1f33e9dc2e8a1c639ca74f8024ad4a9f1f5eae62 (last modified on Mon Jul 13 23:55:49 2026).
+Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map:   0%|          | 0/29434 [00:00<?, ? examples/s]Map:   4%|▍         | 1124/29434 [00:00<00:02, 11094.55 examples/s]Map:   4%|▎         | 1097/29434 [00:00<00:02, 10829.65 examples/s]Map:   4%|▍         | 1114/29434 [00:00<00:02, 11000.87 examples/s]Map:   4%|▎         | 1080/29434 [00:00<00:02, 10668.08 examples/s]Map:   8%|▊         | 2283/29434 [00:00<00:02, 11378.50 examples/s]Map:   8%|▊         | 2249/29434 [00:00<00:02, 11232.26 examples/s]Map:   7%|▋         | 2195/29434 [00:00<00:02, 10945.11 examples/s]Map:   9%|▉         | 2793/29434 [00:00<00:02, 11124.06 examples/s]Map:  12%|█▏        | 3462/29434 [00:00<00:02, 11564.19 examples/s]Map:  12%|█▏        | 3402/29434 [00:00<00:02, 11363.39 examples/s]Map:  11%|█▏        | 3335/29434 [00:00<00:02, 11144.65 examples/s]Map:  13%|█▎        | 3935/29434 [00:00<00:02, 11236.11 examples/s]Map:  16%|█▌        | 4652/29434 [00:00<00:02, 11692.60 examples/s]Map:  16%|█▌        | 4570/29434 [00:00<00:02, 11483.13 examples/s]Map:  15%|█▌        | 4486/29434 [00:00<00:02, 11284.87 examples/s]Map:  17%|█▋        | 5084/29434 [00:00<00:02, 11323.66 examples/s]Map:  20%|█▉        | 5857/29434 [00:00<00:01, 11817.37 examples/s]Map:  20%|█▉        | 5746/29434 [00:00<00:02, 11579.46 examples/s]Map:  19%|█▉        | 5632/29434 [00:00<00:02, 11344.51 examples/s]Map:  21%|██        | 6223/29434 [00:00<00:02, 11345.12 examples/s]Map:  24%|██▍       | 7047/29434 [00:00<00:01, 11842.88 examples/s]Map:  24%|██▎       | 6927/29434 [00:00<00:01, 11656.81 examples/s]Map:  23%|██▎       | 6798/29434 [00:00<00:01, 11447.72 examples/s]Map:  25%|██▌       | 7387/29434 [00:00<00:01, 11437.23 examples/s]Map:  28%|██▊       | 8256/29434 [00:00<00:01, 11919.64 examples/s]Map:  27%|██▋       | 7955/29434 [00:00<00:01, 11483.38 examples/s]Map:  30%|██▉       | 8701/29434 [00:00<00:01, 11721.67 examples/s]Map:  29%|██▉       | 8540/29434 [00:00<00:01, 11461.98 examples/s]Map:  32%|███▏      | 9451/29434 [00:00<00:01, 11924.77 examples/s]Map:  33%|███▎      | 9700/29434 [00:00<00:01, 11502.73 examples/s]Map:  33%|███▎      | 9685/29434 [00:00<00:01, 11498.21 examples/s]Map:  36%|███▋      | 10672/29434 [00:00<00:01, 12013.24 examples/s]Map:  36%|███▌      | 10454/29434 [00:00<00:01, 11704.82 examples/s]Map:  37%|███▋      | 10869/29434 [00:00<00:01, 11559.45 examples/s]Map:  37%|███▋      | 10847/29434 [00:00<00:01, 11530.23 examples/s]Map:  40%|████      | 11904/29434 [00:01<00:01, 12103.80 examples/s]Map:  40%|███▉      | 11662/29434 [00:01<00:01, 11802.16 examples/s]Map:  41%|████      | 12032/29434 [00:01<00:01, 11578.39 examples/s]Map:  44%|████▎     | 12872/29434 [00:01<00:01, 11883.27 examples/s]Map:  43%|████▎     | 12597/29434 [00:01<00:01, 11571.80 examples/s]Map:  47%|████▋     | 13745/29434 [00:01<00:01, 12167.72 examples/s]Map:  48%|████▊     | 14081/29434 [00:01<00:01, 11938.73 examples/s]Map:  47%|████▋     | 13806/29434 [00:01<00:01, 11674.47 examples/s]Map:  47%|████▋     | 13775/29434 [00:01<00:01, 11622.94 examples/s]Map:  51%|█████     | 14986/29434 [00:01<00:01, 12232.59 examples/s]Map:  52%|█████▏    | 15307/29434 [00:01<00:01, 12028.08 examples/s]Map:  51%|█████     | 14997/29434 [00:01<00:01, 11736.69 examples/s]Map:  51%|█████     | 14952/29434 [00:01<00:01, 11659.73 examples/s]Map:  55%|█████▌    | 16212/29434 [00:01<00:01, 12238.16 examples/s]Map:  56%|█████▌    | 16532/29434 [00:01<00:01, 12087.91 examples/s]Map:  55%|█████▍    | 16175/29434 [00:01<00:01, 11745.25 examples/s]Map:  57%|█████▋    | 16714/29434 [00:01<00:01, 11687.22 examples/s]Map:  61%|██████▏   | 18033/29434 [00:01<00:00, 12198.81 examples/s]Map:  59%|█████▉    | 17351/29434 [00:01<00:01, 11747.73 examples/s]Map:  62%|██████▏   | 18318/29434 [00:01<00:00, 12013.14 examples/s]Map:  66%|██████▌   | 19286/29434 [00:01<00:00, 12281.80 examples/s]Map:  63%|██████▎   | 18453/29434 [00:01<00:00, 11650.80 examples/s]Map:  66%|██████▋   | 19557/29434 [00:01<00:00, 12110.73 examples/s]Map:  65%|██████▍   | 19113/29434 [00:01<00:00, 11742.95 examples/s]Map:  70%|██████▉   | 20540/29434 [00:01<00:00, 12349.58 examples/s]Map:  67%|██████▋   | 19639/29434 [00:01<00:00, 11699.01 examples/s]Map:  71%|███████   | 20787/29434 [00:01<00:00, 12160.53 examples/s]Map:  69%|██████▉   | 20311/29434 [00:01<00:00, 11803.26 examples/s]Map:  74%|███████▍  | 21792/29434 [00:01<00:00, 12395.85 examples/s]Map:  71%|███████   | 20834/29434 [00:01<00:00, 11763.46 examples/s]Map:  73%|███████▎  | 21527/29434 [00:01<00:00, 11898.92 examples/s]Map:  77%|███████▋  | 22641/29434 [00:01<00:00, 12200.94 examples/s]Map:  75%|███████▍  | 22028/29434 [00:01<00:00, 11808.88 examples/s]Map:  80%|████████  | 23681/29434 [00:01<00:00, 12464.02 examples/s]Map:  81%|████████  | 23884/29434 [00:02<00:00, 12256.86 examples/s]Map:  79%|███████▉  | 23310/29434 [00:02<00:00, 11891.76 examples/s]Map:  79%|███████▉  | 23236/29434 [00:02<00:00, 11882.03 examples/s]Map:  85%|████████▍ | 24939/29434 [00:02<00:00, 12492.52 examples/s]Map:  83%|████████▎ | 24503/29434 [00:02<00:00, 11898.59 examples/s]Map:  83%|████████▎ | 24439/29434 [00:02<00:00, 11923.18 examples/s]Map:  87%|████████▋ | 25705/29434 [00:02<00:00, 12212.73 examples/s]Map:  91%|█████████ | 26797/29434 [00:02<00:00, 12451.89 examples/s]Map:  92%|█████████▏| 26936/29434 [00:02<00:00, 12236.31 examples/s]Map:  89%|████████▉ | 26261/29434 [00:02<00:00, 11830.13 examples/s]Map:  89%|████████▉ | 26215/29434 [00:02<00:00, 11814.14 examples/s]Map:  97%|█████████▋| 28665/29434 [00:02<00:00, 12449.81 examples/s]Map:  93%|█████████▎| 27411/29434 [00:02<00:00, 11850.86 examples/s]Map:  98%|█████████▊| 28791/29434 [00:02<00:00, 12278.55 examples/s]Map: 100%|██████████| 29434/29434 [00:02<00:00, 12142.71 examples/s]
+Map:  95%|█████████▌| 28000/29434 [00:02<00:00, 11720.47 examples/s]Map: 100%|██████████| 29434/29434 [00:02<00:00, 11927.96 examples/s]
+Map:  97%|█████████▋| 28627/29434 [00:02<00:00, 11907.77 examples/s]Map:  99%|█████████▉| 29209/29434 [00:02<00:00, 11807.00 examples/s]Map: 100%|██████████| 29434/29434 [00:02<00:00, 11610.70 examples/s]
+Map: 100%|██████████| 29434/29434 [00:02<00:00, 11615.26 examples/s]
+[co-OPSD] distillation loss: jsd
+[co-OPSD] distillation loss: jsd
+[co-OPSD] distillation loss: jsd
+[co-OPSD] distillation loss: jsd
+[2026-07-13 23:55:51] WARNING other.py:520: [RANK 0] Detected kernel version 4.18.0, which is below the recommended minimum of 5.5.0; this can cause the process to hang. It is recommended to upgrade the kernel to the minimum version or higher.
+[Gloo] Rank 1 is connected to 3 peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank 0 is connected to 3 peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank 3 is connected to [Gloo] Rank 3 peer ranks. 2Expected number of connected peer ranks is :  is connected to 33
+ peer ranks. Expected number of connected peer ranks is : 3
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+Loading safetensors checkpoint shards:   0% Completed | 0/2 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:11<00:00,  5.71s/it]
+Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:11<00:00,  5.71s/it]
+
+Loading safetensors checkpoint shards:   0% Completed | 0/2 [00:00<?, ?it/s]
+Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:01<00:00,  1.10it/s]
+Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:01<00:00,  1.10it/s]
+
+[co-OPSD] EMA teacher ON (decay=0.999): each peer scores with its EMA weights, not its live (co-trained) weights.The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+[93m [WARNING] [0m DeepSpeed Op Builder: Installed CUDA version 13.0 does not match the version torch was compiled with 12.8.Detected `DS_SKIP_CUDA_CHECK=1`: Allowing this combination of CUDA, but it may result in unexpected behavior.
+[93m [WARNING] [0m DeepSpeed Op Builder: Installed CUDA version 13.0 does not match the version torch was compiled with 12.8.Detected `DS_SKIP_CUDA_CHECK=1`: Allowing this combination of CUDA, but it may result in unexpected behavior.
+[93m [WARNING] [0m DeepSpeed Op Builder: Installed CUDA version 13.0 does not match the version torch was compiled with 12.8.Detected `DS_SKIP_CUDA_CHECK=1`: Allowing this combination of CUDA, but it may result in unexpected behavior.
+[93m [WARNING] [0m DeepSpeed Op Builder: Installed CUDA version 13.0 does not match the version torch was compiled with 12.8.Detected `DS_SKIP_CUDA_CHECK=1`: Allowing this combination of CUDA, but it may result in unexpected behavior.
+  0%|          | 0/150 [00:00<?, ?it/s]/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+  1%|          | 1/150 [02:15<5:36:15, 135.41s/it]
+[co-OPSD step 1] model1 traj sample:
+We are asked to find how many **positive integers** $ n $ satisfy the inequality:
+
+$$
+(n + 8)(n - 3)(n - 12) < 0
+$$
+
+---
+
+### Step 1: Find the critical points
+
+Set each factor to zero and solve for $ n $:
+
+$$
+n + 8 = 0 \Rightarrow n = -8 \\
+n - 3 = 0 \Rightarrow n = 3 \\
+n - 12 = 0 \Rightarrow n = 12
+$$
+
+These critical points divide the number line into four intervals:
+
+1. $ (-\infty, -8) $
+2. $ (-8, 3) $
+3. $ (3, 12) $
+4. $ (12, \infty) $
+
+---
+
+### Step 2: Test the sign of the expression in each interval
+
+We choose a test point from each interval and evaluate the sign of the expression $ (n +
+
+  1%|▏         | 2/150 [04:29<5:31:27, 134.37s/it]                                                  {'loss': 0.0104, 'grad_norm': 0.13099178671836853, 'learning_rate': 4.966666666666667e-06, 'loss1': 0.004605114459991455, 'loss2': 0.008325576782226562, 'epoch': 0.0}
+  1%|▏         | 2/150 [04:29<5:31:27, 134.37s/it]  2%|▏         | 3/150 [06:42<5:27:59, 133.87s/it]
+[co-OPSD step 3] model1 traj sample:
+We are given the question:  
+**Which of these is equal to one million millimetres?**  
+Options:  
+A) 1 metre  
+B) 10 metres  
+C) 100 metres  
+D) 1 kilometre  
+E) 10 kilometres  
+
+---
+
+### Step 1: Understand the units
+
+We know:
+
+- **1 metre = 1000 millimetres**
+- Therefore, **1 millimetre = 1/1000 metre**
+
+Now, we are given **1,000,000 millimetres**.
+
+### Step 2: Convert 1,000,000 millimetres to metres
+
+$$
+1,000,000 \text{ mm} \times \frac{1 \text{ m}}{1000 \text{ mm}} = \frac{1,000,000}{1000} \text{ m} = 1000 \text{ m}
+$$
+
+So, **1,000,000 millimetres = 1000 metres**.
+
+### Step 3: Match with th
+
+  3%|▎         | 4/150 [08:56<5:25:38, 133.83s/it]                                                  {'loss': 0.0115, 'grad_norm': 0.13399119675159454, 'learning_rate': 4.9000000000000005e-06, 'loss1': 0.005562782287597656, 'loss2': 0.005650520324707031, 'epoch': 0.0}
+  3%|▎         | 4/150 [08:56<5:25:38, 133.83s/it]  3%|▎         | 5/150 [11:08<5:22:12, 133.33s/it]  4%|▍         | 6/150 [13:23<5:21:23, 133.91s/it]                                                  {'loss': 0.0067, 'grad_norm': 0.09052230417728424, 'learning_rate': 4.833333333333333e-06, 'loss1': 0.0037403106689453125, 'loss2': 0.0037550926208496094, 'epoch': 0.01}
+  4%|▍         | 6/150 [13:24<5:21:23, 133.91s/it]  5%|▍         | 7/150 [15:36<5:18:07, 133.48s/it]  5%|▌         | 8/150 [17:55<5:20:31, 135.43s/it]                                                  {'loss': 0.004, 'grad_norm': 0.09986430406570435, 'learning_rate': 4.766666666666667e-06, 'loss1': 0.0011116266250610352, 'loss2': 0.0027556419372558594, 'epoch': 0.01}
+  5%|▌         | 8/150 [17:56<5:20:31, 135.43s/it]
+[co-OPSD step 8] model1 traj sample:
+We are given the expression:
+
+$$
+\left|36^{m} - 5^{n}\right|
+$$
+
+We are to find the **smallest** value of this expression for natural numbers $ m $ and $ n $ (i.e., $ m, n \in \mathbb{N} = \{1, 2, 3, \dots\} $).
+
+---
+
+### Step 1: Understand the structure of the expression
+
+We want to minimize:
+
+$$
+\left|36^{m} - 5^{n}\right|
+$$
+
+That is, we are looking for the smallest non-negative difference between a power of $ 36 $ and a power of $ 5 $.
+
+Let's note that both $ 36 $ and $ 5 $ are **positive integers**, so the expression is **always non-negative**.
+
+---
+
+### Step 2: Try small values of $ m $ 
+
+  6%|▌         | 9/150 [20:12<5:19:24, 135.92s/it]  7%|▋         | 10/150 [22:28<5:17:18, 135.99s/it]                                                   {'loss': 0.0013, 'grad_norm': 0.07767834514379501, 'learning_rate': 4.7e-06, 'loss1': 0.0013862848281860352, 'loss2': -0.0003199577331542969, 'epoch': 0.01}
+  7%|▋         | 10/150 [22:29<5:17:18, 135.99s/it]
+[co-OPSD step 10] model1 traj sample:
+We are given a cubic polynomial:
+
+$$
+x^3 - 20x^2 + 18x - 7 = 0
+$$
+
+with roots $ r, s, t $. We are to compute the value of:
+
+$$
+\frac{r}{\frac{1}{r} + st} + \frac{s}{\frac{1}{s} + tr} + \frac{t}{\frac{1}{t} + rs}
+$$
+
+---
+
+### Step 1: Simplify each term
+
+We note that:
+
+$$
+\frac{r}{\frac{1}{r} + st} = \frac{r}{\frac{1}{r} + st}
+$$
+
+To simplify the denominator, multiply numerator and denominator by $ r $:
+
+$$
+\frac{r}{\frac{1}{r} + st} = \frac{r^2}{1 + r st}
+$$
+
+Similarly for the other terms:
+
+$$
+\frac{s}{\frac{1}{s} + tr} = \frac{s^2}{1 + s tr}, \quad \frac{t}{\frac{1}{t} + rs} = \frac{t^2}{1 + t
+
+  7%|▋         | 11/150 [24:43<5:14:05, 135.58s/it]  8%|▊         | 12/150 [26:56<5:10:06, 134.83s/it]                                                   {'loss': 0.0017, 'grad_norm': 0.08250841498374939, 'learning_rate': 4.633333333333334e-06, 'loss1': 0.0008370876312255859, 'loss2': 0.0003135204315185547, 'epoch': 0.01}
+  8%|▊         | 12/150 [26:57<5:10:06, 134.83s/it]  9%|▊         | 13/150 [29:08<5:06:06, 134.06s/it]  9%|▉         | 14/150 [31:26<5:05:57, 134.98s/it]                                                   {'loss': -0.0016, 'grad_norm': 0.06206318736076355, 'learning_rate': 4.566666666666667e-06, 'loss1': 0.00015020370483398438, 'loss2': -0.0028133392333984375, 'epoch': 0.02}
+  9%|▉         | 14/150 [31:26<5:05:57, 134.98s/it] 10%|█         | 15/150 [33:40<5:03:30, 134.89s/it] 11%|█         | 16/150 [35:58<5:03:12, 135.76s/it]                                                   {'loss': -0.0033, 'grad_norm': 0.051687780767679214, 'learning_rate': 4.5e-06, 'loss1': -0.000980079174041748, 'loss2': -6.723403930664062e-05, 'epoch': 0.02}
+ 11%|█         | 16/150 [35:58<5:03:12, 135.76s/it] 11%|█▏        | 17/150 [38:14<5:01:22, 135.96s/it] 12%|█▏        | 18/150 [40:31<4:59:12, 136.01s/it]                                                   {'loss': -0.0052, 'grad_norm': 0.05473346635699272, 'learning_rate': 4.433333333333334e-06, 'loss1': -0.0016026496887207031, 'loss2': -0.0026764869689941406, 'epoch': 0.02}
+ 12%|█▏        | 18/150 [40:31<4:59:12, 136.01s/it] 13%|█▎        | 19/150 [42:46<4:56:49, 135.95s/it] 13%|█▎        | 20/150 [45:04<4:55:22, 136.33s/it]                                                   {'loss': -0.0068, 'grad_norm': 0.03836705535650253, 'learning_rate': 4.366666666666667e-06, 'loss1': -0.002535104751586914, 'loss2': -0.0026552677154541016, 'epoch': 0.02}
+ 13%|█▎        | 20/150 [45:04<4:55:22, 136.33s/it] 14%|█▍        | 21/150 [47:21<4:53:31, 136.52s/it] 15%|█▍        | 22/150 [49:37<4:50:58, 136.39s/it]                                                   {'loss': -0.007, 'grad_norm': 0.04308479651808739, 'learning_rate': 4.3e-06, 'loss1': -0.002518892288208008, 'loss2': -0.0033550262451171875, 'epoch': 0.02}
+ 15%|█▍        | 22/150 [49:37<4:50:58, 136.39s/it]
+[co-OPSD step 22] model1 traj sample:
+We are given a logic problem involving 8 children, each wearing a red hat or a blue hat. There is a specific rule about which balloon each child takes, and the problem is to determine how many children are wearing red hats.
+
+---
+
+### Understanding the Rules:
+
+- Each child **sees** a number of children wearing **red hats**.
+- If a child sees **3 or more** children wearing red hats, they **take a red balloon**.
+- Otherwise, they **take a blue balloon**.
+- Some children take red balloons and some take blue balloons.
+
+We are to determine **how many children are wearing red hats**.
+
+---
+
+### Step 1
+
+ 15%|█▌        | 23/150 [51:55<4:49:40, 136.85s/it] 16%|█▌        | 24/150 [54:10<4:46:15, 136.31s/it]                                                   {'loss': -0.0083, 'grad_norm': 0.04143867641687393, 'learning_rate': 4.233333333333334e-06, 'loss1': -0.004027843475341797, 'loss2': -0.0030040740966796875, 'epoch': 0.03}
+ 16%|█▌        | 24/150 [54:10<4:46:15, 136.31s/it] 17%|█▋        | 25/150 [56:27<4:44:49, 136.71s/it]/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+ 17%|█▋        | 26/150 [58:56<4:49:55, 140.29s/it]                                                   {'loss': -0.0087, 'grad_norm': 0.04230600595474243, 'learning_rate': 4.166666666666667e-06, 'loss1': -0.0045452117919921875, 'loss2': -0.003833293914794922, 'epoch': 0.03}
+ 17%|█▋        | 26/150 [58:56<4:49:55, 140.29s/it] 18%|█▊        | 27/150 [1:01:12<4:45:04, 139.06s/it] 19%|█▊        | 28/150 [1:03:31<4:42:36, 138.99s/it]                                                     {'loss': -0.0087, 'grad_norm': 0.03420967236161232, 'learning_rate': 4.1e-06, 'loss1': -0.00331878662109375, 'loss2': -0.0043430328369140625, 'epoch': 0.03}
+ 19%|█▊        | 28/150 [1:03:31<4:42:36, 138.99s/it]
+[co-OPSD step 28] model1 traj sample:
+We are given a problem about a farmer who buys a batch of trees that he wishes to plant in a **square grid**.
+
+---
+
+### Problem Interpretation:
+
+Let the number of trees the farmer bought be $ N $.
+
+He wants to plant these trees in a **square grid**, so the number of trees must be a perfect square. That is, if he plants the trees in a square grid of side length $ k $, then the number of trees is $ k^2 $, where $ k $ is a positive integer.
+
+He finds that:
+
+- If he had **20 more trees**, he could plant in a square grid.
+- If he had **39 fewer trees**, he could also plant in a square grid.
+
+We are
+
+ 19%|█▉        | 29/150 [1:05:49<4:39:36, 138.65s/it] 20%|██        | 30/150 [1:08:06<4:36:11, 138.09s/it]                                                     {'loss': -0.0089, 'grad_norm': 0.04618913680315018, 'learning_rate': 4.033333333333333e-06, 'loss1': -0.0046863555908203125, 'loss2': -0.003780364990234375, 'epoch': 0.03}
+ 20%|██        | 30/150 [1:08:06<4:36:11, 138.09s/it] 21%|██        | 31/150 [1:10:20<4:31:37, 136.95s/it]
+[co-OPSD step 31] model1 traj sample:
+We are given the identity to prove:
+
+$$
+\binom{n}{k} + \binom{n}{k+1} = \binom{n+1}{k+1}
+$$
+
+### **Step 1: Understand the Binomial Coefficients**
+
+Recall the definition of the binomial coefficient:
+
+$$
+\binom{n}{k} = \frac{n!}{k!(n - k)!}
+$$
+
+Also, the identity:
+
+$$
+\binom{n+1}{k+1} = \binom{n}{k} + \binom{n}{k+1}
+$$
+
+is a standard combinatorial identity. It expresses the binomial coefficient of $ n+1 $ choose $ k+1 $ in terms of the two binomial coefficients of $ n $ choose $ k $ and $ n $ choose $ k+1 $.
+
+---
+
+### **Step 2: Prove by a Known Identity**
+
+The identity:
+
+$$
+\binom{n}{k} + \binom
+
+
+[co-OPSD step 31] model1 traj sample:
+We are given a function:
+
+$$
+f(x) = \frac{ax + b}{cx + d}
+$$
+
+where $ a, b, c, d $ are nonzero real numbers. The constraints are:
+
+1. $ f(19) = 19 $
+2. $ f(97) = 97 $
+3. For all real numbers $ x \neq -\frac{d}{c} $, $ f(f(x)) = x $
+
+We are to find the **unique number that is not in the range** of $ f(x) $.
+
+---
+
+### Step 1: Analyze the symmetry of the function
+
+The condition $ f(f(x)) = x $ means that $ f $ is **an involution**, a function satisfying $ f(f(x)) = x $. This means that $ f $ is its **own inverse**.
+
+The function $ f(x) = \frac{ax + b}{cx + d} $ is of the form $ \frac{ax + b}{cx +
+
+ 21%|██▏       | 32/150 [1:12:35<4:28:30, 136.53s/it]                                                     {'loss': -0.0094, 'grad_norm': 0.03547293692827225, 'learning_rate': 3.966666666666667e-06, 'loss1': -0.005634307861328125, 'loss2': -0.004808902740478516, 'epoch': 0.03}
+ 21%|██▏       | 32/150 [1:12:36<4:28:30, 136.53s/it] 22%|██▏       | 33/150 [1:14:52<4:26:16, 136.55s/it] 23%|██▎       | 34/150 [1:17:08<4:23:43, 136.41s/it]                                                     {'loss': -0.0103, 'grad_norm': 0.04331541806459427, 'learning_rate': 3.900000000000001e-06, 'loss1': -0.006526947021484375, 'loss2': -0.005086660385131836, 'epoch': 0.04}
+ 23%|██▎       | 34/150 [1:17:09<4:23:43, 136.41s/it] 23%|██▎       | 35/150 [1:19:25<4:21:58, 136.69s/it] 24%|██▍       | 36/150 [1:21:42<4:19:21, 136.50s/it]                                                     {'loss': -0.0115, 'grad_norm': 0.03822940215468407, 'learning_rate': 3.833333333333334e-06, 'loss1': -0.005260467529296875, 'loss2': -0.005133628845214844, 'epoch': 0.04}
+ 24%|██▍       | 36/150 [1:21:42<4:19:21, 136.50s/it] 25%|██▍       | 37/150 [1:23:57<4:16:45, 136.33s/it]
+[co-OPSD step 37] model1 traj sample:
+We are given:
+
+- $ a \geq 1 $, $ b \geq 2 $,
+- $ a^b - 1 $ is a **prime number**,
+- We are to **show** that: $ a = 2 $, and $ b $ is **prime**.
+
+---
+
+### Step 1: Understand the structure
+
+We are told that $ a^b - 1 $ is a prime number. This means that:
+
+$$
+a^b - 1 = p,
+$$
+where $ p $ is a **prime number**.
+
+---
+
+### Step 2: Analyze the case $ a = 2 $
+
+Suppose $ a = 2 $. Then:
+
+$$
+a^b - 1 = 2^b - 1.
+$$
+
+We want this to be **prime**. Since the function $ 2^b - 1 $ is well-known in number theory, especially in the area of **Mersenne numbers**, we consider the possible values of $ b $:
+
+Let’s exam
+
+
+[co-OPSD step 37] model1 traj sample:
+We are given the expression:
+
+$$
+E = \frac{13 x^2 + 24xy + 13 y^2 + 16x + 14y + 68}{(9 - x^2 - 8xy - 16 y^2)^{5/2}}
+$$
+
+We are asked to find the **minimum value** of this expression, and **round it to the nearest hundredth** if needed.
+
+---
+
+### Step 1: Simplify the numerator
+
+Let’s write the expression as:
+
+$$
+E = \frac{13x^2 + 24xy + 13y^2 + 16x + 14y + 68}{(9 - x^2 - 8xy - 16 y^2)^{5/2}}
+$$
+
+---
+
+### Step 2: Analyze the denominator
+
+Let’s denote:
+
+$$
+D(x, y) = (9 - x^2 - 8xy - 16y^2)^{5/2}
+$$
+
+We want to **minimize** $E = \frac{N(x, y)}{D(x, y)}$.
+
+So, the **goal is to minimize the rational
+
+ 25%|██▌       | 38/150 [1:26:16<4:15:50, 137.06s/it]                                                     {'loss': -0.0115, 'grad_norm': 0.04803543537855148, 'learning_rate': 3.766666666666667e-06, 'loss1': -0.00525665283203125, 'loss2': -0.0054149627685546875, 'epoch': 0.04}
+ 25%|██▌       | 38/150 [1:26:17<4:15:50, 137.06s/it] 26%|██▌       | 39/150 [1:28:34<4:13:48, 137.19s/it] 27%|██▋       | 40/150 [1:30:51<4:11:20, 137.10s/it]                                                     {'loss': -0.0122, 'grad_norm': 0.03885773569345474, 'learning_rate': 3.7e-06, 'loss1': -0.006927490234375, 'loss2': -0.006580352783203125, 'epoch': 0.04}
+ 27%|██▋       | 40/150 [1:30:51<4:11:20, 137.10s/it] 27%|██▋       | 41/150 [1:33:09<4:09:53, 137.55s/it] 28%|██▊       | 42/150 [1:35:28<4:08:18, 137.95s/it]                                                     {'loss': -0.0125, 'grad_norm': 0.04295327886939049, 'learning_rate': 3.633333333333334e-06, 'loss1': -0.00640106201171875, 'loss2': -0.0067901611328125, 'epoch': 0.05}
+ 28%|██▊       | 42/150 [1:35:29<4:08:18, 137.95s/it]
+[co-OPSD step 42] model1 traj sample:
+We are given a geometric problem involving two upward-facing parabolas and specific constraints on their vertices and intersections with the $ x $-axis.
+
+---
+
+### **Step 1: Understand the setup**
+
+We are told:
+
+1. **Parabola $\Pi_1$** is **upward-facing** (i.e., the coefficient of $ x^2 $ is positive).
+2. It passes through the points $(10,0)$ and $(13,0)$. So the **x-intercepts** of $\Pi_1$ are at $ x = 10 $ and $ x = 13 $.
+3. **Parabola $\Pi_2$** is **also upward-facing** and passes through the point $(13,0)$, the same as $\Pi_1$.
+4. The **vertex** of $\Pi_1$ **bisects** the segment connectin
+
+
+[co-OPSD step 42] model1 traj sample:
+We are given a regular tetrahedron $ABCD$ whose **four vertices** lie on a sphere of radius $R$. The task is to find the **length of the edge $AB$** among the given four options.
+
+---
+
+### **Step 1: Understanding the Geometry of a Regular Tetrahedron**
+
+A **regular tetrahedron** is a tetrahedron (a 3-dimensional shape with 4 triangular faces) where all the edges are of the same length, and all faces are congruent equilateral triangles.
+
+We are told that the **four vertices** of the tetrahedron lie on a **sphere of radius $R$** — this means that the tetrahedron is **inscribed in a sphere of rad
+
+ 29%|██▊       | 43/150 [1:37:46<4:05:51, 137.86s/it] 29%|██▉       | 44/150 [1:40:05<4:04:19, 138.29s/it]                                                     {'loss': -0.0123, 'grad_norm': 0.03708375617861748, 'learning_rate': 3.566666666666667e-06, 'loss1': -0.007190704345703125, 'loss2': -0.005931854248046875, 'epoch': 0.05}
+ 29%|██▉       | 44/150 [1:40:05<4:04:19, 138.29s/it]
+[co-OPSD step 44] model1 traj sample:
+We are given the expression:
+
+$$
+989 \cdot 1001 \cdot 1007 + 320
+$$
+
+We are told this expression can be written as the product of **three distinct primes**, $ p < q < r $, and we are to find these primes.
+
+---
+
+### Step 1: Understanding the structure of the expression
+
+We are told that:
+
+$$
+989 \cdot 1001 \cdot 1007 + 320
+$$
+
+is **equal to a product of three distinct primes**. To identify this, we need to evaluate the entire expression to see if it is divisible by a certain number and eventually factor it fully.
+
+---
+
+### Step 2: Calculate the value of the product
+
+We compute:
+
+$$
+989 \cdot 10
+
+ 30%|███       | 45/150 [1:42:21<4:00:58, 137.70s/it] 31%|███       | 46/150 [1:44:40<3:59:15, 138.04s/it]                                                     {'loss': -0.0134, 'grad_norm': 0.03789133578538895, 'learning_rate': 3.5e-06, 'loss1': -0.007720947265625, 'loss2': -0.006290435791015625, 'epoch': 0.05}
+ 31%|███       | 46/150 [1:44:41<3:59:15, 138.04s/it]
+[co-OPSD step 46] model1 traj sample:
+We are given two functions:
+- $ f(x) = x^2 - 2x $
+- $ g(x) = \begin{cases}
+x - 2, & \text{if } x \geq 1 \\
+-x, & \text{if } x < 1
+\end{cases} $
+
+We are to find the solution set of the inequality:
+$$
+f(x) \leq 3g(x)
+$$
+
+---
+
+### Step 1: Understand the piecewise nature of $ g(x) $
+
+We break the problem into two cases:
+
+---
+
+#### **Case 1: $ x \geq 1 $**  
+Then:
+$$
+g(x) = x - 2
+$$
+
+So we analyze the inequality:
+$$
+f(x) \leq 3g(x) \Rightarrow x^2 - 2x \leq 3(x - 2)
+$$
+
+Simplify:
+$$
+x^2 - 2x \leq 3x - 6
+$$
+
+Bring all terms to one side:
+$$
+x^2 - 2x - 3x + 6 \leq 0
+\Rightarrow x^2 - 5x + 6 \leq 0
+$$
+
+
+
+[co-OPSD step 46] model1 traj sample:
+We are given a function:
+
+$$
+f(x) = \left| \log_2 x \right|
+$$
+
+We are told that:
+
+$$
+f(a+1) = f(b+2)
+$$
+
+$$
+f(10a + 6b + 22) = 4
+$$
+
+and that $ a < b $.
+
+We are to find the value of $ ab $.
+
+---
+
+### Step 1: Understand $ f(x) = \left| \log_2 x \right| $
+
+This is the **absolute value of the base-2 logarithm** of $ x $. It is defined as:
+
+$$
+f(x) = 
+\begin{cases}
+\log_2 x & \text{if } x > 1 \\
+-\log_2 x & \text{if } 0 < x \leq 1
+\end{cases}
+$$
+
+But since we only have absolute value, it’s equivalent to:
+$$
+f(x) = \log_2 |x| \text{ when } x > 0
+$$
+
+But $ f(x) = |\log_2 x| $ is **always non-negati
+
+ 31%|███▏      | 47/150 [1:46:59<3:57:14, 138.20s/it] 32%|███▏      | 48/150 [1:49:17<3:54:56, 138.20s/it]                                                     {'loss': -0.0139, 'grad_norm': 0.03795178234577179, 'learning_rate': 3.4333333333333336e-06, 'loss1': -0.005901336669921875, 'loss2': -0.006618499755859375, 'epoch': 0.05}
+ 32%|███▏      | 48/150 [1:49:17<3:54:56, 138.20s/it] 33%|███▎      | 49/150 [1:51:37<3:53:36, 138.77s/it] 33%|███▎      | 50/150 [1:53:56<3:51:36, 138.96s/it]                                                     {'loss': -0.0147, 'grad_norm': 0.03801238164305687, 'learning_rate': 3.366666666666667e-06, 'loss1': -0.0067996978759765625, 'loss2': -0.0068035125732421875, 'epoch': 0.05}
+ 33%|███▎      | 50/150 [1:53:57<3:51:36, 138.96s/it]/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+
+[co-OPSD step 50] model1 traj sample:
+We are given the expression:
+
+$$
+\frac{\sin x + \sin 2x}{1 + \cos x + \cos 2x}
+$$
+
+Our goal is to **simplify** this expression as much as possible.
+
+---
+
+### **Step 1: Use Trigonometric Identities**
+
+We can use the following identities:
+
+#### **1. Identity for $\sin x + \sin 2x$:**
+
+The sum-to-product identity:
+
+$$
+\sin A + \sin B = 2 \sin \left( \frac{A + B}{2} \right) \cos \left( \frac{A - B}{2} \right)
+$$
+
+Let:
+
+- $A = x$
+- $B = 2x$
+
+Then:
+
+$$
+\sin x + \sin 2x = 2 \sin \left( \frac{x + 2x}{2} \right) \cos \left( \frac{x - 2x}{2} \right)
+= 2 \sin \left( \frac{3x}{2} \right) \cos \left( -\fra
+
+ 34%|███▍      | 51/150 [1:56:24<3:53:24, 141.46s/it]
+[co-OPSD step 51] model1 traj sample:
+We are given the inequality to prove:
+
+$$
+\left(a_{1}+a_{2}+\ldots+a_{n}\right)\left(\frac{1}{a_{1}}+\frac{1}{a_{2}}+\ldots+\frac{1}{a_{n}}\right) \geqslant n^{2}
+$$
+
+where $ a_1, a_2, \dots, a_n > 0 $.
+
+---
+
+### **Step 1: Understanding the Problem**
+
+Let us denote:
+
+- $ S = a_1 + a_2 + \cdots + a_n $
+- $ T = \frac{1}{a_1} + \frac{1}{a_2} + \cdots + \frac{1}{a_n} $
+
+We are asked to prove that:
+
+$$
+S \cdot T \geq n^2
+$$
+
+Note that this is a **symmetric** inequality involving **two sums** of positive terms, with the first sum being the **sum of variables** and the second being the **sum of their
+
+ 35%|███▍      | 52/150 [1:58:42<3:49:23, 140.44s/it]                                                     {'loss': -0.0157, 'grad_norm': 0.03824695944786072, 'learning_rate': 3.3000000000000006e-06, 'loss1': -0.007293701171875, 'loss2': -0.007434844970703125, 'epoch': 0.06}
+ 35%|███▍      | 52/150 [1:58:42<3:49:23, 140.44s/it]
+[co-OPSD step 52] model1 traj sample:
+We are given the numbers:
+
+- $ 3 $
+- $ \frac{5}{2} $
+- $ \sqrt{10} $
+
+We are asked to **list these in order from smallest to largest**, and choose the correct sequence from the given choices.
+
+---
+
+### Step 1: Convert all to decimals or exact values for comparison
+Let's analyze each number numerically.
+
+1. **$ 3 $** — already a number, so value is **3**
+2. **$ \frac{5}{2} $** — $ \frac{5}{2} = 2.5 $
+3. **$ \sqrt{10} $** — we can estimate or simplify this.
+
+We know:
+- $ \sqrt{9} = 3 $, and $ \sqrt{16} = 4 $, so $ \sqrt{10} \approx 3.162 $
+
+Now we have the approximate values:
+
+- $ \frac{5}{2} = 
+
+
+[co-OPSD step 52] model1 traj sample:
+We are given a problem involving **compound interest**, with a **bank** receiving deposits from a **depositor**, and **investing the money** into a **higher interest rate**. The problem asks us to evaluate the **profit** the bank makes, and to assess why the **given formula** is **incorrect**.
+
+---
+
+### **Problem Summary and Setup**
+
+- A **depositor** deposits **$ K $**.
+- The **bank** earns **$ p\% $** interest **annually**, compounded **annually**.
+- The **bank** invests the **capital** at **$ p_1\% $**, where $ p_1 > p $.
+- The **profit** from the investment is the **net gain** after $ n $ 
+
+ 35%|███▌      | 53/150 [2:00:59<3:45:25, 139.44s/it] 36%|███▌      | 54/150 [2:03:15<3:41:17, 138.31s/it]                                                     {'loss': -0.0164, 'grad_norm': 0.04198572412133217, 'learning_rate': 3.2333333333333334e-06, 'loss1': -0.0076446533203125, 'loss2': -0.008991241455078125, 'epoch': 0.06}
+ 36%|███▌      | 54/150 [2:03:15<3:41:17, 138.31s/it] 37%|███▋      | 55/150 [2:05:33<3:39:12, 138.44s/it] 37%|███▋      | 56/150 [2:07:51<3:36:17, 138.06s/it]                                                     {'loss': -0.0159, 'grad_norm': 0.045522067695856094, 'learning_rate': 3.1666666666666667e-06, 'loss1': -0.00763702392578125, 'loss2': -0.008815765380859375, 'epoch': 0.06}
+ 37%|███▋      | 56/150 [2:07:51<3:36:17, 138.06s/it]
+[co-OPSD step 56] model1 traj sample:
+We are given a polynomial $ p(x) $ and asked to find its remainder when divided by the quadratic polynomial:
+
+$$
+x^2 - (a+b)x + ab
+$$
+
+---
+
+### Step 1: Express the divisor in factored form
+
+The given divisor can be factored as:
+
+$$
+x^2 - (a+b)x + ab = (x - a)(x - b)
+$$
+
+So, this is a **factorized quadratic with distinct roots** $ a $ and $ b $, and it is a **divisor of the polynomial** if the remainder when divided by this quadratic is $ mx + n $.
+
+We proceed under the **polynomial remainder theorem** and consider **division of a polynomial by a quadratic**, which involves **remainder theorem 
+
+ 38%|███▊      | 57/150 [2:10:10<3:34:45, 138.55s/it] 39%|███▊      | 58/150 [2:12:29<3:32:21, 138.49s/it]                                                     {'loss': -0.0165, 'grad_norm': 0.0412086583673954, 'learning_rate': 3.1000000000000004e-06, 'loss1': -0.007144927978515625, 'loss2': -0.00824737548828125, 'epoch': 0.06}
+ 39%|███▊      | 58/150 [2:12:29<3:32:21, 138.49s/it]
+[co-OPSD step 58] model1 traj sample:
+To find the **percentage increase** in the price of a product, we proceed in the following steps:
+
+---
+
+### **Step 1: Understand the given data**
+The price **increased from**:
+- **Original price:** $ 5.00 $ reais  
+- **New price:** $ 5.55 $ reais  
+
+So, we are looking for the **percentage increase** of the price, from the original to the new.
+
+---
+
+### **Step 2: Find the **amount of increase****
+We calculate the **change in price**:
+
+$$
+\text{Increase in price} = \text{New price} - \text{Original price}
+$$
+
+$$
+\text{Increase} = 5.55 - 5.00 = 0.55 \text{ reais}
+$$
+
+---
+
+### **Step 3: Find the *
+
+ 39%|███▉      | 59/150 [2:14:48<3:30:19, 138.67s/it] 40%|████      | 60/150 [2:17:06<3:27:48, 138.54s/it]                                                     {'loss': -0.0179, 'grad_norm': 0.04037318006157875, 'learning_rate': 3.0333333333333337e-06, 'loss1': -0.008819580078125, 'loss2': -0.008350372314453125, 'epoch': 0.07}
+ 40%|████      | 60/150 [2:17:06<3:27:48, 138.54s/it]
+[co-OPSD step 60] model1 traj sample:
+We are given a trigonometric expression:
+
+$$
+\frac{\sin 6 \alpha + \sin 7 \alpha + \sin 8 \alpha + \sin 9 \alpha}{\cos 6 \alpha + \cos 7 \alpha + \cos 8 \alpha + \cos 9 \alpha} = \tan\left(\frac{15}{2} \alpha\right)
+$$
+
+We are to verify whether this identity is **true** or **false**, under the assumption that this expression evaluates to the right-hand side, i.e., that it **simplifies to** $\tan\left(\frac{15}{2} \alpha\right)$.
+
+---
+
+### Step 1: Strategy
+
+The left-hand side (LHS) is a rational expression involving sum of sines and cosines of angles in arithmetic progression:
+
+$$
+\frac{\sin 6 
+
+ 41%|████      | 61/150 [2:19:26<3:26:18, 139.08s/it] 41%|████▏     | 62/150 [2:21:43<3:23:09, 138.52s/it]                                                     {'loss': -0.018, 'grad_norm': 0.042394932359457016, 'learning_rate': 2.9666666666666673e-06, 'loss1': -0.00994873046875, 'loss2': -0.008884429931640625, 'epoch': 0.07}
+ 41%|████▏     | 62/150 [2:21:44<3:23:09, 138.52s/it]
+[co-OPSD step 62] model1 traj sample:
+We are given a system of logarithmic equations:
+
+$$
+\log_{2}\left[\log_{\frac{1}{2}}\left(\log_{2} x\right)\right]=\log_{3}\left[\log_{\frac{1}{3}}\left(\log_{3} y\right)\right]=\log_{5}\left[\log_{\frac{1}{5}}\left(\log_{5} z\right)\right]=0
+$$
+
+We are to determine the ordering of the variables: **$ x, y, z $** in the order $ x < y < z $, or other possibilities, based on the given equations.
+
+---
+
+### Step 1: Understand the structure
+
+Let’s define a common variable $ k $, the value that satisfies the given equation:
+
+$$
+\log_{2}\left[\log_{\frac{1}{2}}\left(\log_{2} x\right)\right]=\log_{3}\l
+
+ 42%|████▏     | 63/150 [2:24:02<3:20:40, 138.39s/it] 43%|████▎     | 64/150 [2:26:21<3:18:45, 138.67s/it]                                                     {'loss': -0.0195, 'grad_norm': 0.04272748529911041, 'learning_rate': 2.9e-06, 'loss1': -0.010219573974609375, 'loss2': -0.00986480712890625, 'epoch': 0.07}
+ 43%|████▎     | 64/150 [2:26:21<3:18:45, 138.67s/it]
+[co-OPSD step 64] model1 traj sample:
+We are given a triangle $ \triangle ABC $ with several isosceles or angle-related relationships and a known angle at point $ O $, and the goal is to determine the measure of $ \angle CBO $.
+
+---
+
+### Step 1: Understand the Given Information
+
+We're told:
+
+- $ \angle BA O = \angle CAO $
+- $ \angle CBO = \angle ABO $
+- $ \angle ACO = \angle BCO $
+- $ \angle AOC = 110^\circ $
+
+From these, we understand that point $ O $ is a **point inside triangle $ ABC $** such that it divides the triangle into three smaller triangles, and certain angles are equal and symmetric.
+
+The key is to **use the propertie
+
+ 43%|████▎     | 65/150 [2:28:40<3:16:46, 138.90s/it] 44%|████▍     | 66/150 [2:30:59<3:14:24, 138.86s/it]                                                     {'loss': -0.019, 'grad_norm': 0.04078879952430725, 'learning_rate': 2.8333333333333335e-06, 'loss1': -0.00846099853515625, 'loss2': -0.0089569091796875, 'epoch': 0.07}
+ 44%|████▍     | 66/150 [2:30:59<3:14:24, 138.86s/it]
+[co-OPSD step 66] model1 traj sample:
+We are given the equation:
+$$
+x + \frac{1}{x} = -5
+$$
+and asked to find:
+$$
+x^3 + \frac{1}{x^3}
+$$
+
+---
+
+### Step 1: Recognize the expression for $x + \frac{1}{x}$ and relate it to $x^3 + \frac{1}{x^3}$
+
+We begin by recalling a useful identity involving powers of expressions like $x + \frac{1}{x}$.
+
+Let:
+$$
+a = x + \frac{1}{x}
+$$
+Then we know that:
+$$
+a^3 = \left( x + \frac{1}{x} \right)^3 = x^3 + \frac{1}{x^3} + 3\left( x + \frac{1}{x} \right)
+$$
+
+Now we substitute $a = x + \frac{1}{x} = -5$ into the identity.
+
+---
+
+### Step 2: Apply the identity
+
+$$
+a^3 = \left( x + \frac{1}{x} \right)^3 = x
+
+ 45%|████▍     | 67/150 [2:33:16<3:11:24, 138.37s/it] 45%|████▌     | 68/150 [2:35:34<3:08:52, 138.20s/it]                                                     {'loss': -0.0195, 'grad_norm': 0.04608543589711189, 'learning_rate': 2.766666666666667e-06, 'loss1': -0.00968170166015625, 'loss2': -0.00958251953125, 'epoch': 0.07}
+ 45%|████▌     | 68/150 [2:35:35<3:08:52, 138.20s/it] 46%|████▌     | 69/150 [2:37:54<3:07:10, 138.65s/it] 47%|████▋     | 70/150 [2:40:12<3:04:44, 138.56s/it]                                                     {'loss': -0.0204, 'grad_norm': 0.05150042474269867, 'learning_rate': 2.7000000000000004e-06, 'loss1': -0.008691787719726562, 'loss2': -0.010128021240234375, 'epoch': 0.08}
+ 47%|████▋     | 70/150 [2:40:13<3:04:44, 138.56s/it]
+[co-OPSD step 70] model1 traj sample:
+We are given the real numbers $ x $ and $ y $, and they satisfy the equation:
+
+$$
+2x^2 + 3xy + 2y^2 = 1
+$$
+
+We are to find the **minimum value** of:
+
+$$
+x + y + xy
+$$
+
+---
+
+### Step 1: Analyze the given constraint and function
+
+We are asked to **minimize** the expression:
+
+$$
+f(x, y) = x + y + xy
+$$
+
+subject to the constraint:
+
+$$
+g(x, y) = 2x^2 + 3xy + 2y^2 = 1
+$$
+
+This is an optimization problem with constraints. The **constraint is quadratic**, and the **objective function is also quadratic**.
+
+This is a standard **constrained optimization** problem that we can try solving using **method of
+
+ 47%|████▋     | 71/150 [2:42:30<3:02:14, 138.42s/it] 48%|████▊     | 72/150 [2:44:49<3:00:11, 138.61s/it]                                                     {'loss': -0.0208, 'grad_norm': 0.043599557131528854, 'learning_rate': 2.6333333333333332e-06, 'loss1': -0.011165618896484375, 'loss2': -0.009796142578125, 'epoch': 0.08}
+ 48%|████▊     | 72/150 [2:44:50<3:00:11, 138.61s/it] 49%|████▊     | 73/150 [2:47:09<2:58:21, 138.98s/it] 49%|████▉     | 74/150 [2:49:27<2:55:36, 138.63s/it]                                                     {'loss': -0.0219, 'grad_norm': 0.044867273420095444, 'learning_rate': 2.566666666666667e-06, 'loss1': -0.01038360595703125, 'loss2': -0.010227203369140625, 'epoch': 0.08}
+ 49%|████▉     | 74/150 [2:49:27<2:55:36, 138.63s/it] 50%|█████     | 75/150 [2:51:47<2:53:55, 139.15s/it]/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+
+[co-OPSD step 75] model1 traj sample:
+We are asked to **find all prime numbers $ p, q, r $** such that they satisfy the equation:
+
+$$
+p^{q} + q^{p} = r
+$$
+
+---
+
+### **Step 1: Understand the nature of primes and modular arithmetic**
+Let’s first consider the **basic facts** about primes:
+
+- A **prime number** is a number greater than 1 that is divisible only by 1 and itself.
+- The **only even prime number** is **2**, and all other primes are **odd**.
+- So, the primes $ p, q, r $ are **greater than or equal to 2**.
+
+We are to find all **prime triples** $ (p, q, r) $ such that:
+
+$$
+p^q + q^p = r
+$$
+
+This is an exponential Diophantine 
+
+ 51%|█████     | 76/150 [2:54:16<2:54:57, 141.86s/it]                                                     {'loss': -0.0212, 'grad_norm': 0.04288623854517937, 'learning_rate': 2.5e-06, 'loss1': -0.01128387451171875, 'loss2': -0.0109405517578125, 'epoch': 0.08}
+ 51%|█████     | 76/150 [2:54:16<2:54:57, 141.86s/it] 51%|█████▏    | 77/150 [2:56:35<2:51:36, 141.05s/it]
+[co-OPSD step 77] model1 traj sample:
+We are given that:
+
+- Fido’s yard is a **regular hexagon** (a polygon with 6 equal sides and angles).
+- Fido’s leash is **tied to a stake at the center of the hexagon**, and the leash is **exactly long enough to reach the midpoint of each side**.
+- We are asked: What is the **fraction of the area of Fido’s yard that he is able to reach** while on his leash, expressed in the form $\frac{\sqrt{a}}{b}\pi$, and we must find the product $ab$?
+
+---
+
+### **Understanding the Geometry of the Yard:**
+
+We start by considering the geometry of a **regular hexagon**.
+
+- A regular hexagon can be divided into
+
+ 52%|█████▏    | 78/150 [2:58:53<2:48:19, 140.27s/it]                                                     {'loss': -0.022, 'grad_norm': 0.04556731507182121, 'learning_rate': 2.4333333333333335e-06, 'loss1': -0.0117645263671875, 'loss2': -0.010105133056640625, 'epoch': 0.08}
+ 52%|█████▏    | 78/150 [2:58:54<2:48:19, 140.27s/it] 53%|█████▎    | 79/150 [3:01:11<2:45:16, 139.67s/it]
+[co-OPSD step 79] model1 traj sample:
+We are given the following:
+
+- A function $ p_n $, which is defined for a positive integer $ n \geq 1 $, such that the value of $ p_n $ is the **product of all the non-zero digits** of $ n $.
+- For example, $ p_6 = 6 $, $ p_{32} = 3 \times 2 = 6 $, and $ p_{203} = 2 \times 3 = 6 $.
+- We are to calculate:
+  $$
+  S = p_1 + p_2 + p_3 + \cdots + p_{999}
+  $$
+- Then, **find the largest prime that divides** this sum $ S $.
+
+---
+
+### **Step 1: Understanding the problem**
+
+Each number $ n $ from 1 to 999 (inclusive) has some digits, and we compute the **product of the non-zero digits** of $ n $. We ar
+
+ 53%|█████▎    | 80/150 [3:03:31<2:42:48, 139.55s/it]                                                     {'loss': -0.0224, 'grad_norm': 0.047418028116226196, 'learning_rate': 2.3666666666666667e-06, 'loss1': -0.01027679443359375, 'loss2': -0.011444091796875, 'epoch': 0.09}
+ 53%|█████▎    | 80/150 [3:03:31<2:42:48, 139.55s/it]
+[co-OPSD step 80] model1 traj sample:
+We are given the expression:
+
+$$
+\log _{3}\left(1-\log _{0.5}\left(x^{2}-2x-2.5\right)\right)
+$$
+
+Our goal is to determine the **values of $ x $** for which the **expression is defined**, taking into account the **domain restrictions** imposed by the logarithmic functions involved. That means we must **consider the conditions under which each term is defined, and how they interact** with one another.
+
+---
+
+### Step 1: Understand the components of the expression
+
+The given expression is:
+
+$$
+\log _{3}\left(1-\log _{0.5}\left(x^{2}-2x-2.5\right)\right)
+$$
+
+We analyze each logarithmic component *
+
+ 54%|█████▍    | 81/150 [3:05:49<2:40:07, 139.24s/it] 55%|█████▍    | 82/150 [3:08:10<2:38:11, 139.57s/it]                                                     {'loss': -0.0226, 'grad_norm': 0.04256957024335861, 'learning_rate': 2.3000000000000004e-06, 'loss1': -0.01178741455078125, 'loss2': -0.01171112060546875, 'epoch': 0.09}
+ 55%|█████▍    | 82/150 [3:08:10<2:38:11, 139.57s/it] 55%|█████▌    | 83/150 [3:10:29<2:35:41, 139.43s/it] 56%|█████▌    | 84/150 [3:12:46<2:32:48, 138.92s/it]                                                     {'loss': -0.0237, 'grad_norm': 0.041967976838350296, 'learning_rate': 2.2333333333333333e-06, 'loss1': -0.01168060302734375, 'loss2': -0.010822296142578125, 'epoch': 0.09}
+ 56%|█████▌    | 84/150 [3:12:47<2:32:48, 138.92s/it] 57%|█████▋    | 85/150 [3:15:03<2:29:47, 138.28s/it] 57%|█████▋    | 86/150 [3:17:22<2:27:38, 138.42s/it]                                                     {'loss': -0.0247, 'grad_norm': 0.04428201913833618, 'learning_rate': 2.166666666666667e-06, 'loss1': -0.00988006591796875, 'loss2': -0.01354217529296875, 'epoch': 0.09}
+ 57%|█████▋    | 86/150 [3:17:22<2:27:38, 138.42s/it]
+[co-OPSD step 86] model1 traj sample:
+We are given the inequality:
+
+$$
+y > 2x
+$$
+
+and we are to minimize the expression:
+
+$$
+\frac{y^2 - 2xy + x^2}{xy - 2x^2}
+$$
+
+We are told $ x > 0 $, $ y > 0 $, and $ y > 2x $. We are tasked with minimizing this expression over all such positive real numbers $ x, y $.
+
+---
+
+### Step 1: Simplify the expression
+We begin by simplifying the numerator and the denominator:
+
+**Numerator:**
+$$
+y^2 - 2xy + x^2 = (y - x)^2
+$$
+
+**Denominator:**
+$$
+xy - 2x^2 = x(y - 2x)
+$$
+
+So now, we rewrite the expression:
+
+$$
+\frac{(y - x)^2}{x(y - 2x)}
+$$
+
+Let’s keep in mind that:
+$$
+y > 2x \Rightarrow y - 2x > 0
+$$
+
+So
+
+ 58%|█████▊    | 87/150 [3:19:40<2:25:14, 138.33s/it] 59%|█████▊    | 88/150 [3:22:00<2:23:24, 138.79s/it]                                                     {'loss': -0.0252, 'grad_norm': 0.04141658917069435, 'learning_rate': 2.1000000000000002e-06, 'loss1': -0.011714935302734375, 'loss2': -0.01201629638671875, 'epoch': 0.1}
+ 59%|█████▊    | 88/150 [3:22:00<2:23:24, 138.79s/it] 59%|█████▉    | 89/150 [3:24:16<2:20:20, 138.04s/it] 60%|██████    | 90/150 [3:26:35<2:18:14, 138.23s/it]                                                     {'loss': -0.0251, 'grad_norm': 0.04303005337715149, 'learning_rate': 2.0333333333333335e-06, 'loss1': -0.01355743408203125, 'loss2': -0.01149749755859375, 'epoch': 0.1}
+ 60%|██████    | 90/150 [3:26:35<2:18:14, 138.23s/it] 61%|██████    | 91/150 [3:28:56<2:16:40, 138.98s/it] 61%|██████▏   | 92/150 [3:31:14<2:14:15, 138.89s/it]                                                     {'loss': -0.0257, 'grad_norm': 0.04495216906070709, 'learning_rate': 1.9666666666666668e-06, 'loss1': -0.01343536376953125, 'loss2': -0.0119476318359375, 'epoch': 0.1}
+ 61%|██████▏   | 92/150 [3:31:15<2:14:15, 138.89s/it]
+[co-OPSD step 92] model1 traj sample:
+We are given the equation:
+
+$$
+x^3 - \lfloor x \rfloor = 3
+$$
+
+where $\lfloor x \rfloor$ denotes the **integer part** of the number $x$, i.e., the **floor function**, and the task is to **solve** for $x$ in real numbers.
+
+---
+
+### Step 1: Understand the structure of the problem
+
+We are dealing with a **non-linear** equation involving a **floor function**, which is piecewise constant. The floor function is a **discontinuous function**, but in our context, the behavior of the left-hand side, $x^3 - \lfloor x \rfloor$, must **equal the constant right-hand side**, which is 3.
+
+Let’s denote:
+
+$$
+x 
+
+ 62%|██████▏   | 93/150 [3:33:33<2:11:49, 138.77s/it]
+[co-OPSD step 93] model1 traj sample:
+We are given the trigonometric identity to prove:
+
+$$
+\sin \alpha + \sin \beta + \sin \gamma - \sin (\alpha+\beta) \cos \gamma - \cos (\alpha+\beta) \sin \gamma = 4 \sin \frac{\alpha+\beta}{2} \sin \frac{\beta+\gamma}{2} \sin \frac{\gamma+\alpha}{2}
+$$
+
+We are to **verify this identity** by **breaking it down and simplifying both sides algebraically**. To do this, we will **analyze each term and then compare them algebraically**, as is standard in trigonometric identity verification.
+
+---
+
+### Step 1: Simplify the Left-Hand Side (LHS)
+
+We start with the **LHS expression**:
+
+$$
+\sin \alpha + \s
+
+ 63%|██████▎   | 94/150 [3:35:53<2:09:58, 139.26s/it]                                                     {'loss': -0.0258, 'grad_norm': 0.041543424129486084, 'learning_rate': 1.9000000000000002e-06, 'loss1': -0.0136871337890625, 'loss2': -0.01274871826171875, 'epoch': 0.1}
+ 63%|██████▎   | 94/150 [3:35:54<2:09:58, 139.26s/it] 63%|██████▎   | 95/150 [3:38:11<2:07:23, 138.97s/it] 64%|██████▍   | 96/150 [3:40:31<2:05:08, 139.04s/it]                                                     {'loss': -0.026, 'grad_norm': 0.04262648522853851, 'learning_rate': 1.8333333333333333e-06, 'loss1': -0.011951446533203125, 'loss2': -0.0153045654296875, 'epoch': 0.1}
+ 64%|██████▍   | 96/150 [3:40:31<2:05:08, 139.04s/it]
+[co-OPSD step 96] model1 traj sample:
+We are given the equations of an **ellipse** and a **hyperbola**, and we are told that they have **the same directrix**. Our goal is to find the value of the ellipse's constant $ k $.
+
+---
+
+### **Understanding the problem:**
+
+We are given:
+
+- An **ellipse**:  
+  $$
+  x^2 + ky^2 = 1
+  $$
+
+- A **hyperbola**:  
+  $$
+  \frac{x^2}{4} - \frac{y^2}{5} = 1
+  $$
+
+We are told these **two conic sections** share **the same directrix**.
+
+From this, we must find the value of $ k $ such that this condition is satisfied.
+
+---
+
+## **Step 1: Convert the ellipse into standard form**
+
+First, rewrite the ellipse i
+
+ 65%|██████▍   | 97/150 [3:42:49<2:02:37, 138.81s/it] 65%|██████▌   | 98/150 [3:45:08<2:00:30, 139.05s/it]                                                     {'loss': -0.0255, 'grad_norm': 0.041006095707416534, 'learning_rate': 1.7666666666666668e-06, 'loss1': -0.01334381103515625, 'loss2': -0.012607574462890625, 'epoch': 0.11}
+ 65%|██████▌   | 98/150 [3:45:09<2:00:30, 139.05s/it] 66%|██████▌   | 99/150 [3:47:28<1:58:15, 139.12s/it] 67%|██████▋   | 100/150 [3:49:47<1:55:53, 139.07s/it]                                                      {'loss': -0.0259, 'grad_norm': 0.04318863898515701, 'learning_rate': 1.7000000000000002e-06, 'loss1': -0.01276397705078125, 'loss2': -0.011241912841796875, 'epoch': 0.11}
+ 67%|██████▋   | 100/150 [3:49:47<1:55:53, 139.07s/it]/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+
+[co-OPSD step 100] model1 traj sample:
+We are given a problem about distributing 38 athletes among three floors of a hotel during the Winter Olympics. The goal is to determine **how many athletes are staying on the second floor**.
+
+---
+
+### **Given Data**
+
+- **Total number of athletes**: 38  
+- **Number of athletes on first and second floors**: 26  
+- **Number of athletes on second and third floors**: 27
+
+Let’s analyze this carefully to avoid overcomplicating and use logical reasoning.
+
+---
+
+### **Key Observations and Definitions**
+
+We are told the following:
+
+1. **Athletes staying on the first and second floors together is 26**, m
+
+ 67%|██████▋   | 101/150 [3:52:15<1:55:54, 141.92s/it] 68%|██████▊   | 102/150 [3:54:35<1:52:55, 141.16s/it]                                                      {'loss': -0.0259, 'grad_norm': 0.043819356709718704, 'learning_rate': 1.6333333333333335e-06, 'loss1': -0.01271820068359375, 'loss2': -0.01328277587890625, 'epoch': 0.11}
+ 68%|██████▊   | 102/150 [3:54:35<1:52:55, 141.16s/it] 69%|██████▊   | 103/150 [3:56:52<1:49:41, 140.04s/it] 69%|██████▉   | 104/150 [3:59:10<1:46:54, 139.45s/it]                                                      {'loss': -0.0268, 'grad_norm': 0.03985162824392319, 'learning_rate': 1.566666666666667e-06, 'loss1': -0.01293182373046875, 'loss2': -0.01294708251953125, 'epoch': 0.11}
+ 69%|██████▉   | 104/150 [3:59:11<1:46:54, 139.45s/it] 70%|███████   | 105/150 [4:01:30<1:44:46, 139.70s/it]
+[co-OPSD step 105] model1 traj sample:
+We are given the expression:
+
+$$
+\frac{\left(\sqrt{3} \cdot \tan 12^{\circ} - 3\right) \cdot \csc 12^{\circ}}{4 \cos ^{2} 12^{\circ} - 2}
+$$
+
+Our goal is to simplify this expression step by step and determine its value.
+
+---
+
+### **Step 1: Recognize and simplify parts of the expression**
+
+We are dealing with several trigonometric expressions:
+
+- **$\tan 12^\circ$**
+- **$\csc 12^\circ = \frac{1}{\sin 12^\circ}$**
+- **$\cos 12^\circ$**
+
+Let’s start with simplifying **$\sqrt{3} \cdot \tan 12^\circ - 3$**:
+
+$$
+\sqrt{3} \cdot \tan 12^\circ - 3
+$$
+
+Use the identity:
+
+$$
+\tan x = \frac{\sin x}{\cos x
+
+ 71%|███████   | 106/150 [4:03:49<1:42:11, 139.34s/it]                                                      {'loss': -0.0273, 'grad_norm': 0.04149043187499046, 'learning_rate': 1.5e-06, 'loss1': -0.01528167724609375, 'loss2': -0.013214111328125, 'epoch': 0.12}
+ 71%|███████   | 106/150 [4:03:49<1:42:11, 139.34s/it] 71%|███████▏  | 107/150 [4:06:09<1:39:57, 139.47s/it] 72%|███████▏  | 108/150 [4:08:29<1:37:44, 139.63s/it]                                                      {'loss': -0.0268, 'grad_norm': 0.04340279847383499, 'learning_rate': 1.4333333333333335e-06, 'loss1': -0.0151519775390625, 'loss2': -0.01491546630859375, 'epoch': 0.12}
+ 72%|███████▏  | 108/150 [4:08:29<1:37:44, 139.63s/it] 73%|███████▎  | 109/150 [4:10:48<1:35:15, 139.41s/it] 73%|███████▎  | 110/150 [4:13:07<1:32:52, 139.32s/it]                                                      {'loss': -0.027, 'grad_norm': 0.04200838878750801, 'learning_rate': 1.3666666666666668e-06, 'loss1': -0.0115814208984375, 'loss2': -0.014678955078125, 'epoch': 0.12}
+ 73%|███████▎  | 110/150 [4:13:07<1:32:52, 139.32s/it] 74%|███████▍  | 111/150 [4:15:26<1:30:37, 139.42s/it] 75%|███████▍  | 112/150 [4:17:45<1:28:09, 139.21s/it]                                                      {'loss': -0.0274, 'grad_norm': 0.03857063502073288, 'learning_rate': 1.3e-06, 'loss1': -0.01537322998046875, 'loss2': -0.01419830322265625, 'epoch': 0.12}
+ 75%|███████▍  | 112/150 [4:17:46<1:28:09, 139.21s/it] 75%|███████▌  | 113/150 [4:20:05<1:25:57, 139.39s/it] 76%|███████▌  | 114/150 [4:22:20<1:22:55, 138.21s/it]                                                      {'loss': -0.028, 'grad_norm': 0.036697693169116974, 'learning_rate': 1.2333333333333335e-06, 'loss1': -0.0144195556640625, 'loss2': -0.01436614990234375, 'epoch': 0.12}
+ 76%|███████▌  | 114/150 [4:22:21<1:22:55, 138.21s/it] 77%|███████▋  | 115/150 [4:24:39<1:20:39, 138.26s/it] 77%|███████▋  | 116/150 [4:26:57<1:18:15, 138.10s/it]                                                      {'loss': -0.0284, 'grad_norm': 0.04076701030135155, 'learning_rate': 1.1666666666666668e-06, 'loss1': -0.0145263671875, 'loss2': -0.01465606689453125, 'epoch': 0.13}
+ 77%|███████▋  | 116/150 [4:26:57<1:18:15, 138.10s/it]
+[co-OPSD step 116] model1 traj sample:
+To determine the **shortest possible length of the remaining side** of the triangle with a **right angle**, we proceed with the following logic.
+
+---
+
+### **Step 1: Understand the Triangle Geometry**
+
+We are given:
+
+- One side is **6 cm**
+- Another side is **8 cm**
+- The triangle is **right-angled**, with the **right angle** between these two sides.
+- The **third side** is the **remaining side**, and we're asked to **find the shortest possible value for it**, to the **nearest hundredth**.
+
+This configuration must correspond to either of two possible triangles:
+
+#### **Case A**:  
+- The **two g
+
+ 78%|███████▊  | 117/150 [4:29:15<1:16:02, 138.26s/it] 79%|███████▊  | 118/150 [4:31:33<1:13:37, 138.03s/it]                                                      {'loss': -0.0272, 'grad_norm': 0.04636060446500778, 'learning_rate': 1.1e-06, 'loss1': -0.0140380859375, 'loss2': -0.0120697021484375, 'epoch': 0.13}
+ 79%|███████▊  | 118/150 [4:31:33<1:13:37, 138.03s/it] 79%|███████▉  | 119/150 [4:33:53<1:11:36, 138.59s/it] 80%|████████  | 120/150 [4:36:11<1:09:12, 138.41s/it]                                                      {'loss': -0.0289, 'grad_norm': 0.047083329409360886, 'learning_rate': 1.0333333333333333e-06, 'loss1': -0.01525115966796875, 'loss2': -0.01528167724609375, 'epoch': 0.13}
+ 80%|████████  | 120/150 [4:36:11<1:09:12, 138.41s/it] 81%|████████  | 121/150 [4:38:29<1:06:54, 138.42s/it] 81%|████████▏ | 122/150 [4:40:48<1:04:37, 138.47s/it]                                                      {'loss': -0.0296, 'grad_norm': 0.04329100251197815, 'learning_rate': 9.666666666666668e-07, 'loss1': -0.01500701904296875, 'loss2': -0.01721954345703125, 'epoch': 0.13}
+ 81%|████████▏ | 122/150 [4:40:48<1:04:37, 138.47s/it] 82%|████████▏ | 123/150 [4:43:07<1:02:26, 138.77s/it] 83%|████████▎ | 124/150 [4:45:26<1:00:06, 138.72s/it]                                                      {'loss': -0.0287, 'grad_norm': 0.04354863613843918, 'learning_rate': 9.000000000000001e-07, 'loss1': -0.01462554931640625, 'loss2': -0.013751983642578125, 'epoch': 0.13}
+ 83%|████████▎ | 124/150 [4:45:26<1:00:06, 138.72s/it] 83%|████████▎ | 125/150 [4:47:45<57:50, 138.83s/it]  /anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+
+[co-OPSD step 125] model1 traj sample:
+We are given two equations:
+
+$$
+a \cdot 2^b = 8 \tag{1}
+$$
+$$
+a^b = 2 \tag{2}
+$$
+
+And we are to compute:
+
+$$
+a^{\log_{2} a} \cdot 2^{b^2} \tag{3}
+$$
+
+---
+
+### **Step 1: Express $ a \cdot 2^b = 8 $ in terms of the second equation**
+
+We know:
+$$
+a^b = 2 \Rightarrow a = 2^{1/b} \tag{4}
+$$
+
+Substitute into equation (1):
+
+$$
+a \cdot 2^b = 2^{1/b} \cdot 2^b = 2^{1/b + b}
+$$
+
+We are told this equals 8. Since:
+$$
+8 = 2^3
+$$
+
+So:
+$$
+2^{1/b + b} = 2^3
+\Rightarrow \frac{1}{b} + b = 3
+$$
+
+This gives us a key equation to work with:
+$$
+\frac{1}{b} + b = 3 \tag{5}
+$$
+
+---
+
+### **Step 2: Solve equation (5) fo
+
+
+[co-OPSD step 125] model1 traj sample:
+We are given the definition of a *triangular number*:
+$$
+T = 1 + 2 + \cdots + n = \frac{n(n+1)}{2}
+$$
+and we are to find the **smallest positive integer** $ k $ such that **for any triangular number $ T $**, the expression $ 81T + k $ is **also triangular**.
+
+---
+
+### Step 1: Reformulate the condition
+We are told:
+$$
+81T + k \text{ is triangular}
+$$
+That is, we need to find the **smallest** positive integer $ k $ such that for **every positive integer $ n $**, the following holds:
+$$
+81T_n + k = \frac{m(m+1)}{2} \quad \text{for some integer } m > 0
+$$
+where $ T_n = \frac{n(n+1)}{2} $
+
+Thus, th
+
+ 84%|████████▍ | 126/150 [4:50:15<56:54, 142.27s/it]                                                    {'loss': -0.0293, 'grad_norm': 0.045186448842287064, 'learning_rate': 8.333333333333333e-07, 'loss1': -0.01476287841796875, 'loss2': -0.01514434814453125, 'epoch': 0.14}
+ 84%|████████▍ | 126/150 [4:50:15<56:54, 142.27s/it] 85%|████████▍ | 127/150 [4:52:34<54:12, 141.42s/it] 85%|████████▌ | 128/150 [4:54:52<51:22, 140.11s/it]                                                    {'loss': -0.0286, 'grad_norm': 0.03972681611776352, 'learning_rate': 7.666666666666667e-07, 'loss1': -0.0136566162109375, 'loss2': -0.014007568359375, 'epoch': 0.14}
+ 85%|████████▌ | 128/150 [4:54:52<51:22, 140.11s/it]
+[co-OPSD step 128] model1 traj sample:
+We are given information about currency conversions and are tasked with calculating how many **rubles** must be exchanged to **buy a travel package for 600 euros**, based on given conversion rates:
+
+---
+
+### **Step 1: Understand and convert the cost of the travel package in euros to dollars, then to rubles**
+
+We are told:
+
+- **10 euros = 12 US dollars**
+- **1 US dollar = 60 rubles**
+
+We aim to determine:
+- **How many rubles must be exchanged to buy 600 euros**
+
+This is essentially an **involuntary conversion via intermediaries**, so we'll convert the value of the travel package **step-by-step 
+
+
+[co-OPSD step 128] model1 traj sample:
+To solve the problem, we are looking for the **largest three-digit number** that satisfies **two conditions**:
+
+1. The number is **equal to the sum of its digits.**
+2. The number is **also equal to the square of twice the sum of its digits.**
+
+We will denote the three-digit number as $ N $, and analyze both of these conditions.
+
+---
+
+### Step 1: Understand the number structure
+
+We know:
+
+- The number is a **three-digit number**, so its value ranges from $ 100 $ to $ 999 $.
+- We denote the digits of $ N $ as $ a $, $ b $, and $ c $ such that:
+
+$$
+N = 100a + 10b + c
+$$
+
+where:
+
+- $ a $, $ b $, a
+
+ 86%|████████▌ | 129/150 [4:57:09<48:45, 139.29s/it] 87%|████████▋ | 130/150 [4:59:28<46:26, 139.30s/it]                                                    {'loss': -0.0291, 'grad_norm': 0.04314642772078514, 'learning_rate': 7.000000000000001e-07, 'loss1': -0.01456451416015625, 'loss2': -0.01618194580078125, 'epoch': 0.14}
+ 87%|████████▋ | 130/150 [4:59:29<46:26, 139.30s/it]
+[co-OPSD step 130] model1 traj sample:
+We are given the equation:
+
+$$
+\frac{x}{6} = \frac{15}{10}
+$$
+
+We are asked to find the value of $ x $.
+
+---
+
+### **Step 1: Understand the Equation**
+
+The equation is a proportion:
+
+$$
+\frac{x}{6} = \frac{15}{10}
+$$
+
+This means that the **fraction $ \frac{x}{6} $** is equal to the **fraction $ \frac{15}{10} $**.
+
+So the **task is to solve for $ x $**.
+
+---
+
+### **Step 2: Cross-Multiplication (Solving Algebraically)**
+
+Since the equation is:
+
+$$
+\frac{x}{6} = \frac{15}{10}
+$$
+
+We can multiply both sides by 6 (the denominator of the left-hand side) to isolate $ x $:
+
+$$
+x = \frac{15}{10} \cdot 6
+
+ 87%|████████▋ | 131/150 [5:01:47<44:04, 139.21s/it] 88%|████████▊ | 132/150 [5:04:08<41:52, 139.57s/it]                                                    {'loss': -0.0278, 'grad_norm': 0.04306912422180176, 'learning_rate': 6.333333333333334e-07, 'loss1': -0.01451873779296875, 'loss2': -0.01273345947265625, 'epoch': 0.14}
+ 88%|████████▊ | 132/150 [5:04:08<41:52, 139.57s/it]
+[co-OPSD step 132] model1 traj sample:
+We are given the logarithmic expression:
+
+$$
+\log _{3}\left(1-\log _{0.5}\left(x^{2}-2x-2.5\right)\right)
+$$
+
+We are asked to **determine for which values of $ x $ this expression is defined.**
+
+---
+
+### **Step 1: Understand the Domain of the Expression**
+
+Since we're dealing with **logarithms**, the input must be **positive** (since logarithms of non-positive numbers are **undefined** in the real number system), and also the **arguments of logarithms must be valid.**
+
+The logarithmic expression involves **two nested logarithms**, so the expressions inside them must be valid. That is:
+
+1. $ x^
+
+
+[co-OPSD step 132] model1 traj sample:
+We are given the following:
+
+- A **point light source**, located **at a distance of $ 3r $** from a **sphere with radius $ r $**.
+- We are to determine how **the illuminated area on the sphere** compares to the **lateral surface area of the cone of light**, that is, **how many times greater the illuminated area is than the lateral surface area of the cone**.
+
+---
+
+### **Understanding the Problem**
+
+Let’s analyze the geometry carefully.
+
+We have a **sphere** with radius $ r $, and a **point light source** located at a distance of **$ 3r $** from the center of the sphere. This point is **outside
+
+ 89%|████████▊ | 133/150 [5:06:27<39:32, 139.56s/it] 89%|████████▉ | 134/150 [5:08:43<36:57, 138.59s/it]                                                    {'loss': -0.0297, 'grad_norm': 0.04478830844163895, 'learning_rate': 5.666666666666667e-07, 'loss1': -0.01529693603515625, 'loss2': -0.01793670654296875, 'epoch': 0.15}
+ 89%|████████▉ | 134/150 [5:08:44<36:57, 138.59s/it] 90%|█████████ | 135/150 [5:11:03<34:41, 138.76s/it] 91%|█████████ | 136/150 [5:13:21<32:19, 138.56s/it]                                                    {'loss': -0.0294, 'grad_norm': 0.04688818007707596, 'learning_rate': 5.000000000000001e-07, 'loss1': -0.014049530029296875, 'loss2': -0.01560211181640625, 'epoch': 0.15}
+ 91%|█████████ | 136/150 [5:13:21<32:19, 138.56s/it] 91%|█████████▏| 137/150 [5:15:40<30:05, 138.87s/it] 92%|█████████▏| 138/150 [5:18:00<27:50, 139.22s/it]                                                    {'loss': -0.0308, 'grad_norm': 0.04360179975628853, 'learning_rate': 4.333333333333334e-07, 'loss1': -0.014251708984375, 'loss2': -0.01682281494140625, 'epoch': 0.15}
+ 92%|█████████▏| 138/150 [5:18:01<27:50, 139.22s/it] 93%|█████████▎| 139/150 [5:20:20<25:33, 139.40s/it] 93%|█████████▎| 140/150 [5:22:38<23:10, 139.07s/it]                                                    {'loss': -0.0298, 'grad_norm': 0.04512637481093407, 'learning_rate': 3.666666666666667e-07, 'loss1': -0.0151519775390625, 'loss2': -0.012603759765625, 'epoch': 0.15}
+ 93%|█████████▎| 140/150 [5:22:39<23:10, 139.07s/it] 94%|█████████▍| 141/150 [5:24:57<20:50, 138.93s/it] 95%|█████████▍| 142/150 [5:27:15<18:29, 138.73s/it]                                                    {'loss': -0.0294, 'grad_norm': 0.04614963009953499, 'learning_rate': 3.0000000000000004e-07, 'loss1': -0.01563262939453125, 'loss2': -0.010944366455078125, 'epoch': 0.15}
+ 95%|█████████▍| 142/150 [5:27:16<18:29, 138.73s/it]
+[co-OPSD step 142] model1 traj sample:
+We are asked to **show that** the expression:
+
+$$
+a^{2} + b^{2} + 2(a - 1)(b - 1) \geq 1
+$$
+
+holds for **all real numbers** $ a, b \in \mathbb{R} $.
+
+---
+
+### **Step 1: Expand the expression**
+
+We start by simplifying the given expression using algebra:
+
+$$
+a^2 + b^2 + 2(a - 1)(b - 1)
+$$
+
+Let's first expand the term $ 2(a - 1)(b - 1) $:
+
+$$
+(a - 1)(b - 1) = ab - a - b + 1
+$$
+
+Now multiply this by 2:
+
+$$
+2(a - 1)(b - 1) = 2ab - 2a - 2b + 2
+$$
+
+So the full expression becomes:
+
+$$
+a^2 + b^2 + 2ab - 2a - 2b + 2
+$$
+
+Now combine like terms:
+
+$$
+a^2 + b^2 + 2ab - 2a - 2b + 2
+$$
+
+We recognize that:
+
+$
+
+ 95%|█████████▌| 143/150 [5:29:35<16:13, 139.05s/it] 96%|█████████▌| 144/150 [5:31:55<13:56, 139.37s/it]                                                    {'loss': -0.0287, 'grad_norm': 0.04841418191790581, 'learning_rate': 2.3333333333333336e-07, 'loss1': -0.01589202880859375, 'loss2': -0.0147552490234375, 'epoch': 0.16}
+ 96%|█████████▌| 144/150 [5:31:56<13:56, 139.37s/it] 97%|█████████▋| 145/150 [5:34:15<11:37, 139.59s/it]
+[co-OPSD step 145] model1 traj sample:
+We are given the complex expression:
+
+$$
+\left|\left(3 + \sqrt{7}i\right)^3\right|
+$$
+
+We are asked to compute the **modulus (absolute value)** of the complex number raised to the third power.
+
+---
+
+### **Step 1: Use the modulus property of complex powers**
+
+One key property of complex numbers in polar form is:
+
+$$
+\left|z^n\right| = \left|z\right|^n
+$$
+
+Where $ z^n $ is the complex number raised to the power of $ n $, and the absolute value is taken of the result.
+
+So we can simplify the expression using this property:
+
+$$
+\left|\left(3 + \sqrt{7}i\right)^3\right| = \left|3 + \sqrt{7}i\right|
+
+ 97%|█████████▋| 146/150 [5:36:34<09:17, 139.30s/it]                                                    {'loss': -0.0294, 'grad_norm': 0.03938652575016022, 'learning_rate': 1.6666666666666668e-07, 'loss1': -0.01523590087890625, 'loss2': -0.01617431640625, 'epoch': 0.16}
+ 97%|█████████▋| 146/150 [5:36:34<09:17, 139.30s/it]
+[co-OPSD step 146] model1 traj sample:
+We are given a triangle $ ABC $ with a right angle at $ C $. From point $ C $, a perpendicular is dropped to meet the hypotenuse $ AB $ at point $ D $. The midpoints of segments $ AD $, $ DC $, and $ CA $ are $ L, M, N $, respectively.
+
+We are told that:
+
+$$
+CL = 7,\quad BM = 12
+$$
+
+and we're asked to find the value of $ BN^2 $, using these given segment lengths and triangle geometric relationships.
+
+---
+
+### Step 1: Coordinate Setup
+
+To make this calculation more approachable, we place triangle $ ABC $ in a coordinate system. Let’s assign coordinates to the points based on geometry and known 
+
+ 98%|█████████▊| 147/150 [5:38:53<06:57, 139.13s/it] 99%|█████████▊| 148/150 [5:41:12<04:38, 139.31s/it]                                                    {'loss': -0.0293, 'grad_norm': 0.042199693620204926, 'learning_rate': 1.0000000000000001e-07, 'loss1': -0.01572418212890625, 'loss2': -0.014408111572265625, 'epoch': 0.16}
+ 99%|█████████▊| 148/150 [5:41:13<04:38, 139.31s/it]
+[co-OPSD step 148] model1 traj sample:
+We are given that $ a $ and $ b $ are **positive integers**, and the inequality  
+$$
+\frac{a}{b} > \sqrt{2}
+$$  
+must hold. We are to **prove that**  
+$$
+\frac{a}{b} - \frac{1}{2ab} > \sqrt{2}
+$$  
+Let us proceed by analyzing and reworking both sides, and comparing their values.
+
+---
+
+### **Step 1: Expressing the Quantity**
+
+We are to compare:
+$$
+\frac{a}{b} - \frac{1}{2ab}
+$$
+
+We begin by **noting that the difference involves a positive real quantity**, which may be manipulated by combining over a common denominator.
+
+We define:
+
+$$
+x = \frac{a}{b}
+$$
+
+We are given $ x > \sqrt{2} $, and the e
+
+ 99%|█████████▉| 149/150 [5:43:32<02:19, 139.28s/it]100%|██████████| 150/150 [5:45:51<00:00, 139.36s/it]                                                    {'loss': -0.0299, 'grad_norm': 0.04153396934270859, 'learning_rate': 3.333333333333334e-08, 'loss1': -0.01433563232421875, 'loss2': -0.01403045654296875, 'epoch': 0.16}
+100%|██████████| 150/150 [5:45:52<00:00, 139.36s/it]/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
+                                                    {'train_runtime': 20762.7188, 'train_samples_per_second': 0.231, 'train_steps_per_second': 0.007, 'train_loss': -0.01860333522160848, 'epoch': 0.16}
+100%|██████████| 150/150 [5:46:02<00:00, 139.36s/it]100%|██████████| 150/150 [5:46:02<00:00, 138.42s/it]
+/anvil/scratch/x-hluo4/envs/coopsd/lib/python3.12/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen3-1.7B - will assume that the vocabulary was not modified.
+  warnings.warn(
+[rank1]:[W714 05:42:25.442967666 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+[rank3]:[W714 05:42:25.442971132 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+[rank2]:[W714 05:42:25.442973577 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+[1;34mwandb[0m: 
+[1;34mwandb[0m: You can sync this run to the cloud by running:
+[1;34mwandb[0m: [1mwandb sync /anvil/scratch/x-hluo4/co_opsd_night/coopsd_tip/opsd_upstream/wandb/offline-run-20260713_235542-asd32y4t[0m
+[1;34mwandb[0m: Find logs at: [1;35mwandb/offline-run-20260713_235542-asd32y4t/logs[0m
+[rank0]:[W714 05:42:25.873444793 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+[W714 05:42:28.358154633 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
+[exit] ec=0 RUN=coopsd_Qwen3-1.7B+Qwen3-1.7B_tip0-off-rhoNA_seed123_beta0_eb32_steps150_base_s123_20260713_235450
