@@ -18,7 +18,7 @@ import torch.nn as _nn
 from transformers import AutoTokenizer
 from transformers.modeling_utils import PreTrainedModel as _PreTrainedModel
 
-from co_grpo_dp_trainer import CoGRPOdpTrainer
+from co_grpo_dp_trainer import CANDIDATE_SEP, CoGRPOdpTrainer
 from co_label_utils import extract_boxed_answer, grade_answer
 from dataset import DAPO_DATASET, MATH_LEVEL12345_DATASET, MATH_LEVEL345_DATASET, OPSD_DATASET, load_dataset
 from rendezvous import Rendezvous
@@ -137,6 +137,20 @@ class CoGRPOdpScriptArguments(ScriptArguments):
         default=True,
         metadata={"help": "Log how often pseudo-labels match real ground truth (diagnostic only)."},
     )
+    peer_label_mode: str = field(
+        default="strict_majority",
+        metadata={
+            "help": "How peer answers become this group's supervision. "
+            "strict_majority (default, unchanged): majority over PEERS only, ties "
+            "discarded, which dropped ~1/3 of prompts on the first N=3 run. "
+            "self_plus_peers: majority over MY answer plus the peers', so a 2-vs-1 "
+            "split resolves instead of being discarded (mixes in a TTRL component, "
+            "since my own answer votes). "
+            "union: every distinct peer answer is a candidate and a rollout is "
+            "rewarded for matching any of them, so nothing is discarded and the "
+            "supervision stays purely cross-model."
+        },
+    )
 
 
 def _get_text(completion):
@@ -174,17 +188,25 @@ def reward_correctness(completions, solution, **kwargs):
 
     rewards = []
     for i, (completion, ground_truth) in enumerate(zip(completions, solution)):
+        # peer_label_mode=union packs several candidate answers into the single
+        # `solution` string, and a rollout scores if it matches ANY of them. The
+        # single-label modes emit no separator, so this splits to a 1-element
+        # list and their behaviour is unchanged.
+        candidates = (
+            ground_truth.split(CANDIDATE_SEP)
+            if isinstance(ground_truth, str) else [ground_truth]
+        )
         if tasks[i] == "coding":
             from comas.code_reward import extract_calls, voting_answer
             fn, call_inputs = extract_calls(test_codes[i])
             my_answer = voting_answer(_get_text(completion), fn, call_inputs)
-            rewards.append(1.0 if (my_answer is not None and my_answer == ground_truth) else 0.0)
+            hit = my_answer is not None and any(my_answer == c for c in candidates)
         else:
             pred_answer = extract_boxed_answer(_get_text(completion))
-            if pred_answer is not None and grade_answer(pred_answer, ground_truth):
-                rewards.append(1.0)
-            else:
-                rewards.append(0.0)
+            hit = pred_answer is not None and any(
+                grade_answer(pred_answer, c) for c in candidates
+            )
+        rewards.append(1.0 if hit else 0.0)
     return rewards
 
 
@@ -315,7 +337,8 @@ if __name__ == "__main__":
             f"lr{lr_str}_bs{effective_batch_size}_"
             f"gen{training_args.num_generations}_"
             f"temp{training_args.temperature}_"
-            f"sct{script_args.self_consistency_threshold}"
+            f"sct{script_args.self_consistency_threshold}_"
+            f"mode-{script_args.peer_label_mode}"
         )
 
     print(f"\n{'='*80}")
@@ -328,6 +351,7 @@ if __name__ == "__main__":
     print(f"WandB run    : {full_wandb_run_name}")
     print(f"Output dir   : {training_args.output_dir}")
     print(f"SCT          : {script_args.self_consistency_threshold}")
+    print(f"Label mode   : {script_args.peer_label_mode}")
     print(f"World size   : {num_processes}")
     print(f"{'='*80}\n")
 
@@ -486,6 +510,7 @@ if __name__ == "__main__":
         rendezvous=rendezvous,
         self_consistency_threshold=script_args.self_consistency_threshold,
         log_oracle_accuracy=script_args.log_oracle_accuracy,
+        peer_label_mode=script_args.peer_label_mode,
     )
 
     trainer.add_callback(BestKeeperCallback())

@@ -59,6 +59,59 @@ def _peer_majority_vote(peer_labels: list[str]) -> str:
     return counts[0][0]
 
 
+# Separator packing several candidate answers into the single `solution` string
+# that the parent reward path expects. \x1e is ASCII RECORD SEPARATOR: it cannot
+# appear in a parsed \boxed{} answer, so splitting is unambiguous. A label with
+# no separator splits to a 1-element list, which is why the single-label modes
+# below need no special case in `reward_correctness`.
+CANDIDATE_SEP = "\x1e"
+
+
+def _self_plus_peer_vote(my_label: str, peer_labels: list[str]) -> str:
+    """`self_plus_peers` aggregator: strict majority over MY label + all peers'.
+
+    At N=3 this is a 3-way vote, so a 2-vs-1 split now produces a winner where
+    `_peer_majority_vote` would have discarded it. That is the entire point: the
+    measured tie-discard rate on the peers-only rule was 0.32-0.37, i.e. roughly
+    a third of every step's rollouts earned no gradient.
+
+    The cost is that my own answer is inside the vote, so whenever I am in the
+    majority the label is partly self-supplied and the objective picks up a TTRL
+    flavour. Runs using this mode cannot be attributed purely to cross-model
+    supervision; that is what `union` below avoids.
+    """
+    return _peer_majority_vote([my_label] + list(peer_labels))
+
+
+def _peer_candidate_set(peer_labels: list[str]) -> str:
+    """`union` aggregator: every distinct peer answer becomes a candidate.
+
+    Returns the candidates joined by `CANDIDATE_SEP`, or `_UNLABELED_SENTINEL`
+    if no peer produced a label. `reward_correctness` grades a rollout against
+    each candidate and keeps the best, so a rollout is rewarded when it matches
+    ANY peer rather than only the consensus.
+
+    Nothing is ever discarded: coverage is the fraction of prompts where at
+    least one peer was labeled, measured at 1.0. When the peers agree the set
+    collapses to one element and this is identical to the strict-majority rule;
+    the modes differ only on the prompts the old rule threw away.
+
+    The honest cost: when peers disagree, at least one candidate is wrong, and a
+    rollout matching it is rewarded. This is the partial-label / candidate-set
+    setting, where the training signal is "the truth is somewhere in this set"
+    rather than a point label. Weaker than a correct point label, but strictly
+    better than discarding, and unlike breaking the tie at random it never
+    commits the whole prompt to a single wrong answer.
+    """
+    seen: list[str] = []
+    for p in peer_labels:
+        if p != _UNLABELED_SENTINEL and p not in seen:
+            seen.append(p)
+    if not seen:
+        return _UNLABELED_SENTINEL
+    return CANDIDATE_SEP.join(seen)
+
+
 class CoGRPOdpTrainer(GRPOTrainer):
     """
     Args:
@@ -88,6 +141,7 @@ class CoGRPOdpTrainer(GRPOTrainer):
         rendezvous,
         self_consistency_threshold: float = 0.0,
         log_oracle_accuracy: bool = True,
+        peer_label_mode: str = "strict_majority",
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -95,6 +149,14 @@ class CoGRPOdpTrainer(GRPOTrainer):
         self.rendezvous = rendezvous
         self.self_consistency_threshold = self_consistency_threshold
         self.log_oracle_accuracy = log_oracle_accuracy
+        if peer_label_mode not in ("strict_majority", "self_plus_peers", "union"):
+            raise ValueError(
+                f"peer_label_mode must be strict_majority|self_plus_peers|union, "
+                f"got {peer_label_mode!r}"
+            )
+        # Default is the historical rule, so every existing script keeps its
+        # exact behaviour without being touched.
+        self.peer_label_mode = peer_label_mode
         # `peers` is sourced from the Rendezvous instance — single source of truth.
         # 2-way: len(peers) == 1, falls into legacy exchange() path.
         # N-way: len(peers) >= 2, uses exchange_n_way() and N-way MV with tie discard.
@@ -176,9 +238,19 @@ class CoGRPOdpTrainer(GRPOTrainer):
         my_pseudo = []
         num_labeled_me = 0
         num_oracle_me = 0
+        # Normalized ground truth per prompt group, or None where unavailable
+        # (coding tasks, unparseable solutions). Diagnostics only: this list is
+        # never written into `inputs` and never reaches the reward function.
+        gt_answers: list = []
         for g in range(num_groups):
             lo, hi = g * G, (g + 1) * G
             label, _ = _majority_vote(gathered_answers[lo:hi], self.self_consistency_threshold)
+            # Same normalization the oracle check below uses, so the two
+            # diagnostics agree on what "matches the truth" means.
+            gt_answers.append(
+                normalize_answer(gathered_real_solutions[lo])
+                if gathered_tasks[lo] != "coding" else None
+            )
             if label is None:
                 my_pseudo.append(_UNLABELED_SENTINEL)
             else:
@@ -187,7 +259,7 @@ class CoGRPOdpTrainer(GRPOTrainer):
                 # Oracle accuracy is a math-only diagnostic; for coding the real
                 # "solution" is test asserts, not a sympy-comparable answer, so skip.
                 if self.log_oracle_accuracy and gathered_tasks[lo] != "coding":
-                    gt = normalize_answer(gathered_real_solutions[lo])
+                    gt = gt_answers[g]
                     if gt is not None and gt == label:
                         num_oracle_me += 1
 
@@ -246,8 +318,26 @@ class CoGRPOdpTrainer(GRPOTrainer):
         # ---- 4. Compute supervision pseudo-labels (per prompt group) ----
         # 2-way: supervision = the single peer's pseudo.
         # N-way: supervision = strict-majority over N-1 peers' pseudos; ties discarded.
-        if self.n_way == 2:
+        # `union` and `self_plus_peers` change only this aggregation step. Every
+        # other stage (rendezvous, injection, the parent reward call) is shared,
+        # so the three modes differ by exactly one function and stay comparable.
+        if self.n_way == 2 and self.peer_label_mode == "strict_majority":
             supervision_pseudo = peer_pseudos_by_name[self.peers[0]]
+        elif self.peer_label_mode == "union":
+            supervision_pseudo = [
+                _peer_candidate_set(
+                    [peer_pseudos_by_name[peer][g] for peer in self.peers]
+                )
+                for g in range(num_groups)
+            ]
+        elif self.peer_label_mode == "self_plus_peers":
+            supervision_pseudo = [
+                _self_plus_peer_vote(
+                    my_pseudo[g],
+                    [peer_pseudos_by_name[peer][g] for peer in self.peers],
+                )
+                for g in range(num_groups)
+            ]
         else:
             supervision_pseudo = [
                 _peer_majority_vote(
@@ -301,6 +391,52 @@ class CoGRPOdpTrainer(GRPOTrainer):
             metrics["co_labeling/peer_tie_rate"].append(
                 ties / len(all_peers_labeled_groups) if all_peers_labeled_groups else 0.0
             )
+
+            # P(all N models produced the same answer). Without this the tie
+            # rate and the pairwise agreements only bound the no-majority rate
+            # by inclusion-exclusion; an offline attempt on the first full run
+            # could pin it no tighter than [0.00, 0.30]. One counter closes it.
+            fully_labeled = [
+                g for g in all_peers_labeled_groups
+                if my_pseudo[g] != _UNLABELED_SENTINEL
+            ]
+            unanimous = sum(
+                1 for g in fully_labeled
+                if all(peer_pseudos_by_name[p][g] == my_pseudo[g] for p in self.peers)
+            )
+            metrics["co_labeling/unanimous_rate"].append(
+                unanimous / len(fully_labeled) if fully_labeled else 0.0
+            )
+
+            # Size of the candidate set actually handed to the reward function.
+            # 1.0 means the modes are indistinguishable this step; 2.0 at N=3
+            # means every prompt had the peers split.
+            if self.peer_label_mode == "union":
+                sizes = [
+                    len(s.split(CANDIDATE_SEP))
+                    for s in supervision_pseudo if s != _UNLABELED_SENTINEL
+                ]
+                metrics["co_labeling/candidate_set_size"].append(
+                    sum(sizes) / len(sizes) if sizes else 0.0
+                )
+
+            # Does the supervision signal contain the truth? For union this is
+            # "the true answer is somewhere in the candidate set", which is the
+            # assumption partial-label learning rests on, so it is the number
+            # that decides whether this mode can work at all. Diagnostic only —
+            # `solution_gt` never reaches the reward function.
+            if self.log_oracle_accuracy and gt_answers is not None:
+                hits, seen_sup = 0, 0
+                for g in range(num_groups):
+                    sup = supervision_pseudo[g]
+                    if sup == _UNLABELED_SENTINEL or gt_answers[g] is None:
+                        continue
+                    seen_sup += 1
+                    if gt_answers[g] in sup.split(CANDIDATE_SEP):
+                        hits += 1
+                metrics["co_labeling/supervision_contains_truth"].append(
+                    hits / seen_sup if seen_sup else 0.0
+                )
 
         if self.log_oracle_accuracy:
             metrics["co_labeling/oracle_accuracy_me"].append(
