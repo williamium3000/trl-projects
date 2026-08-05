@@ -60,6 +60,8 @@ from trl.models.utils import unwrap_model_for_generation
 from trl.trainer.utils import disable_dropout_in_model, ensure_master_addr_port
 from trl.experimental.gold.gold_trainer import ULDLoss
 
+from simct_loss import SimCTLoss
+
 try:
     from vllm import LLM, SamplingParams
 except ImportError:
@@ -390,7 +392,7 @@ class CoOPSDTrainer(Trainer):
         else:
             loss_mode = distill_loss_type
         self.loss_mode = loss_mode
-        self.cross_tokenizer = loss_mode in ("uld", "gold")
+        self.cross_tokenizer = loss_mode in ("uld", "gold", "simct")
         print(f"[co-OPSD] distillation loss: {loss_mode}")
 
         # The collated batch carries co-OPSD-specific keys that do not match any
@@ -401,7 +403,7 @@ class CoOPSDTrainer(Trainer):
         # gold = GOLD (HuggingFaceH4): extended-ULD token-merging alignment + the
         #        hybrid loss L_GOLD = w1*L_GKD + w2*L_ULD (exact JSD on tokens
         #        shared by both vocabularies, ULD sorting only on the rest).
-        if self.cross_tokenizer:
+        if loss_mode in ("uld", "gold"):
             args.use_uld_loss = True
             args.use_extended_uld = loss_mode == "gold"
             args.uld_use_hybrid_loss = loss_mode == "gold"
@@ -437,8 +439,17 @@ class CoOPSDTrainer(Trainer):
         # dir1: model1 student ← model2 teacher; dir2 swaps the tokenizers.
         if self.cross_tokenizer:
             dev = self.accelerator.device
-            self.model.uld_dir1 = ULDLoss(args, tokenizer1, tokenizer2, device=dev)
-            self.model.uld_dir2 = ULDLoss(args, tokenizer2, tokenizer1, device=dev)
+            if loss_mode == "simct":
+                # SimCT: same __call__ signature as ULDLoss, so it drops into
+                # _distill_one_direction unchanged. dir1: model1 student ← model2.
+                clip = getattr(args, "jsd_token_clip", None)
+                self.model.uld_dir1 = SimCTLoss(tokenizer1, tokenizer2, beta=args.beta,
+                                                temperature=args.temperature, token_clip=clip)
+                self.model.uld_dir2 = SimCTLoss(tokenizer2, tokenizer1, beta=args.beta,
+                                                temperature=args.temperature, token_clip=clip)
+            else:
+                self.model.uld_dir1 = ULDLoss(args, tokenizer1, tokenizer2, device=dev)
+                self.model.uld_dir2 = ULDLoss(args, tokenizer2, tokenizer1, device=dev)
 
         # vLLM colocate: one engine per model in every process. Built while the
         # training models are still on CPU (DeepSpeed moves them to GPU only in

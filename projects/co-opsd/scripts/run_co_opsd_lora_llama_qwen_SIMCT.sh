@@ -1,37 +1,24 @@
 #!/usr/bin/env bash
-# co-OPSD · Qwen3-1.7B (A) × Qwen3-4B (B) · LoRA · same-tokenizer JSD · EMA teacher.
+# co-OPSD · Llama-3.2-3B × Qwen2.5-3B · LoRA · cross-tokenizer SimCT (arXiv 2605.07711) · 150 steps.
 #
-# WHY THIS RUN: homogeneous co-OPSD (two identical Qwen3-1.7B) only MATCHES single-model
-# OPSD — two clones carry no decorrelated information (Blum-Mitchell: identical views give
-# no signal), so it is mathematically capped at the single-model ceiling. To EXCEED it we
-# need genuine diversity. This is the first heterogeneous cell: same Qwen3 tokenizer (=>
-# exact JSD, no GOLD/ULD noise) but real capability diversity (1.7B vs 4B). Both are native
-# thinking models (required: the Openthoughts thinking-trace data needs a thinking base).
+# Cross-family pair (Llama-3.2-3B-Instruct + Qwen2.5-3B-Instruct), different
+# tokenizers (vocab 128256 vs 151665) => GOLD loss (token-merging alignment
+# + hybrid JSD/ULD). Both models wrapped in LoRA (r=64, alpha=128) — the same
+# config that ran stably in the OPSD-LoRA baseline. Previous full-FT version of
+# this same pair (the 4 deleted co-OPSD runs) collapsed by step 60-80; LoRA
+# should be much more stable because update magnitude is gated by the LoRA rank.
 #
-# EMA teacher is ON by default: heterogeneity does NOT remove the moving-target instability
-# (both peers still co-train live), so the EMA anchor is still needed to stop the collapse.
-#
-# ASYMMETRY CAVEAT: 4B->1.7B is strong-teaches-weak (1.7B should gain); 1.7B->4B is
-# weak-teaches-strong (may drag the 4B). Watch group_B; an asymmetric/weighted variant may
-# be needed if the 4B underperforms its own single-model OPSD.
-#
-# MEMORY: 4B is bigger than the validated 1.7B homo config. vllm_util dropped to 0.2/engine
-# + expandable_segments. FIRST RUN: watch step 1 for OOM; if it OOMs, fall back to BS=2 GA=2
-# (still EB=32) or VLLM_UTIL=0.15.
-#
-#   PREREQ: validate Qwen3-4B single-model OPSD reproduces a gain first
-#           (run_opsd_single_qwen3_4b.sh) — else the 4B teacher is unreliable & has no GT.
-#
-# 8 GPUs. Launch DETACHED:
-#   EMA=true bash projects/co-opsd/scripts/run_co_opsd_lora_qwen3_1.7b_x_4b.sh \
-#     > projects/work_dirs/co-opsd/launch_heter_1.7b_x_4b.log 2>&1 &
+# 8 GPUs, max_steps=150 (~50 min wall clock).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 CO_OPSD_DIR="$REPO_ROOT/projects/co-opsd/opsd_upstream"
 
-# ---- GPU-occupancy guard --------------------------------------------------
+# ---- GPU-occupancy guard: refuse to launch onto busy GPUs -------------------
+# A competing launch onto already-busy GPUs is what silently killed prior runs
+# (bug-catalog H.2: step-11 truncation = external SIGKILL, not an algo bug).
+# run_dynamic.py keeper holds ~991 MiB/GPU; abort only if something real (>2 GB).
 # Only guard the GPUs this run will use (shared box: other cards may be someone else's job).
 GUARD_GPUS="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
 MAX_USED=$(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits \
@@ -43,47 +30,49 @@ if [ "${MAX_USED:-0}" -gt 2000 ]; then
 fi
 echo "[guard] GPUs [$GUARD_GPUS] clear (max used ${MAX_USED} MiB). Proceeding."
 
-MODEL1="Qwen/Qwen3-1.7B"
-MODEL2="Qwen/Qwen3-4B"
-M1_TAG="qwen3-1.7b"
-M2_TAG="qwen3-4b"
-DISTILL_LOSS="jsd"            # same Qwen3 tokenizer -> exact JSD
-TEACHER_GT="${TEACHER_GT:-true}"            # teacher sees GT solution; set false for self-supervised (no-GT)
-EMA="${EMA:-true}"           # heter still has moving-target instability -> EMA on by default
+MODEL1="meta-llama/Llama-3.2-3B-Instruct"
+MODEL2="Qwen/Qwen2.5-3B"               # ← Base (matches OPSD baseline run), was Instruct
+M1_TAG="llama32-3b-it"
+M2_TAG="qwen25-3b-base"
+DISTILL_LOSS="simct"
+TEACHER_GT="true"
+EMA="${EMA:-false}"          # SimCT: toggle EMA teacher (user wants both no-EMA and EMA)
 EMA_DECAY="${EMA_DECAY:-0.999}"
-DATASET="siyanzhao/Openthoughts_math_30k_opsd"
+DATASET="${DATASET:-siyanzhao/Openthoughts_math_30k_opsd}"
+PROBLEM_COL="${PROBLEM_COL:-problem}"      # MATH345 uses 'prompt'
+SOLUTION_COL="${SOLUTION_COL:-solution}"   # MATH345 uses 'answer' (answer-conditioned teacher)
 SEED1=42
-SEED2=7
+SEED2=86
 
+# NUM_PROC/GA env-overridable for the 4-GPU mapping (hold EB=64: 4 proc → GA=8). Recipe untouched.
 NUM_PROC="${NUM_PROC:-8}"
-LR="${LR:-5e-6}"
-BETA="${BETA:-0}"
-CLIP="${CLIP:-0.05}"
-BS="${BS:-4}"               # 4B is big; if step-1 OOM, set BS=2 GA=2 (EB stays 32)
-GA="${GA:-1}"
+LR="1e-5"               # ← paper Table 6 (was 5e-6)
+BETA=0.5                # ← paper §4.1 (was 0 = forward KL)
+WARMUP_RATIO=0.1        # ← paper §4.1
+CLIP=0.05
+BS="${BS:-2}"                    # ← OOM fix (β=0.5 needs 3-4x kl_div mem); was 4
+GA="${GA:-4}"                    # ← keep eff batch 64; was 2
 TEMP=1.1
 TOP_P=0.95
 TOP_K=20
-MAX_COMPLETION="${MAX_COMPLETION:-1024}"
-MAX_LEN="${MAX_LEN:-20000}"
+MAX_COMPLETION=1024
+MAX_LEN=20000
 MAX_STEPS="${MAX_STEPS:-150}"
-SAVE_STEPS="${SAVE_STEPS:-25}"
-SAVE_LIMIT="${SAVE_LIMIT:-30}"
-VLLM_UTIL="${VLLM_UTIL:-0.2}"   # 2 engines/GPU; 4B bigger than 1.7B -> lower than homo
-export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
+VLLM_UTIL="${VLLM_UTIL:-0.2}"           # ← OOM fix; was 0.25 (2 engines/GPU * 0.2 = 40% for vLLM)
 
 LORA_R=64
 LORA_ALPHA=128
 
 EB=$(( BS * GA * NUM_PROC ))
 TS="$(date +%Y%m%d_%H%M%S)"
-RUN="coopsd_lora_${M1_TAG}+${M2_TAG}_${DISTILL_LOSS}_gt-${TEACHER_GT}_ema-${EMA}_beta${BETA}_clip${CLIP}_lr${LR}_eb${EB}_t${TEMP}_seed${SEED1}-${SEED2}_steps${MAX_STEPS}${RUN_SUFFIX:-}_${TS}"
+RUN="coopsd_lora_${M1_TAG}+${M2_TAG}_${DISTILL_LOSS}_ema-${EMA}_gt-${TEACHER_GT}_lr${LR}_eb${EB}_t${TEMP}_seed${SEED1}-${SEED2}_steps${MAX_STEPS}_${TS}"
 BASE_OUT="$REPO_ROOT/projects/work_dirs/co-opsd"
 mkdir -p "$BASE_OUT/$RUN"
 LOG="$BASE_OUT/$RUN/train.log"
 
 wandb online || true
-export WANDB_API_KEY="${WANDB_API_KEY:-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}"
+# wandb key: inject at runtime (`export WANDB_API_KEY=...`), never hard-code it here.
+export WANDB_API_KEY="${WANDB_API_KEY:?set WANDB_API_KEY (or use WANDB_MODE=offline)}"
 export WANDB_ENTITY="${WANDB_ENTITY:-logan-yang2002-johns-hopkins-university}"
 export WANDB_PROJECT="${WANDB_PROJECT:-OPSD}"
 export DISABLE_MLFLOW_INTEGRATION=TRUE
@@ -91,19 +80,20 @@ export DISABLE_MLFLOW_INTEGRATION=TRUE
 export PYTHONPATH="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}"
 cd "$CO_OPSD_DIR"
 
-echo "[launch] RUN=$RUN"
-echo "[launch] hparams: lr=$LR beta=$BETA clip=$CLIP eb=$EB ema=$EMA decay=$EMA_DECAY vllm_util=$VLLM_UTIL"
-
 set +e
 CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launch \
     --config_file accelerate.yaml \
     --num_processes "$NUM_PROC" \
     --gradient_accumulation_steps "$GA" \
-    --main_process_port 12973 \
+    --main_process_port 12971 \
     co_opsd_train.py \
     --model1_name_or_path "$MODEL1" \
     --model2_name_or_path "$MODEL2" \
     --model1_dataset "$DATASET" \
+    --model1_problem_column "$PROBLEM_COL" \
+    --model1_solution_column "$SOLUTION_COL" \
+    --model2_problem_column "$PROBLEM_COL" \
+    --model2_solution_column "$SOLUTION_COL" \
     --model1_shuffle_seed "$SEED1" \
     --model2_dataset "$DATASET" \
     --model2_shuffle_seed "$SEED2" \
@@ -120,6 +110,7 @@ CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launc
     --vllm_gpu_memory_utilization "$VLLM_UTIL" \
     --vllm_tensor_parallel_size 1 \
     --learning_rate "$LR" \
+    --warmup_ratio "$WARMUP_RATIO" \
     --max_grad_norm 0.1 \
     --per_device_train_batch_size "$BS" \
     --gradient_checkpointing \
@@ -129,8 +120,8 @@ CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launc
     --num_train_epochs 99 \
     --max_steps "$MAX_STEPS" \
     --max_completion_length "$MAX_COMPLETION" \
-    --save_steps "$SAVE_STEPS" \
-    --save_total_limit "$SAVE_LIMIT" \
+    --save_steps "${SAVE_STEPS:-25}" \
+    --save_total_limit "${SAVE_LIMIT:-5}" \
     --logging_steps 2 \
     --attn_implementation flash_attention_2 \
     --bf16 true \
@@ -146,8 +137,8 @@ CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launc
 ACCEL_EC=${PIPESTATUS[0]}
 set -e
 
-echo "[exit] ACCELERATE EXIT CODE: $ACCEL_EC" | tee -a "$LOG"
 cd "$REPO_ROOT"
+echo "[exit] ACCELERATE EXIT CODE: $ACCEL_EC" | tee -a "$LOG"
 if [ "$ACCEL_EC" -eq 0 ]; then
     echo "[done] $RUN -> $BASE_OUT/$RUN" | tee -a "$LOG"
 else

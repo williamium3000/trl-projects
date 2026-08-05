@@ -19,13 +19,16 @@ CO_OPSD_DIR="$REPO_ROOT/projects/co-opsd/opsd_upstream"
 # A competing launch onto already-busy GPUs is what silently killed prior runs
 # (bug-catalog H.2: step-11 truncation = external SIGKILL, not an algo bug).
 # run_dynamic.py keeper holds ~991 MiB/GPU; abort only if something real (>2 GB).
-MAX_USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | sort -rn | head -1)
+# Only guard the GPUs this run will use (shared box: other cards may be someone else's job).
+GUARD_GPUS="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
+MAX_USED=$(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits \
+    | awk -F', *' -v want=",$GUARD_GPUS," 'index(want, ","$1",")>0 {print $2}' | sort -rn | head -1)
 if [ "${MAX_USED:-0}" -gt 2000 ]; then
-    echo "[guard] ABORT: a GPU already uses ${MAX_USED} MiB (>2000). Another job is running."
+    echo "[guard] ABORT: a GPU in [$GUARD_GPUS] already uses ${MAX_USED} MiB (>2000). Another job is running."
     nvidia-smi --query-gpu=index,memory.used --format=csv,noheader
     exit 1
 fi
-echo "[guard] GPUs clear (max used ${MAX_USED} MiB). Proceeding."
+echo "[guard] GPUs [$GUARD_GPUS] clear (max used ${MAX_USED} MiB). Proceeding."
 
 MODEL1="meta-llama/Llama-3.2-3B-Instruct"
 MODEL2="Qwen/Qwen2.5-3B"               # ← Base (matches OPSD baseline run), was Instruct
@@ -37,20 +40,21 @@ DATASET="siyanzhao/Openthoughts_math_30k_opsd"
 SEED1=42
 SEED2=86
 
-NUM_PROC=8
+# NUM_PROC/GA env-overridable for the 4-GPU mapping (hold EB=64: 4 proc → GA=8). Recipe untouched.
+NUM_PROC="${NUM_PROC:-8}"
 LR="1e-5"               # ← paper Table 6 (was 5e-6)
 BETA=0.5                # ← paper §4.1 (was 0 = forward KL)
 WARMUP_RATIO=0.1        # ← paper §4.1
 CLIP=0.05
-BS=2                    # ← OOM fix (β=0.5 needs 3-4x kl_div mem); was 4
-GA=4                    # ← keep eff batch 64; was 2
+BS="${BS:-2}"                    # ← OOM fix (β=0.5 needs 3-4x kl_div mem); was 4
+GA="${GA:-4}"                    # ← keep eff batch 64; was 2
 TEMP=1.1
 TOP_P=0.95
 TOP_K=20
 MAX_COMPLETION=1024
 MAX_LEN=20000
-MAX_STEPS=150
-VLLM_UTIL=0.2           # ← OOM fix; was 0.25 (2 engines/GPU * 0.2 = 40% for vLLM)
+MAX_STEPS="${MAX_STEPS:-150}"
+VLLM_UTIL="${VLLM_UTIL:-0.2}"           # ← OOM fix; was 0.25 (2 engines/GPU * 0.2 = 40% for vLLM)
 
 LORA_R=64
 LORA_ALPHA=128
@@ -105,8 +109,8 @@ CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}" accelerate launc
     --num_train_epochs 99 \
     --max_steps "$MAX_STEPS" \
     --max_completion_length "$MAX_COMPLETION" \
-    --save_steps 25 \
-    --save_total_limit 5 \
+    --save_steps "${SAVE_STEPS:-25}" \
+    --save_total_limit "${SAVE_LIMIT:-5}" \
     --logging_steps 2 \
     --attn_implementation flash_attention_2 \
     --bf16 true \

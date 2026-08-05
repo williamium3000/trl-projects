@@ -32,13 +32,17 @@ CO_OPSD_DIR="$REPO_ROOT/projects/co-opsd/opsd_upstream"
 # ---- GPU-occupancy guard: refuse to launch onto busy GPUs -------------------
 # A competing launch onto already-busy GPUs is what silently killed prior runs.
 # run_dynamic.py keeper holds ~991 MiB/GPU; abort only if something real (>2 GB).
-MAX_USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | sort -rn | head -1)
+# Only guard the GPUs this run will actually use: on a shared box the other cards
+# are legitimately busy with someone else's job.
+GUARD_GPUS="${CUDA_VISIBLE_DEVICES:-0,1,2,3,4,5,6,7}"
+MAX_USED=$(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits \
+    | awk -F', *' -v want=",$GUARD_GPUS," 'index(want, ","$1",")>0 {print $2}' | sort -rn | head -1)
 if [ "${MAX_USED:-0}" -gt 2000 ]; then
-    echo "[guard] ABORT: a GPU already uses ${MAX_USED} MiB (>2000). Another job is running."
+    echo "[guard] ABORT: a GPU in [$GUARD_GPUS] already uses ${MAX_USED} MiB (>2000). Another job is running."
     nvidia-smi --query-gpu=index,memory.used --format=csv,noheader
     exit 1
 fi
-echo "[guard] GPUs clear (max used ${MAX_USED} MiB). Proceeding."
+echo "[guard] GPUs [$GUARD_GPUS] clear (max used ${MAX_USED} MiB). Proceeding."
 
 MODEL1="Qwen/Qwen3-1.7B"
 MODEL2="Qwen/Qwen3-1.7B"
@@ -49,10 +53,12 @@ TEACHER_GT="${TEACHER_GT:-true}"            # teacher sees GT solution; set fals
 EMA="${EMA:-false}"          # EMA teacher: peer scores with slow EMA weights (stable anchor)
 EMA_DECAY="${EMA_DECAY:-0.999}"
 DATASET="siyanzhao/Openthoughts_math_30k_opsd"
-SEED1=42                      # model1 data shuffle seed
-SEED2=7                       # model2 data shuffle seed (different => symmetry break)
+SEED1="${SEED1:-42}"          # model1 data shuffle seed (env-overridable for multi-seed repro)
+SEED2="${SEED2:-7}"           # model2 data shuffle seed (different => symmetry break)
 
-NUM_PROC=8
+# NUM_PROC = one process per GPU. EB = BS*GA*NUM_PROC must stay 32 (the validated
+# recipe): on 8 GPUs that is BS=4/GA=1, on 4 GPUs BS=4/GA=2.
+NUM_PROC="${NUM_PROC:-8}"
 LR="${LR:-5e-6}"             # README recipe (the one that reproduced), NOT Table 6
 BETA="${BETA:-0}"            # forward KL
 CLIP="${CLIP:-0.05}"        # jsd_token_clip (thinking model => 0.05)

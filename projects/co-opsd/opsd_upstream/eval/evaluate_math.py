@@ -155,7 +155,7 @@ def load_vllm_model(
     print("=" * 70)
     print(f"vLLM Model Config dtype: {llm.llm_engine.model_config.dtype}")
     print(f"vLLM Model quantization: {llm.llm_engine.model_config.quantization}")
-    print(f"KV cache dtype: {llm.llm_engine.cache_config.cache_dtype}")
+    print(f"KV cache dtype: {llm.llm_engine.vllm_config.cache_config.cache_dtype}")
     print("=" * 70 + "\n")
 
     print("vLLM model loaded successfully!")
@@ -361,7 +361,7 @@ def evaluate_math500(
     print("=" * 70)
     print(f"Model dtype: {llm.llm_engine.model_config.dtype}")
     print(f"Quantization: {llm.llm_engine.model_config.quantization}")
-    print(f"KV cache dtype: {llm.llm_engine.cache_config.cache_dtype}")
+    print(f"KV cache dtype: {llm.llm_engine.vllm_config.cache_config.cache_dtype}")
     print(f"Using LoRA: {lora_request is not None}")
     if lora_request is not None:
         if lora_request.lora_path is None:
