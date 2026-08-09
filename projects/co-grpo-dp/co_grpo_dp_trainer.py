@@ -16,6 +16,7 @@ group, so the groups run in genuine parallel across disjoint GPUs.
 """
 
 import time
+import random
 from collections import Counter
 
 from accelerate.utils import broadcast_object_list, gather_object
@@ -81,6 +82,51 @@ def _self_plus_peer_vote(my_label: str, peer_labels: list[str]) -> str:
     supervision; that is what `union` below avoids.
     """
     return _peer_majority_vote([my_label] + list(peer_labels))
+
+
+def _pooled_rollout_vote(peer_rollouts: list[list[str]]) -> str:
+    """`pooled_majority` aggregator: one vote over the peers' RAW rollouts.
+
+    The other modes exchange one already-voted string per peer, so a 3-way run
+    aggregates 2 votes. This one exchanges each peer's G raw answers and takes a
+    single majority over the pooled 2*G of them, which weights a peer by how
+    confident it was rather than giving every peer one equal vote.
+
+    My own rollouts are deliberately excluded -- including them would fold in a
+    TTRL-style self-vote and make the result impossible to attribute to
+    cross-model supervision, the same objection that applies to
+    `self_plus_peers`.
+    """
+    pool = [a for r in peer_rollouts for a in r if a is not None and a != _UNLABELED_SENTINEL]
+    if not pool:
+        return _UNLABELED_SENTINEL
+    counts = Counter(pool).most_common()
+    # An exact tie is discarded rather than broken by iteration order. The point
+    # of pooling raw rollouts is to weight a peer by its confidence; a dead heat
+    # means the peers were equally confident about different answers, so there is
+    # no signal to pass on. Breaking it by order would also make the label depend
+    # on rollout ordering, which is not reproducible.
+    if len(counts) > 1 and counts[0][1] == counts[1][1]:
+        return _UNLABELED_SENTINEL
+    return counts[0][0]
+
+
+def _random_peer_pick(peer_labels: list[str], rng: random.Random) -> str:
+    """`random_peer` aggregator: take one peer's vote, chosen uniformly.
+
+    Aggregation removed, everything else held fixed. Together with `ring` (one
+    fixed peer) this separates "more peers" from "aggregating over peers": if
+    picking one at random matches the aggregating modes, the gain was never in
+    the aggregation.
+
+    The draw is per prompt, from a seeded generator, so a run is reproducible.
+    Unlabeled peers are excluded first rather than drawn and discarded -- a draw
+    that lands on a peer with no label would otherwise silently lower coverage.
+    """
+    valid = [p for p in peer_labels if p != _UNLABELED_SENTINEL]
+    if not valid:
+        return _UNLABELED_SENTINEL
+    return rng.choice(valid)
 
 
 def _peer_candidate_set(peer_labels: list[str]) -> str:
@@ -149,9 +195,13 @@ class CoGRPOdpTrainer(GRPOTrainer):
         self.rendezvous = rendezvous
         self.self_consistency_threshold = self_consistency_threshold
         self.log_oracle_accuracy = log_oracle_accuracy
-        if peer_label_mode not in ("strict_majority", "self_plus_peers", "union"):
+        if peer_label_mode not in (
+            "strict_majority", "self_plus_peers", "union",
+            "pooled_majority", "random_peer", "ring",
+        ):
             raise ValueError(
-                f"peer_label_mode must be strict_majority|self_plus_peers|union, "
+                f"peer_label_mode must be strict_majority|self_plus_peers|union|"
+                f"pooled_majority|random_peer|ring, "
                 f"got {peer_label_mode!r}"
             )
         # Default is the historical rule, so every existing script keeps its
@@ -271,6 +321,16 @@ class CoGRPOdpTrainer(GRPOTrainer):
         gc = self._gen_counter_train
         self._gen_counter_train += 1
 
+        # pooled_majority needs the peers' RAW rollouts, so it ships G answers per
+        # prompt instead of one voted string. Every other mode keeps the original
+        # one-string payload byte for byte.
+        if self.peer_label_mode == "pooled_majority":
+            exchange_payload = [
+                list(gathered_answers[g * G:(g + 1) * G]) for g in range(num_groups)
+            ]
+        else:
+            exchange_payload = my_pseudo
+
         if self.accelerator.is_main_process:
             # Diagnostic: log wall time spent waiting on peers' files. This is the
             # interval where rank 0 is in file-poll while rank 1 is blocked on the
@@ -282,7 +342,7 @@ class CoGRPOdpTrainer(GRPOTrainer):
             _rdv_start = time.perf_counter()
             if self.n_way == 2:
                 # Legacy 2-way path — keep byte-identical with pre-N-way runs.
-                peer_pseudo = self.rendezvous.exchange(mode=mode, counter=gc, payload=my_pseudo)
+                peer_pseudo = self.rendezvous.exchange(mode=mode, counter=gc, payload=exchange_payload)
                 if len(peer_pseudo) != num_groups:
                     raise RuntimeError(
                         f"peer sent {len(peer_pseudo)} pseudo-labels for {mode} gc={gc}, "
@@ -292,7 +352,7 @@ class CoGRPOdpTrainer(GRPOTrainer):
             else:
                 # N-way (N≥3) path. exchange_n_way returns dict[peer_name → payload].
                 peer_pseudos_by_name = self.rendezvous.exchange_n_way(
-                    mode=mode, counter=gc, payload=my_pseudo,
+                    mode=mode, counter=gc, payload=exchange_payload,
                 )
                 for peer_name, peer_pseudo in peer_pseudos_by_name.items():
                     if len(peer_pseudo) != num_groups:
@@ -321,7 +381,32 @@ class CoGRPOdpTrainer(GRPOTrainer):
         # `union` and `self_plus_peers` change only this aggregation step. Every
         # other stage (rendezvous, injection, the parent reward call) is shared,
         # so the three modes differ by exactly one function and stay comparable.
-        if self.n_way == 2 and self.peer_label_mode == "strict_majority":
+        if self.peer_label_mode == "pooled_majority":
+            supervision_pseudo = [
+                _pooled_rollout_vote(
+                    [peer_pseudos_by_name[peer][g] for peer in self.peers]
+                )
+                for g in range(num_groups)
+            ]
+        elif self.peer_label_mode == "random_peer":
+            # Seeded on (global seed, step, prompt group) so the draw is
+            # reproducible and differs across prompts and across steps.
+            supervision_pseudo = [
+                _random_peer_pick(
+                    [peer_pseudos_by_name[peer][g] for peer in self.peers],
+                    # random.Random takes int/str/bytes, not a tuple -- hash the
+                    # triple into one int so the draw still varies by seed, step
+                    # and prompt while staying reproducible.
+                    random.Random(f"{self.args.seed}-{gc}-{g}"),
+                )
+                for g in range(num_groups)
+            ]
+        elif self.peer_label_mode == "ring":
+            # A <- B <- C <- A. `self.peers` excludes me and keeps the declared
+            # order, so peers[0] is the next group round the ring.
+            teacher = self.peers[0]
+            supervision_pseudo = list(peer_pseudos_by_name[teacher])
+        elif self.n_way == 2 and self.peer_label_mode == "strict_majority":
             supervision_pseudo = peer_pseudos_by_name[self.peers[0]]
         elif self.peer_label_mode == "union":
             supervision_pseudo = [

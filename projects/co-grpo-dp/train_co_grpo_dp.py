@@ -148,7 +148,15 @@ class CoGRPOdpScriptArguments(ScriptArguments):
             "since my own answer votes). "
             "union: every distinct peer answer is a candidate and a rollout is "
             "rewarded for matching any of them, so nothing is discarded and the "
-            "supervision stays purely cross-model."
+            "supervision stays purely cross-model. "
+            "pooled_majority: peers ship their RAW rollouts and one majority is "
+            "taken over the pooled 2*G of them, weighting a peer by how confident "
+            "it was instead of one vote each; my own rollouts are excluded. "
+            "random_peer: one peer's vote, drawn uniformly per prompt -- no "
+            "aggregation, everything else held fixed. "
+            "ring: a single fixed teacher, A<-B<-C<-A, so each group has exactly "
+            "one supervisor. random_peer and ring together separate 'more peers' "
+            "from 'aggregating over peers'."
         },
     )
 
