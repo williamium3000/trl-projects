@@ -108,7 +108,14 @@ echo "  OUT_DIR        $RUN_DIR"
 nvidia-smi --query-gpu=index,name,memory.free --format=csv,noheader || true
 
 # Build a common vLLM model_args string for lm-eval and the external runners.
+# EVAL_SEED (env, optional): seeds the vLLM engine AND lm-eval. Without it
+# vLLM defaults to seed=1234, but `--batch_size auto` still varies the
+# batching between runs, so two identical invocations drift (measured on
+# gt-llama32: AMC 27.71 vs 21.69, HumanEval 60.98 vs 64.02). Setting it
+# makes a run reproducible; it does NOT reduce the variance, so several
+# seeds are still needed for the small-sample columns.
 VLLM_ARGS="pretrained=$MODEL,dtype=bfloat16,gpu_memory_utilization=$GPU_MEM,max_model_len=$MAX_MODEL_LEN,trust_remote_code=True"
+[ -n "${EVAL_SEED:-}" ] && VLLM_ARGS="$VLLM_ARGS,seed=$EVAL_SEED"
 [ -n "$REVISION" ] && VLLM_ARGS="$VLLM_ARGS,revision=$REVISION"
 
 # =============================================================================
@@ -149,6 +156,7 @@ if [ "$SKIP_LM_EVAL" = "0" ]; then
     lm_eval \
         --model vllm \
         --model_args "$VLLM_ARGS" \
+        ${EVAL_SEED:+--seed "$EVAL_SEED"} \
         --tasks "$LM_EVAL_TASKS" \
         --include_path "$CUSTOM_TASKS_DIR" \
         --batch_size auto \

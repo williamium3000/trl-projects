@@ -57,44 +57,81 @@ def _last_boxed(text: str) -> str | None:
     return "".join(out).strip() if out else None
 
 
-def process_results_aime(doc: dict[str, Any], results: list[str]) -> dict[str, float]:
-    """AIME-2024: integer answer 000..999."""
-    completion = results[0] if results else ""
-    pred = _last_boxed(completion)
-    target = str(doc.get("answer", "")).strip()
+def _flatten_samples(results: Any) -> list[str]:
+    """Return the k completions for one doc, whatever nesting lm-eval used.
 
-    if pred is None:
+    With the default `take_first` filter `results` is `[str]`. With
+    `take_first_k` it comes back one level deeper, `[[str, ...]]`, and grading
+    it directly raises `AttributeError: 'list' object has no attribute 'rfind'`.
+    Accept both so the grader does not depend on the filter in the yaml.
+    """
+    if not results:
+        return []
+    out: list[str] = []
+    for r in results:
+        if isinstance(r, (list, tuple)):
+            out.extend(str(x) for x in r)
+        else:
+            out.append(str(r))
+    return out
+
+
+def process_results_aime(doc: dict[str, Any], results: list[str]) -> dict[str, float]:
+    """AIME-2024: integer answer 000..999. avg@k over the `repeats` samples."""
+    # Same fix as process_results_amc: this graded results[0] only, so the
+    # column was pass@1 while being described as avg@8.
+    target = str(doc.get("answer", "")).strip()
+    if not results:
         return {"exact_match": 0.0}
 
-    # Strip $ ... $ wrappers, leading 0s, trailing punctuation.
-    pred_clean = pred.strip().strip("$").strip()
+    def _one(completion: str) -> float:
+        pred = _last_boxed(completion)
+        if pred is None:
+            return 0.0
+        # Strip $ ... $ wrappers, leading 0s, trailing punctuation.
+        pred_clean = pred.strip().strip("$").strip()
+        try:
+            return float(int(pred_clean) == int(target))
+        except (ValueError, TypeError):
+            return float(pred_clean == target)
 
-    try:
-        return {"exact_match": float(int(pred_clean) == int(target))}
-    except (ValueError, TypeError):
-        return {"exact_match": float(pred_clean == target)}
+    samples = _flatten_samples(results)
+    if not samples:
+        return {"exact_match": 0.0}
+    scores = [_one(c) for c in samples]
+    return {"exact_match": sum(scores) / len(scores)}
 
 
 def process_results_amc(doc: dict[str, Any], results: list[str]) -> dict[str, float]:
     """AMC-23: numeric / symbolic; use math_verify for equivalence."""
-    completion = results[0] if results else ""
-    pred = _last_boxed(completion)
+    # avg@k, not results[0]. `repeats: 8` in the yaml asks for eight samples and
+    # the paper describes this column as avg@8 (PAPER_OUTLINE_v5 4.3 and the
+    # 5.1 caption); grading only the first sample made it a single-sample pass@1
+    # at eight times the cost, and left the column with sigma ~= 4.9 points on
+    # 83 problems -- an identical rerun moved it 6.0 points.
     target = str(doc.get("answer", "")).strip()
-
-    if pred is None:
+    if not results:
         return {"exact_match": 0.0}
 
-    try:
-        from math_verify import parse, verify  # type: ignore
-        gold = parse(f"${target}$")
-        guess = parse(f"${pred}$")
-        return {"exact_match": float(bool(verify(gold, guess)))}
-    except Exception:
-        # Fallback: best-effort numeric compare.
+    def _one(completion: str) -> float:
+        pred = _last_boxed(completion)
+        if pred is None:
+            return 0.0
         try:
-            return {"exact_match": float(float(pred) == float(target))}
-        except (ValueError, TypeError):
-            return {"exact_match": float(pred.strip() == target.strip())}
+            from math_verify import parse, verify  # type: ignore
+            return float(bool(verify(parse(f"${target}$"), parse(f"${pred}$"))))
+        except Exception:
+            # Fallback: best-effort numeric compare.
+            try:
+                return float(float(pred) == float(target))
+            except (ValueError, TypeError):
+                return float(pred.strip() == target.strip())
+
+    samples = _flatten_samples(results)
+    if not samples:
+        return {"exact_match": 0.0}
+    scores = [_one(c) for c in samples]
+    return {"exact_match": sum(scores) / len(scores)}
 
 
 # ---------------------------------------------------------------------------

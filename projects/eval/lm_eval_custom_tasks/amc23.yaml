@@ -24,6 +24,15 @@ generation_kwargs:
   temperature: 0.6
   top_p: 0.95
   until: []
+# Without an explicit filter lm-eval applies its default `take_first`,
+# which discards 7 of the 8 `repeats` before they reach process_results --
+# so the column was pass@1 at 8x the cost while the paper calls it avg@8.
+# take_first_k with k=8 passes all of them through; the grader averages.
+filter_list:
+  - name: avg8
+    filter:
+      - function: take_first_k
+        k: 8
 metric_list:
   - metric: exact_match
     aggregation: mean
