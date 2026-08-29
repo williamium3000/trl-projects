@@ -150,6 +150,12 @@ apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_gemma_u2581.patch"
 # Fix #12 — mbpp_instruct extractor swallowed first keyword ("def"/"from") of
 # unfenced code as a ``` language tag → Qwen-instruct mbpp = 0.0. 坑位记录 #6.
 apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_mbpp_lang_tag.patch"
+# Fix #13 — humaneval_instruct's column-0 stop sequences ("\ndef", "\n#", ...)
+# fire on the first token for models that restate the function or open with a
+# comment: granite-3.3-2b returns 58/164 empty generations where phi4mini returns
+# 0/164. Adds humaneval_instruct_relaxed, which keeps only "\nclass" and leans on
+# the existing closing-fence truncation in the instruct filter. 坑位记录 #7.
+apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_humaneval_relaxed_stops.patch"
 
 # 先钉 vllm==0.14.0 (cu12 编译), 否则 lm_eval 的 [vllm] extra 会拉最新版 —
 # vllm >=0.21 默认 wheel 是 CUDA 13 编译, 在驱动 535 的 pod 上 import 不报错、

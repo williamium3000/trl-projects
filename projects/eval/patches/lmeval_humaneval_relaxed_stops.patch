@@ -1,0 +1,23 @@
+diff --git a/lm_eval/tasks/humaneval/humaneval_instruct_relaxed.yaml b/lm_eval/tasks/humaneval/humaneval_instruct_relaxed.yaml
+new file mode 100644
+index 00000000..5283ae23
+--- /dev/null
++++ b/lm_eval/tasks/humaneval/humaneval_instruct_relaxed.yaml
+@@ -0,0 +1,17 @@
++# Variant of humaneval_instruct with the column-0 stop sequences dropped.
++#
++# Why: granite-3.3-2b-instruct restates the function or opens with a column-0
++# comment, so "\ndef" / "\n#" fire on the first token and 58/164 generations come
++# back empty (phi4mini on the same batch: 0/164). The instruct filter already
++# truncates at the first closing code fence, so the stop sequences are redundant
++# for fence-wrapping models and actively harmful for granite.
++#
++# Only "\nclass" is kept -- a class definition at column 0 is never part of a
++# HumanEval solution body, and no model in this project emits one first.
++include: humaneval_instruct.yaml
++task: humaneval_instruct_relaxed
++generation_kwargs:
++  until:
++    - "\nclass"
++  max_gen_toks: 1024
++  do_sample: false

@@ -1,5 +1,5 @@
 diff --git a/lcb_runner/lm_styles.py b/lcb_runner/lm_styles.py
-index d10b211..5c66d36 100644
+index d10b211..4532bbb 100644
 --- a/lcb_runner/lm_styles.py
 +++ b/lcb_runner/lm_styles.py
 @@ -30,6 +30,7 @@ class LMStyle(Enum):
@@ -10,7 +10,7 @@ index d10b211..5c66d36 100644
      DeepSeekR1 = "DeepSeekR1"
  
      TogetherAI = "TogetherAI"
-@@ -861,6 +862,221 @@ LanguageModelList: list[LanguageModel] = [
+@@ -861,6 +862,465 @@ LanguageModelList: list[LanguageModel] = [
          datetime(2024, 4, 1),
          "https://huggingface.co/agentica-org/DeepCoder-14B-Preview",
      ),
@@ -37,6 +37,53 @@ index d10b211..5c66d36 100644
 +        LMStyle.GenericBase,
 +        datetime(2024, 8, 20),
 +        "https://huggingface.co/microsoft/Phi-3.5-mini-instruct",
++    ),
++    LanguageModel(
++        # Same GenericBase caveat as Phi-3.5 above.
++        "microsoft/Phi-4-mini-instruct",
++        "Phi-4-mini-Ins",
++        LMStyle.GenericBase,
++        datetime(2025, 2, 1),
++        "https://huggingface.co/microsoft/Phi-4-mini-instruct",
++    ),
++    LanguageModel(
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/stage/gt__microsoft_Phi-4-mini-instruct__20260812_222659/best_model",
++        "GT-Phi-4-mini-best",
++        LMStyle.GenericBase,
++        datetime(2025, 2, 1),
++        "q1716523669/llm-math345-gt-phi4mini-best",
++    ),
++    LanguageModel(
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/stage/gt__microsoft_Phi-4-mini-instruct__20260812_222659",
++        "GT-Phi-4-mini-end",
++        LMStyle.GenericBase,
++        datetime(2025, 2, 1),
++        "q1716523669/llm-math345-gt-phi4mini-endpoint",
++    ),
++    LanguageModel(
++        # Same GenericBase caveat as the GT rows above. Every phi4mini row on both
++        # machines is GenericBase, which is what keeps the LCB column comparable.
++        "q1716523669/llm-math345-ttrl-phi4mini-best",
++        "TTRL-Phi-4-mini-best",
++        LMStyle.GenericBase,
++        datetime(2025, 2, 1),
++        "https://huggingface.co/q1716523669/llm-math345-ttrl-phi4mini-best",
++    ),
++    LanguageModel(
++        "q1716523669/llm-math345-ttrl-phi4mini-endpoint",
++        "TTRL-Phi-4-mini-end",
++        LMStyle.GenericBase,
++        datetime(2025, 2, 1),
++        "https://huggingface.co/q1716523669/llm-math345-ttrl-phi4mini-endpoint",
++    ),
++    LanguageModel(
++        # C-slot placeholder of the granite ring. GenericBase per doc/15: LCB ships
++        # no Granite style, and both machines have to register the same one.
++        "ibm-granite/granite-3.3-2b-instruct",
++        "Granite-3.3-2B-Ins",
++        LMStyle.GenericBase,
++        datetime(2025, 4, 1),
++        "https://huggingface.co/ibm-granite/granite-3.3-2b-instruct",
 +    ),
 +    LanguageModel(
 +        "google/gemma-3-4b-it",
@@ -229,6 +276,203 @@ index d10b211..5c66d36 100644
 +        datetime(2026, 6, 10),
 +        "local: cogrpo_homo__llama31_8b 0609_170200 group_B best_model (step10, 早停留意)",
 +    ),
++
++    # ---- w2s size-pair ckpts (2026-08-12) ----
++    LanguageModel(
++        "q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupA-qwen25-3b-best",
++        "W2S-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupA-qwen25-3b-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupB-qwen25-7b-best",
++        "W2S-Qwen2.5-7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupB-qwen25-7b-best",
++    ),
++    # ---- n3 variant ckpts: pooled_majority / random_peer / ring (2026-08-10) ----
++    LanguageModel(
++        "q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "PooledMaj-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "PooledMaj-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "PooledMaj-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "RandomPeer-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "RandomPeer-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "RandomPeer-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "Ring-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "Ring-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "Ring-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++    ),
++    # ---- n3 union / GT / TTRL ckpts (2026-08-07) ----
++    LanguageModel(
++        "q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "Union-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "Union-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "Union-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++    ),
++    LanguageModel(
++        "q1716523669/grpo-qwen25-3b-math345",
++        "GT-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/grpo-qwen25-3b-math345",
++    ),
++    LanguageModel(
++        "q1716523669/grpo-llama32-3b-math345",
++        "GT-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/grpo-llama32-3b-math345",
++    ),
++    LanguageModel(
++        "q1716523669/grpo-qwen3-1p7b-math345-best",
++        "GT-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/grpo-qwen3-1p7b-math345-best",
++    ),
++    LanguageModel(
++        "q1716523669/Qwen2.5-3B-ungrpomaj-majvote-MATH345",
++        "TTRL-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/Qwen2.5-3B-ungrpomaj-majvote-MATH345",
++    ),
++    LanguageModel(
++        "q1716523669/Llama-3.2-3B-ungrpomaj-majvote-MATH345",
++        "TTRL-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/Llama-3.2-3B-ungrpomaj-majvote-MATH345",
++    ),
++    LanguageModel(
++        "q1716523669/unmaj-qwen3-1p7b-math345-best",
++        "TTRL-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "https://huggingface.co/q1716523669/unmaj-qwen3-1p7b-math345-best",
++    ),
++
++
++    # ---- base + selfpeers + strict (2026-08-08) ----
++    LanguageModel(
++        "Qwen/Qwen3-1.7B-Base",
++        "Qwen3-1.7B-Base",
++        LMStyle.GenericBase,
++        datetime(2025, 5, 31),
++        "Qwen/Qwen3-1.7B-Base",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "SelfPeers-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "SelfPeers-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++    ),
++    LanguageModel(
++        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "SelfPeers-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++    ),
++    LanguageModel(
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/co-grpo-dp/N3_strict_majority__q25-3b_llama32-3b_qwen3-1p7b-base__20260806_195610/group_A/checkpoint-100",
++        "Strict-Qwen2.5-3B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/co-grpo-dp/N3_strict_majority__q25-3b_llama32-3b_qwen3-1p7b-base__20260806_195610/group_A/checkpoint-100",
++    ),
++    LanguageModel(
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/co-grpo-dp/N3_strict_majority__q25-3b_llama32-3b_qwen3-1p7b-base__20260806_195610/group_B/checkpoint-70",
++        "Strict-Llama-3.2-3B",
++        LMStyle.LLaMa3,
++        datetime(2025, 5, 31),
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/co-grpo-dp/N3_strict_majority__q25-3b_llama32-3b_qwen3-1p7b-base__20260806_195610/group_B/checkpoint-70",
++    ),
++    LanguageModel(
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/co-grpo-dp/N3_strict_majority__q25-3b_llama32-3b_qwen3-1p7b-base__20260806_195610/group_C/checkpoint-90",
++        "Strict-Qwen3-1.7B",
++        LMStyle.CodeQwenInstruct,
++        datetime(2025, 5, 31),
++        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/co-grpo-dp/N3_strict_majority__q25-3b_llama32-3b_qwen3-1p7b-base__20260806_195610/group_C/checkpoint-90",
++    ),
++
  ]
  
  LanguageModelStore: dict[str, LanguageModel] = {
