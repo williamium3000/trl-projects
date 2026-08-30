@@ -156,6 +156,11 @@ apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_mbpp_lang_tag.patch"
 # 0/164. Adds humaneval_instruct_relaxed, which keeps only "\nclass" and leans on
 # the existing closing-fence truncation in the instruct filter. 坑位记录 #7.
 apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_humaneval_relaxed_stops.patch"
+# Fix #14 — granite-3.3 opens the body with a tab and continues with four spaces,
+# so 49 of 164 predictions died on TabError with the code itself correct. Expands
+# leading tabs to four spaces to match HumanEval's own indentation. Verified no-op
+# on phi4mini (164/164 compile before and after). 坑位记录 #8.
+apply_patch "$LM_EVAL_DIR" "$PATCHES_DIR/lmeval_humaneval_tab_indent.patch"
 
 # 先钉 vllm==0.14.0 (cu12 编译), 否则 lm_eval 的 [vllm] extra 会拉最新版 —
 # vllm >=0.21 默认 wheel 是 CUDA 13 编译, 在驱动 535 的 pod 上 import 不报错、

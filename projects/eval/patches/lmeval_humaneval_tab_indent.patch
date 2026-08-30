@@ -1,0 +1,21 @@
+--- a/lm_eval/tasks/humaneval/utils.py
++++ b/lm_eval/tasks/humaneval/utils.py
+@@ -37,7 +37,17 @@
+         # Strip everything after the first closing code fence.
+         if "```" in r:
+             r = r[: r.find("```")]
+-        return r
++        # granite-3.3 opens the body with a tab and continues with four spaces, so
++        # the prediction hits TabError on 49 of 164 HumanEval problems even though
++        # the code itself is fine. HumanEval prompts indent with four spaces, so
++        # expanding leading tabs to four spaces makes the two agree. No-op for
++        # models that already indent with spaces.
++        lines = []
++        for line in r.split("\n"):
++            body = line.lstrip(" \t")
++            lead = line[: len(line) - len(body)]
++            lines.append(lead.replace("\t", "    ") + body)
++        return "\n".join(lines)
+     return [
+         [doc["prompt"] + _clean(r) for r in resp]
+         for resp, doc in zip(resps, docs)
