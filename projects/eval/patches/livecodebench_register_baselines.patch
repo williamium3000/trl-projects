@@ -1,16 +1,17 @@
 diff --git a/lcb_runner/lm_styles.py b/lcb_runner/lm_styles.py
-index d10b211..4532bbb 100644
+index d10b211..7ad9485 100644
 --- a/lcb_runner/lm_styles.py
 +++ b/lcb_runner/lm_styles.py
-@@ -30,6 +30,7 @@ class LMStyle(Enum):
+@@ -30,6 +30,8 @@ class LMStyle(Enum):
      CodeQwenInstruct = "CodeQwenInstruct"
      QwQ = "QwQ"
      LLaMa3 = "LLaMa3"
 +    Gemma3 = "Gemma3"
++    GraniteInstruct = "GraniteInstruct"
      DeepSeekR1 = "DeepSeekR1"
  
      TogetherAI = "TogetherAI"
-@@ -861,6 +862,465 @@ LanguageModelList: list[LanguageModel] = [
+@@ -861,6 +863,507 @@ LanguageModelList: list[LanguageModel] = [
          datetime(2024, 4, 1),
          "https://huggingface.co/agentica-org/DeepCoder-14B-Preview",
      ),
@@ -51,39 +52,81 @@ index d10b211..4532bbb 100644
 +        "GT-Phi-4-mini-best",
 +        LMStyle.GenericBase,
 +        datetime(2025, 2, 1),
-+        "q1716523669/llm-math345-gt-phi4mini-best",
++        "logan7000/llm-math345-gt-phi4mini-best",
 +    ),
 +    LanguageModel(
 +        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/stage/gt__microsoft_Phi-4-mini-instruct__20260812_222659",
 +        "GT-Phi-4-mini-end",
 +        LMStyle.GenericBase,
 +        datetime(2025, 2, 1),
-+        "q1716523669/llm-math345-gt-phi4mini-endpoint",
++        "logan7000/llm-math345-gt-phi4mini-endpoint",
 +    ),
 +    LanguageModel(
 +        # Same GenericBase caveat as the GT rows above. Every phi4mini row on both
 +        # machines is GenericBase, which is what keeps the LCB column comparable.
-+        "q1716523669/llm-math345-ttrl-phi4mini-best",
++        "logan7000/llm-math345-ttrl-phi4mini-best",
 +        "TTRL-Phi-4-mini-best",
 +        LMStyle.GenericBase,
 +        datetime(2025, 2, 1),
-+        "https://huggingface.co/q1716523669/llm-math345-ttrl-phi4mini-best",
++        "https://huggingface.co/logan7000/llm-math345-ttrl-phi4mini-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/llm-math345-ttrl-phi4mini-endpoint",
++        "logan7000/llm-math345-ttrl-phi4mini-endpoint",
 +        "TTRL-Phi-4-mini-end",
 +        LMStyle.GenericBase,
 +        datetime(2025, 2, 1),
-+        "https://huggingface.co/q1716523669/llm-math345-ttrl-phi4mini-endpoint",
++        "https://huggingface.co/logan7000/llm-math345-ttrl-phi4mini-endpoint",
 +    ),
 +    LanguageModel(
 +        # C-slot placeholder of the granite ring. GenericBase per doc/15: LCB ships
 +        # no Granite style, and both machines have to register the same one.
 +        "ibm-granite/granite-3.3-2b-instruct",
 +        "Granite-3.3-2B-Ins",
-+        LMStyle.GenericBase,
++        LMStyle.GraniteInstruct,
 +        datetime(2025, 4, 1),
 +        "https://huggingface.co/ibm-granite/granite-3.3-2b-instruct",
++    ),
++    LanguageModel(
++        "logan7000/llm-math345-gt-granite2b-best",
++        "GT-Granite-2B-best",
++        LMStyle.GraniteInstruct,
++        datetime(2025, 4, 1),
++        "https://huggingface.co/logan7000/llm-math345-gt-granite2b-best",
++    ),
++    LanguageModel(
++        "logan7000/llm-math345-gt-granite2b-endpoint",
++        "GT-Granite-2B-end",
++        LMStyle.GraniteInstruct,
++        datetime(2025, 4, 1),
++        "https://huggingface.co/logan7000/llm-math345-gt-granite2b-endpoint",
++    ),
++    LanguageModel(
++        "logan7000/llm-math345-ttrl-granite2b-best",
++        "TTRL-Granite-2B-best",
++        LMStyle.GraniteInstruct,
++        datetime(2025, 4, 1),
++        "https://huggingface.co/logan7000/llm-math345-ttrl-granite2b-best",
++    ),
++    LanguageModel(
++        "logan7000/llm-math345-ttrl-granite2b-endpoint",
++        "TTRL-Granite-2B-end",
++        LMStyle.GraniteInstruct,
++        datetime(2025, 4, 1),
++        "https://huggingface.co/logan7000/llm-math345-ttrl-granite2b-endpoint",
++    ),
++    LanguageModel(
++        "logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-granite2b-math345-groupC-granite2b-best",
++        "N3g-C-Granite-best",
++        LMStyle.GraniteInstruct,
++        datetime(2025, 4, 1),
++        "https://huggingface.co/logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-granite2b-math345-groupC-granite2b-best",
++    ),
++    LanguageModel(
++        "logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-granite2b-math345-groupC-granite2b-end",
++        "N3g-C-Granite-end",
++        LMStyle.GraniteInstruct,
++        datetime(2025, 4, 1),
++        "https://huggingface.co/logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-granite2b-math345-groupC-granite2b-end",
 +    ),
 +    LanguageModel(
 +        "google/gemma-3-4b-it",
@@ -94,152 +137,152 @@ index d10b211..4532bbb 100644
 +    ),
 +    # ---- trl-projects co-grpo-dp math345 trained ckpts (chat-tuned) ----
 +    LanguageModel(
-+        "q1716523669/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupA-qwen",
++        "logan7000/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupA-qwen",
 +        "CoGRPO-Heter-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupA-qwen",
++        "https://huggingface.co/logan7000/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupA-qwen",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupB-llama",
++        "logan7000/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupB-llama",
 +        "CoGRPO-Heter-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupB-llama",
++        "https://huggingface.co/logan7000/cogrpo-heter-qwen25-3b-x-llama32-3b-math345-bs2-groupB-llama",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-homo-qwen25-3b-math345-groupA",
++        "logan7000/cogrpo-homo-qwen25-3b-math345-groupA",
 +        "CoGRPO-Homo-Qwen2.5-3B-A",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-homo-qwen25-3b-math345-groupA",
++        "https://huggingface.co/logan7000/cogrpo-homo-qwen25-3b-math345-groupA",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-homo-qwen25-3b-math345-groupB",
++        "logan7000/cogrpo-homo-qwen25-3b-math345-groupB",
 +        "CoGRPO-Homo-Qwen2.5-3B-B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-homo-qwen25-3b-math345-groupB",
++        "https://huggingface.co/logan7000/cogrpo-homo-qwen25-3b-math345-groupB",
 +    ),
 +    # ---- trl-projects 7B/8B math345 ckpts + bases (2026-06-10 night eval) ----
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-selfcertainty-math345-eb128",
++        "logan7000/qwen25-7b-selfcertainty-math345-eb128",
 +        "Intuitor-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-selfcertainty-math345-eb128",
++        "https://huggingface.co/logan7000/qwen25-7b-selfcertainty-math345-eb128",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-decoupled-rephrQ-x-llama31-8b-origL-groupA-qwen",
++        "logan7000/qwen25-7b-decoupled-rephrQ-x-llama31-8b-origL-groupA-qwen",
 +        "Decoupled-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-decoupled-rephrQ-x-llama31-8b-origL-groupA-qwen",
++        "https://huggingface.co/logan7000/qwen25-7b-decoupled-rephrQ-x-llama31-8b-origL-groupA-qwen",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-homo-qwen25-7b-math345-groupA",
++        "logan7000/cogrpo-homo-qwen25-7b-math345-groupA",
 +        "CoGRPO-Homo-Qwen2.5-7B-A",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/cogrpo-homo-qwen25-7b-math345-groupA",
++        "https://huggingface.co/logan7000/cogrpo-homo-qwen25-7b-math345-groupA",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-homo-qwen25-7b-math345-groupB",
++        "logan7000/cogrpo-homo-qwen25-7b-math345-groupB",
 +        "CoGRPO-Homo-Qwen2.5-7B-B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/cogrpo-homo-qwen25-7b-math345-groupB",
++        "https://huggingface.co/logan7000/cogrpo-homo-qwen25-7b-math345-groupB",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen",
++        "logan7000/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen",
 +        "CoGRPO-Heter-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen",
++        "https://huggingface.co/logan7000/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupA-qwen",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-entropy-math345-eb128-lr3e-6",
++        "logan7000/qwen25-7b-entropy-math345-eb128-lr3e-6",
 +        "RENT-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-entropy-math345-eb128-lr3e-6",
++        "https://huggingface.co/logan7000/qwen25-7b-entropy-math345-eb128-lr3e-6",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-unmaj-math345-eb128-lr3e-6",
++        "logan7000/qwen25-7b-unmaj-math345-eb128-lr3e-6",
 +        "TTRL-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-unmaj-math345-eb128-lr3e-6",
++        "https://huggingface.co/logan7000/qwen25-7b-unmaj-math345-eb128-lr3e-6",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-gtgrpo-math345-eb128-lr3e-6",
++        "logan7000/qwen25-7b-gtgrpo-math345-eb128-lr3e-6",
 +        "GT-GRPO-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-gtgrpo-math345-eb128-lr3e-6",
++        "https://huggingface.co/logan7000/qwen25-7b-gtgrpo-math345-eb128-lr3e-6",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-crii-math345-lr3e-6",
++        "logan7000/qwen25-7b-crii-math345-lr3e-6",
 +        "CR-II-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-crii-math345-lr3e-6",
++        "https://huggingface.co/logan7000/qwen25-7b-crii-math345-lr3e-6",
 +    ),
 +    LanguageModel(
-+        "q1716523669/llama31-8b-selfcertainty-math345-eb128",
++        "logan7000/llama31-8b-selfcertainty-math345-eb128",
 +        "Intuitor-Llama-3.1-8B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/llama31-8b-selfcertainty-math345-eb128",
++        "https://huggingface.co/logan7000/llama31-8b-selfcertainty-math345-eb128",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-decoupled-origQ-x-llama31-8b-rephrL-groupB-llama",
++        "logan7000/qwen25-7b-decoupled-origQ-x-llama31-8b-rephrL-groupB-llama",
 +        "Decoupled-Llama-3.1-8B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-decoupled-origQ-x-llama31-8b-rephrL-groupB-llama",
++        "https://huggingface.co/logan7000/qwen25-7b-decoupled-origQ-x-llama31-8b-rephrL-groupB-llama",
 +    ),
 +    LanguageModel(
-+        "q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama",
++        "logan7000/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama",
 +        "CoGRPO-Heter-Llama-3.1-8B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama",
++        "https://huggingface.co/logan7000/qwen25-7b-heter-x-llama31-8b-math345-lr3e-6-groupB-llama",
 +    ),
 +    LanguageModel(
-+        "q1716523669/llama31-8b-entropy-math345-eb128",
++        "logan7000/llama31-8b-entropy-math345-eb128",
 +        "RENT-Llama-3.1-8B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/llama31-8b-entropy-math345-eb128",
++        "https://huggingface.co/logan7000/llama31-8b-entropy-math345-eb128",
 +    ),
 +    LanguageModel(
-+        "q1716523669/llama31-8b-unmaj-math345-eb128",
++        "logan7000/llama31-8b-unmaj-math345-eb128",
 +        "TTRL-Llama-3.1-8B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/llama31-8b-unmaj-math345-eb128",
++        "https://huggingface.co/logan7000/llama31-8b-unmaj-math345-eb128",
 +    ),
 +    LanguageModel(
-+        "q1716523669/llama31-8b-gtgrpo-math345-eb128",
++        "logan7000/llama31-8b-gtgrpo-math345-eb128",
 +        "GT-GRPO-Llama-3.1-8B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/llama31-8b-gtgrpo-math345-eb128",
++        "https://huggingface.co/logan7000/llama31-8b-gtgrpo-math345-eb128",
 +    ),
 +    LanguageModel(
-+        "q1716523669/llama31-8b-crii-math345-lr3e-6",
++        "logan7000/llama31-8b-crii-math345-lr3e-6",
 +        "CR-II-Llama-3.1-8B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/llama31-8b-crii-math345-lr3e-6",
++        "https://huggingface.co/logan7000/llama31-8b-crii-math345-lr3e-6",
 +    ),
 +    LanguageModel(
-+        "q1716523669/Llama-3.2-3B-Instruct-CoRewarding-II-MATH345",
++        "logan7000/Llama-3.2-3B-Instruct-CoRewarding-II-MATH345",
 +        "CR-II-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/Llama-3.2-3B-Instruct-CoRewarding-II-MATH345",
++        "https://huggingface.co/logan7000/Llama-3.2-3B-Instruct-CoRewarding-II-MATH345",
 +    ),
 +    LanguageModel(
 +        "Qwen/Qwen2.5-7B",
@@ -260,7 +303,7 @@ index d10b211..4532bbb 100644
 +        "Intuitor-Llama-3.1-8B-best",
 +        LMStyle.LLaMa3,
 +        datetime(2026, 6, 10),
-+        "https://huggingface.co/q1716523669/llama31-8b-selfcertainty-math345-eb128",
++        "https://huggingface.co/logan7000/llama31-8b-selfcertainty-math345-eb128",
 +    ),
 +    LanguageModel(
 +        "/mnt/bn/tns-algo-video-public-my2/yijiangli/project/trl-projects/projects/work_dirs/co-grpo-dp/cogrpo_homo__llama31_8b__math345_full_lr3e-6_e2_20260609_170200/group_A/best_model",
@@ -279,146 +322,146 @@ index d10b211..4532bbb 100644
 +
 +    # ---- w2s size-pair ckpts (2026-08-12) ----
 +    LanguageModel(
-+        "q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupA-qwen25-3b-best",
++        "logan7000/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupA-qwen25-3b-best",
 +        "W2S-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupA-qwen25-3b-best",
++        "https://huggingface.co/logan7000/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupA-qwen25-3b-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupB-qwen25-7b-best",
++        "logan7000/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupB-qwen25-7b-best",
 +        "W2S-Qwen2.5-7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupB-qwen25-7b-best",
++        "https://huggingface.co/logan7000/cogrpo-w2s-qwen25-3b-x-qwen25-7b-math345-groupB-qwen25-7b-best",
 +    ),
 +    # ---- n3 variant ckpts: pooled_majority / random_peer / ring (2026-08-10) ----
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "logan7000/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +        "PooledMaj-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "logan7000/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +        "PooledMaj-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "logan7000/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +        "PooledMaj-Qwen3-1.7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-pooledmaj-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "logan7000/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +        "RandomPeer-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "logan7000/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +        "RandomPeer-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "logan7000/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +        "RandomPeer-Qwen3-1.7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-randompeer-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +        "Ring-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +        "Ring-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +        "Ring-Qwen3-1.7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-ring-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +    ),
 +    # ---- n3 union / GT / TTRL ckpts (2026-08-07) ----
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "logan7000/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +        "Union-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "logan7000/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +        "Union-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "logan7000/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +        "Union-Qwen3-1.7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "https://huggingface.co/logan7000/cogrpo-n3-union-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/grpo-qwen25-3b-math345",
++        "logan7000/grpo-qwen25-3b-math345",
 +        "GT-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/grpo-qwen25-3b-math345",
++        "https://huggingface.co/logan7000/grpo-qwen25-3b-math345",
 +    ),
 +    LanguageModel(
-+        "q1716523669/grpo-llama32-3b-math345",
++        "logan7000/grpo-llama32-3b-math345",
 +        "GT-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/grpo-llama32-3b-math345",
++        "https://huggingface.co/logan7000/grpo-llama32-3b-math345",
 +    ),
 +    LanguageModel(
-+        "q1716523669/grpo-qwen3-1p7b-math345-best",
++        "logan7000/grpo-qwen3-1p7b-math345-best",
 +        "GT-Qwen3-1.7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/grpo-qwen3-1p7b-math345-best",
++        "https://huggingface.co/logan7000/grpo-qwen3-1p7b-math345-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/Qwen2.5-3B-ungrpomaj-majvote-MATH345",
++        "logan7000/Qwen2.5-3B-ungrpomaj-majvote-MATH345",
 +        "TTRL-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/Qwen2.5-3B-ungrpomaj-majvote-MATH345",
++        "https://huggingface.co/logan7000/Qwen2.5-3B-ungrpomaj-majvote-MATH345",
 +    ),
 +    LanguageModel(
-+        "q1716523669/Llama-3.2-3B-ungrpomaj-majvote-MATH345",
++        "logan7000/Llama-3.2-3B-ungrpomaj-majvote-MATH345",
 +        "TTRL-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/Llama-3.2-3B-ungrpomaj-majvote-MATH345",
++        "https://huggingface.co/logan7000/Llama-3.2-3B-ungrpomaj-majvote-MATH345",
 +    ),
 +    LanguageModel(
-+        "q1716523669/unmaj-qwen3-1p7b-math345-best",
++        "logan7000/unmaj-qwen3-1p7b-math345-best",
 +        "TTRL-Qwen3-1.7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "https://huggingface.co/q1716523669/unmaj-qwen3-1p7b-math345-best",
++        "https://huggingface.co/logan7000/unmaj-qwen3-1p7b-math345-best",
 +    ),
 +
 +
@@ -431,25 +474,25 @@ index d10b211..4532bbb 100644
 +        "Qwen/Qwen3-1.7B-Base",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "logan7000/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +        "SelfPeers-Qwen2.5-3B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
++        "logan7000/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupA-qwen25-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "logan7000/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +        "SelfPeers-Llama-3.2-3B",
 +        LMStyle.LLaMa3,
 +        datetime(2025, 5, 31),
-+        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
++        "logan7000/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupB-llama32-best",
 +    ),
 +    LanguageModel(
-+        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "logan7000/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +        "SelfPeers-Qwen3-1.7B",
 +        LMStyle.CodeQwenInstruct,
 +        datetime(2025, 5, 31),
-+        "q1716523669/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
++        "logan7000/cogrpo-n3-selfpeers-qwen25-3b-x-llama32-3b-x-qwen3-1p7b-math345-groupC-qwen3-best",
 +    ),
 +    LanguageModel(
 +        "/weka/scratch/jhu/dssg2026-ext-rghani1/yyang331/trl-projects-llm/work_dirs/co-grpo-dp/N3_strict_majority__q25-3b_llama32-3b_qwen3-1p7b-base__20260806_195610/group_A/checkpoint-100",
@@ -476,3 +519,46 @@ index d10b211..4532bbb 100644
  ]
  
  LanguageModelStore: dict[str, LanguageModel] = {
+diff --git a/lcb_runner/prompts/code_generation.py b/lcb_runner/prompts/code_generation.py
+index 22ba3f8..05ed7fd 100644
+--- a/lcb_runner/prompts/code_generation.py
++++ b/lcb_runner/prompts/code_generation.py
+@@ -1,3 +1,4 @@
++import os
+ import json
+ 
+ try:
+@@ -265,7 +266,7 @@ def format_prompt_generation(
+         from transformers import AutoTokenizer
+ 
+         tokenizer = AutoTokenizer.from_pretrained(
+-            "meta-llama/Meta-Llama-3-8B-Instruct", padding_side="left", use_fast=False
++            os.environ.get("LCB_LLAMA3_TOKENIZER", "meta-llama/Meta-Llama-3-8B-Instruct"), padding_side="left", use_fast=False
+         )
+         return tokenizer.apply_chat_template(
+             chat_messages,
+@@ -335,6 +336,24 @@ def format_prompt_generation(
+         prompt += f"{get_deepseek_r1_question_template_answer(question)}"
+         return prompt
+ 
++    if LanguageModelStyle == LMStyle.GraniteInstruct:
++        chat_messages = [
++            {"role": "system", "content": PromptConstants.SYSTEM_MESSAGE_GENERIC},
++            {"role": "user", "content": get_generic_question_template_answer(question)},
++        ]
++        from transformers import AutoTokenizer
++
++        _tokenizer = AutoTokenizer.from_pretrained(
++            "ibm-granite/granite-3.3-2b-instruct", padding_side="left"
++        )
++        return _tokenizer.apply_chat_template(
++            chat_messages,
++            tokenize=False,
++            add_generation_prompt=True,
++            truncation=False,
++            padding=False,
++        )
++
+     if LanguageModelStyle == LMStyle.GenericBase:
+         prompt = get_base_model_question_template_answer(question)
+         return prompt
